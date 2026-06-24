@@ -55,7 +55,7 @@ export function TopicCard({ topic, selected, onToggle, disabled }: TopicCardProp
       </p>
 
       {/* Angle */}
-      <p className="text-xs text-indigo-400 italic mb-3">
+      <p className="text-xs text-primary italic mb-3">
         ✦ {topic.angle}
       </p>
 

@@ -9,7 +9,7 @@ export function NicheBadge({ niche, className }: NicheBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-400',
+        'inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary',
         className
       )}
     >

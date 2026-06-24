@@ -126,6 +126,6 @@ export const STATUS_LABELS: Record<string, string> = {
 export const STATUS_COLORS: Record<string, string> = {
   idea: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
   planned: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  scripted: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+  scripted: 'bg-primary/15 text-primary border-primary/30',
   published: 'bg-green-500/20 text-green-400 border-green-500/30',
 }

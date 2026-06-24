@@ -171,7 +171,7 @@ export default function BrainPage() {
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="h-12 w-12 text-yellow-500" />
         <div className="text-center">
-          <h2 className="font-display text-xl font-semibold mb-2">Configure ton profil d'abord</h2>
+          <h2 className="font-display text-xl font-semibold tracking-sub-heading leading-tight-heading mb-2">Configure ton profil d'abord</h2>
           <p className="text-muted-foreground mb-4">
             Renseigne tes niches, canaux et langues pour générer des sujets pertinents.
           </p>
@@ -186,7 +186,7 @@ export default function BrainPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-3xl font-bold">Brain</h1>
+        <h1 className="font-display text-3xl font-bold tracking-heading leading-heading">Brain</h1>
         <p className="text-muted-foreground mt-1">
           Génère et sélectionne tes sujets de contenu pour la semaine
         </p>

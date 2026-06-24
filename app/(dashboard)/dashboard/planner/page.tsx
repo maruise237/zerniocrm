@@ -144,7 +144,7 @@ export default function PlannerPage() {
       {/* Header + navigation */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Planner</h1>
+          <h1 className="font-display text-3xl font-bold tracking-heading leading-heading">Planner</h1>
           <p className="text-muted-foreground mt-1">
             Semaine {weekNumber} · {weekDays[0].toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
             {' — '}
