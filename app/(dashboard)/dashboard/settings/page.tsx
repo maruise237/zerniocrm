@@ -143,7 +143,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold">Paramètres</h1>
+        <h1 className="font-display text-3xl font-bold tracking-heading leading-heading">Paramètres</h1>
         <p className="text-muted-foreground mt-1">Configure ton profil et tes préférences</p>
       </div>
 

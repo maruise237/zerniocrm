@@ -20,6 +20,16 @@ const config: Config = {
         display: ['Syne', 'sans-serif'],
         sans: ['DM Sans', 'sans-serif'],
       },
+      letterSpacing: {
+        'display-tight': '-0.035em',
+        'heading': '-0.025em',
+        'sub-heading': '-0.015em',
+      },
+      lineHeight: {
+        'display': '1.05',
+        'heading': '1.15',
+        'tight-heading': '1.2',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

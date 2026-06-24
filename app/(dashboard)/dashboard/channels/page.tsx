@@ -159,7 +159,7 @@ export default function ChannelsPage() {
   return (
     <div className="max-w-lg space-y-4">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">Canaux</h1>
+        <h1 className="font-display text-xl font-semibold tracking-heading leading-heading">Canaux</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Connecte un canal pour recevoir rappels et bilans automatiques.
         </p>

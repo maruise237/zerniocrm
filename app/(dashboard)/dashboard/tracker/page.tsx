@@ -112,7 +112,7 @@ export default function TrackerPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold">Tracker</h1>
+        <h1 className="font-display text-3xl font-bold tracking-heading leading-heading">Tracker</h1>
         <p className="text-muted-foreground mt-1">Suis ta constance et tes performances de publication</p>
       </div>
 
@@ -129,7 +129,7 @@ export default function TrackerPage() {
             <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Record personnel</CardTitle></CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 gap-1">
               <Trophy className="h-8 w-8 text-yellow-500" />
-              <span className="font-display text-4xl font-bold">{bestStreak}</span>
+              <span className="font-display text-4xl font-semibold">{bestStreak}</span>
               <p className="text-xs text-muted-foreground">semaines</p>
             </CardContent>
           </Card>
@@ -140,7 +140,7 @@ export default function TrackerPage() {
             <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Score mensuel</CardTitle></CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 gap-1">
               <TrendingUp className={`h-8 w-8 ${consistencyScore >= 70 ? 'text-green-500' : 'text-primary'}`} />
-              <span className="font-display text-4xl font-bold">{consistencyScore}%</span>
+              <span className="font-display text-4xl font-semibold">{consistencyScore}%</span>
               <p className="text-xs text-muted-foreground">constance</p>
             </CardContent>
           </Card>

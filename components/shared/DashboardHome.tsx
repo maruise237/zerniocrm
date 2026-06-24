@@ -50,7 +50,7 @@ export function DashboardHome({ userName, weeklyPublished, weeklyTarget, streak,
     <div className="space-y-6">
       {/* Salutation */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="font-display text-3xl font-bold">
+        <h1 className="font-display text-3xl font-bold tracking-heading leading-heading">
           {greeting}, {userName} {timeEmoji}
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -67,7 +67,7 @@ export function DashboardHome({ userName, weeklyPublished, weeklyTarget, streak,
               <CardTitle className="text-sm font-medium text-muted-foreground">Cette semaine</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-display font-bold mb-2">
+              <div className="text-2xl font-display font-semibold mb-2">
                 {weeklyPublished}/{weeklyTarget}
               </div>
               <Progress value={weekProgress} className="h-1.5 mb-1" />
@@ -85,7 +85,7 @@ export function DashboardHome({ userName, weeklyPublished, weeklyTarget, streak,
             <CardContent>
               <div className="flex items-center gap-2">
                 <Flame className={`h-6 w-6 ${streak > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
-                <span className="text-2xl font-display font-bold">{streak}</span>
+                <span className="text-2xl font-display font-semibold">{streak}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">semaine{streak !== 1 ? 's' : ''} consécutive{streak !== 1 ? 's' : ''}</p>
             </CardContent>
@@ -99,7 +99,7 @@ export function DashboardHome({ userName, weeklyPublished, weeklyTarget, streak,
               <CardTitle className="text-sm font-medium text-muted-foreground">Constance mensuelle</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-display font-bold">{consistencyScore}%</div>
+              <div className="text-2xl font-display font-semibold">{consistencyScore}%</div>
               <p className="text-xs text-muted-foreground mt-1">
                 {consistencyScore >= 70 ? 'Excellent !' : consistencyScore >= 40 ? 'Continue !' : 'On y va !'}
               </p>
@@ -188,7 +188,7 @@ export function DashboardHome({ userName, weeklyPublished, weeklyTarget, streak,
 
       {/* Raccourcis */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <h2 className="font-display text-lg font-semibold mb-3">Modules</h2>
+        <h2 className="font-display text-lg font-semibold tracking-sub-heading leading-tight-heading mb-3">Modules</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {SHORTCUTS.map((shortcut, index) => (
             <motion.div

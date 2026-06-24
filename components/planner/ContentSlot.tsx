@@ -577,8 +577,8 @@ function ScriptDialog({ open, onClose, topic, script, onRegenerate, regenerating
         <div className="flex-1 overflow-y-auto py-3 space-y-4 text-sm">
           {script && tab === 'script' && (
             <>
-              <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/5 p-4">
-                <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wide mb-1">Intro</p>
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Intro</p>
                 <p className="leading-relaxed">{script.intro}</p>
               </div>
               {points.map((point) => (
