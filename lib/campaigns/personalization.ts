@@ -8,10 +8,76 @@
 import { apiFetch } from '@/lib/api-client';
 import type { ZernioBroadcast, ZernioBroadcastRecipient } from '@/lib/types';
 
+/**
+ * Configuration de personnalisation d'une campagne, au format du payload
+ * Zernio (template.components + template.variableMapping) pour pouvoir
+ * reconstruire exactement le même template lors d'une duplication/relance.
+ * Persistée localement car Zernio ne restitue pas ces champs sur GET.
+ */
+export interface CampaignVarValue {
+  field: 'name' | 'phone' | 'email' | 'company' | 'custom';
+  customValue?: string;
+}
+
 export interface CampaignVars {
   templateName: string;
   language: string;
-  vars: { pos: number; field: string; custom?: string }[];
+  components: {
+    type: 'body';
+    parameters: { type: 'text'; text: string }[];
+  }[];
+  variableMapping: Record<string, CampaignVarValue>;
+}
+
+/** Ancien format (liste `vars`) → nouveau format payload. */
+function migrate(raw: unknown): CampaignVars | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.templateName !== 'string') return null;
+  const language = typeof obj.language === 'string' ? obj.language : 'en';
+  const legacyVars = Array.isArray(obj.vars)
+    ? (obj.vars as { pos: number; field: string; custom?: string }[])
+    : null;
+
+  if (legacyVars) {
+    const variableMapping: Record<string, CampaignVarValue> = {};
+    for (const v of legacyVars) {
+      variableMapping[String(v.pos)] =
+        v.field === 'custom'
+          ? { field: 'custom', customValue: v.custom ?? '' }
+          : { field: v.field as CampaignVarValue['field'] };
+    }
+    return {
+      templateName: obj.templateName,
+      language,
+      components: [
+        {
+          type: 'body',
+          parameters: legacyVars.map((v) => ({ type: 'text' as const, text: `{{${v.pos}}}` })),
+        },
+      ],
+      variableMapping,
+    };
+  }
+
+  return {
+    templateName: obj.templateName,
+    language,
+    components: Array.isArray(obj.components) ? (obj.components as CampaignVars['components']) : [],
+    variableMapping: (obj.variableMapping ?? {}) as Record<string, CampaignVarValue>,
+  };
+}
+
+/** Liste triée par position des variables, pour l'édition UI. */
+export function campaignVarsToList(cfg: CampaignVars): { pos: number; field: string; custom?: string }[] {
+  return Object.entries(cfg.variableMapping)
+    .map(([key, value]) => ({
+      pos: Number(key),
+      field: value.field,
+      custom: value.field === 'custom' ? value.customValue : undefined,
+    }))
+    .filter((v) => Number.isFinite(v.pos))
+    .sort((a, b) => a.pos - b.pos);
 }
 
 const VARS_KEY = (id: string) => `crm-campaign-vars:${id}`;
@@ -28,14 +94,16 @@ export function saveCampaignVars(broadcastId: string, cfg: CampaignVars): void {
 export function loadCampaignVars(broadcastId: string): CampaignVars | null {
   try {
     const raw = window.localStorage.getItem(VARS_KEY(broadcastId));
-    return raw ? (JSON.parse(raw) as CampaignVars) : null;
+    if (!raw) return null;
+    return migrate(JSON.parse(raw));
   } catch {
     return null;
   }
 }
 
 export function campaignHasVars(broadcastId: string): boolean {
-  return (loadCampaignVars(broadcastId)?.vars.length ?? 0) > 0;
+  const cfg = loadCampaignVars(broadcastId);
+  return !!cfg && Object.keys(cfg.variableMapping).length > 0;
 }
 
 export function markDirectSent(broadcastId: string): void {
@@ -122,13 +190,25 @@ export interface DuplicateOptions {
 export async function duplicateBroadcast(opts: DuplicateOptions): Promise<ZernioBroadcast> {
   const { original, profileId, suffix } = opts;
   const name = `${original.name}${suffix}`;
+  const varsCfg = loadCampaignVars(original.id);
 
-  const template = original.template?.name
+  // Reconstruction du template COMPLET (components + variableMapping) quand la
+  // personnalisation est connue — sinon nom + langue seulement.
+  const template: Record<string, unknown> | undefined = varsCfg?.templateName
     ? {
-        name: original.template.name,
-        ...(original.template.language ? { language: original.template.language } : {}),
+        name: varsCfg.templateName,
+        language: varsCfg.language,
+        ...(varsCfg.components.length > 0 ? { components: varsCfg.components } : {}),
+        ...(Object.keys(varsCfg.variableMapping).length > 0
+          ? { variableMapping: varsCfg.variableMapping }
+          : {}),
       }
-    : undefined;
+    : original.template?.name
+      ? {
+          name: original.template.name,
+          ...(original.template.language ? { language: original.template.language } : {}),
+        }
+      : undefined;
 
   const created = await apiFetch<{ broadcast?: ZernioBroadcast }>('/api/broadcasts', {
     method: 'POST',
@@ -149,7 +229,6 @@ export async function duplicateBroadcast(opts: DuplicateOptions): Promise<Zernio
   if (!copy?.id) throw new Error('copy-failed');
 
   // Reprend la personnalisation locale de l'original, si elle existe.
-  const varsCfg = loadCampaignVars(original.id);
   if (varsCfg) saveCampaignVars(copy.id, varsCfg);
 
   if (opts.copyRecipients) {

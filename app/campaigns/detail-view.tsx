@@ -6,6 +6,7 @@ import {
   CalendarClock,
   Check,
   CheckCheck,
+  Code2,
   Copy,
   FileUp,
   Loader2,
@@ -41,6 +42,7 @@ import { cn } from '@/lib/utils';
 import { parseContactFile } from '@/lib/contacts/import-parser';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import {
+  campaignVarsToList,
   duplicateBroadcast,
   fetchBroadcastRecipients,
   hideCampaign,
@@ -562,14 +564,16 @@ function CampaignEditDialog({
 }) {
   const [name, setName] = useState(broadcast.name);
   const [description, setDescription] = useState(broadcast.description ?? '');
-  const [rows, setRows] = useState<CampaignVars['vars']>(varsCfg?.vars ?? []);
+  const [rows, setRows] = useState<{ pos: number; field: string; custom?: string }[]>(() =>
+    varsCfg ? campaignVarsToList(varsCfg) : [],
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setName(broadcast.name);
     setDescription(broadcast.description ?? '');
-    setRows(varsCfg?.vars ?? []);
+    setRows(varsCfg ? campaignVarsToList(varsCfg) : []);
   }, [open, broadcast.name, broadcast.description, varsCfg]);
 
   async function save() {
@@ -585,10 +589,19 @@ function CampaignEditDialog({
         }),
       });
       if (varsCfg && rows.length > 0) {
+        const variableMapping = Object.fromEntries(
+          rows.map((row) => [
+            String(row.pos),
+            row.field === 'custom'
+              ? { field: 'custom', customValue: row.custom ?? '' }
+              : { field: row.field },
+          ]),
+        ) as CampaignVars['variableMapping'];
         saveCampaignVars(broadcast.id, {
           templateName: varsCfg.templateName,
           language: varsCfg.language,
-          vars: rows,
+          components: varsCfg.components,
+          variableMapping,
         });
       }
       toast.success('Campagne modifiée');
@@ -718,6 +731,8 @@ export function CampaignDetail({
   const [duplicating, setDuplicating] = useState(false);
   const [directBusy, setDirectBusy] = useState(false);
   const [directErrors, setDirectErrors] = useState<string[]>([]);
+  const [inspectOpen, setInspectOpen] = useState(false);
+  const [inspectJson, setInspectJson] = useState('');
 
   if (isLoading && !broadcast) {
     return (
@@ -762,7 +777,7 @@ export function CampaignDetail({
   ): Promise<string[]> {
     const phone = (recipient.platformIdentifier ?? '').replace(/\D/g, '');
     const values: string[] = [];
-    for (const v of [...cfg.vars].sort((a, b) => a.pos - b.pos)) {
+    for (const v of campaignVarsToList(cfg)) {
       let value = '';
       if (v.field === 'custom') value = v.custom ?? '';
       else if (v.field === 'phone') value = phone ? `+${phone}` : '';
@@ -855,6 +870,22 @@ export function CampaignDetail({
       toast.error(`L’envoi direct a échoué.${detail}`);
     } finally {
       setDirectBusy(false);
+    }
+  }
+
+  // Ouvre le JSON brut de la campagne tel qu'enregistré chez Zernio :
+  // vérifie si template.components et template.variableMapping sont stockés.
+  async function openInspect() {
+    if (!broadcast) return;
+    try {
+      const raw = await apiFetch<unknown>(
+        `/api/broadcasts/${encodeURIComponent(broadcast.id)}`,
+      );
+      setInspectJson(JSON.stringify(raw, null, 2));
+      setInspectOpen(true);
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`Impossible de lire la campagne chez Zernio.${detail}`);
     }
   }
 
@@ -979,6 +1010,17 @@ export function CampaignDetail({
               {broadcast.scheduledAt && ` · envoi prévu le ${formatDate(broadcast.scheduledAt)}`}
               {broadcast.completedAt && ` · terminée le ${formatDate(broadcast.completedAt)}`}
             </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void openInspect()}
+              className="text-muted-foreground"
+              title="Voir l’objet campagne brut enregistré chez Zernio (diagnostic personnalisation)"
+            >
+              <Code2 className="size-4" /> Inspecter
+            </Button>
           </div>
         </div>
 
@@ -1107,6 +1149,27 @@ export function CampaignDetail({
             onChanged();
           }}
         />
+      )}
+      {inspectOpen && (
+        <Dialog open={inspectOpen} onOpenChange={setInspectOpen}>
+          <DialogContent className="flex max-h-[85vh] flex-col p-0 sm:max-w-2xl">
+            <DialogHeader className="border-b border-[var(--chat-border)] px-5 pt-5">
+              <DialogTitle className="text-sm">Campagne brute (Zernio)</DialogTitle>
+            </DialogHeader>
+            <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
+              <pre className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
+                {inspectJson}
+              </pre>
+            </div>
+            <div className="border-t border-[var(--chat-border)] px-5 py-3">
+              <p className="text-[11px] text-muted-foreground">
+                Vérifiez si <span className="font-mono">template.components</span> et{' '}
+                <span className="font-mono">template.variableMapping</span> sont présents : c’est le test A/B
+                du diagnostic.
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

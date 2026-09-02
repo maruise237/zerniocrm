@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
-import { saveCampaignVars } from '@/lib/campaigns/personalization';
+import { saveCampaignVars, type CampaignVars } from '@/lib/campaigns/personalization';
 import { extractPlaceholders } from '@/lib/whatsapp/template-meta';
 import { cn } from '@/lib/utils';
 import type {
@@ -238,17 +238,31 @@ export function CampaignCreateDialog({
       const broadcast = created.broadcast;
       if (!broadcast?.id) throw new Error('no-broadcast');
 
-      // Persiste la personnalisation localement : le moteur d'envoi direct
-      // (par destinataire) en a besoin, Zernio ne la relit pas.
+      // Persiste la personnalisation localement (format payload Zernio) :
+      // nécessaire pour l'édition et la duplication fidèle de la campagne.
       if (placeholders.length > 0) {
+        const components: CampaignVars['components'] = [
+          {
+            type: 'body',
+            parameters: placeholders.map((n) => ({ type: 'text', text: `{{${n}}}` })),
+          },
+        ];
+        const variableMapping = Object.fromEntries(
+          placeholders.map((n) => {
+            const row = mapping[n];
+            return [
+              String(n),
+              row.field === 'custom'
+                ? { field: 'custom', customValue: row.custom.trim() }
+                : { field: row.field },
+            ];
+          }),
+        ) as CampaignVars['variableMapping'];
         saveCampaignVars(broadcast.id, {
           templateName: selectedTemplate.name,
           language: effectiveLanguage,
-          vars: placeholders.map((n) => ({
-            pos: n,
-            field: mapping[n].field,
-            custom: mapping[n].field === 'custom' ? mapping[n].custom.trim() : '',
-          })),
+          components,
+          variableMapping,
         });
       }
 
