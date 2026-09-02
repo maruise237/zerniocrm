@@ -879,11 +879,17 @@ export function CampaignDetail({
     }
   }
 
-  // Relance la campagne : duplication puis envoi immédiat (direct si personnalisée).
+  // Relance la campagne : une campagne identique (même nom) est recréée puis
+  // envoyée — l'API Zernio ne permet pas de réexpédier une campagne terminée.
   async function relaunch() {
     if (!broadcast) return;
     const count = broadcast.recipientCount ?? 0;
-    if (!window.confirm(`Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\nUne copie sera créée puis envoyée.`)) {
+    if (
+      !window.confirm(
+        `Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\n` +
+          "L’envoi groupé Zernio ne peut se faire que sur un brouillon : une campagne identique (même nom) sera créée puis envoyée. L’ancienne reste dans l’historique.",
+      )
+    ) {
       return;
     }
     setDuplicating(true);
@@ -891,11 +897,11 @@ export function CampaignDetail({
       const copy = await duplicateBroadcast({
         original: broadcast,
         profileId,
-        suffix: ' (relance)',
+        suffix: '',
         copyRecipients: true,
       });
       await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
-      toast.success(`Relance « ${copy.name} » envoyée.`);
+      toast.success(`Relance de « ${copy.name} » envoyée.`);
       onChanged();
       onSelectBroadcast(copy.id);
     } catch (err) {

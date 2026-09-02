@@ -232,7 +232,12 @@ export default function CampaignsPage() {
   async function relaunchRow(broadcast: ZernioBroadcast) {
     if (busyId) return;
     const count = broadcast.recipientCount ?? 0;
-    if (!window.confirm(`Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\nUne copie sera créée puis envoyée.`)) {
+    if (
+      !window.confirm(
+        `Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\n` +
+          "L’envoi groupé Zernio ne peut se faire que sur un brouillon : une campagne identique (même nom) sera créée puis envoyée. L’ancienne reste dans l’historique.",
+      )
+    ) {
       return;
     }
     setBusyId(broadcast.id);
@@ -240,11 +245,11 @@ export default function CampaignsPage() {
       const copy = await duplicateBroadcast({
         original: broadcast,
         profileId: profiles[0]?._id ?? '',
-        suffix: ' (relance)',
+        suffix: '',
         copyRecipients: true,
       });
       await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
-      toast.success(`Relance « ${copy.name} » envoyée.`);
+      toast.success(`Relance de « ${copy.name} » envoyée.`);
       refresh();
       setSelectedId(copy.id);
     } catch (err) {
