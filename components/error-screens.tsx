@@ -42,9 +42,9 @@ export function SetupScreen() {
         <KeyRound className="size-5 text-primary" />
         <span className="text-sm font-medium text-muted-foreground">Unified Inbox</span>
       </div>
-      <h1 className="text-xl font-semibold tracking-tight">Add your Zernio API key</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Ajoutez votre clé API</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        This app talks to the Zernio API. It needs a key before it can load your inbox.
+        Cette application a besoin d’une clé API pour charger votre boîte de réception.
       </p>
       <ol className="mt-6 space-y-4 text-sm">
         <li className="flex gap-3">
@@ -59,7 +59,7 @@ export function SetupScreen() {
               rel="noreferrer"
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
-              Zernio dashboard
+              Tableau de bord
             </a>
           </span>
         </li>
@@ -90,17 +90,17 @@ export function InboxAddonScreen({ trialAvailable }: { trialAvailable?: boolean 
         <span className="text-sm font-medium text-muted-foreground">Unified Inbox</span>
       </div>
       <h1 className="text-xl font-semibold tracking-tight">
-        Your Zernio account needs the Inbox add-on
+        Votre compte nécessite l’option Inbox
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Reading and sending messages requires the Inbox add-on on your Zernio plan.
+        La lecture et l’envoi de messages nécessitent l’option Inbox de votre plan.
         {trialAvailable
           ? ' A free trial is available, enable it from your dashboard and reload this page.'
           : ' Enable it from your dashboard and reload this page.'}
       </p>
       <Button asChild className="mt-6 w-full">
         <a href="https://zernio.com" target="_blank" rel="noreferrer">
-          Open Zernio dashboard
+          Ouvrir le tableau de bord
         </a>
       </Button>
     </FullScreenCard>

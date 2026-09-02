@@ -335,7 +335,7 @@ export default function Home() {
           )}
           {(error || accountsError) && (
             <div className="p-6 text-center text-sm text-red-600">
-              Impossible de charger les données réelles. Vérifiez la configuration Zernio.
+              Impossible de charger les données réelles. Vérifiez la configuration du compte.
             </div>
           )}
           {!isLoading &&
@@ -389,7 +389,7 @@ export default function Home() {
 
         <div className="mt-auto flex items-center justify-between border-t border-[var(--chat-border)] px-4 py-3 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Données Zernio
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Données en direct
           </span>
           <span className="flex items-center gap-2">
             <span className="hidden sm:inline">Propulsé par <span className="font-medium text-foreground">Kamtech</span></span>

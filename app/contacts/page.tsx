@@ -167,7 +167,7 @@ function ImportDialog({
       });
       if ((res.created ?? 0) > 0 || (res.skipped ?? 0) > 0) onImported();
     } catch {
-      toast.error("L'import a échoué — vérifiez la configuration Zernio.");
+      toast.error("L'import a échoué — vérifiez la configuration du compte.");
     } finally {
       setImporting(false);
     }
@@ -519,7 +519,7 @@ export default function ContactsPage() {
             )}
             {query.error && (
               <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm text-red-600 dark:text-red-400">
-                Impossible de charger les contacts. Vérifiez la configuration Zernio.
+                Impossible de charger les contacts. Vérifiez la configuration du compte.
               </div>
             )}
             {!query.isLoading && !query.error && contacts.length === 0 && (

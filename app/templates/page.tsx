@@ -342,7 +342,7 @@ export default function TemplatesPage() {
           )}
           {(error || accountsError) && (
             <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm text-red-600 dark:text-red-400">
-              Impossible de charger les modèles. Vérifiez la configuration Zernio.
+              Impossible de charger les modèles. Vérifiez la configuration du compte.
               {error?.message ? <p className="mt-1 text-xs opacity-70">{error.message}</p> : null}
             </div>
           )}

@@ -24,7 +24,8 @@ export function hasApiKey(): boolean {
 export function missingKeyResponse(): Response {
   return Response.json(
     {
-      error: 'ZERNIO_API_KEY is not set. Add it to your environment and restart.',
+      error:
+        "La clé API du serveur n’est pas configurée. Contactez l’administrateur de l’installation.",
       code: 'missing_api_key',
     },
     { status: 500 },
