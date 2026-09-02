@@ -292,11 +292,10 @@ export function InteractiveDrawer({
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="buttons" className="px-1 text-xs">Boutons</TabsTrigger>
             <TabsTrigger value="list" className="px-1 text-xs">Liste</TabsTrigger>
             <TabsTrigger value="cta" className="px-1 text-xs">Lien</TabsTrigger>
-            <TabsTrigger value="flow" className="px-1 text-xs">Flow</TabsTrigger>
             <TabsTrigger value="location" className="px-1 text-xs">Localisation</TabsTrigger>
             <TabsTrigger value="call" className="px-1 text-xs">Appel</TabsTrigger>
           </TabsList>
