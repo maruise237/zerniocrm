@@ -1,14 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   CalendarClock,
+  Check,
   CheckCheck,
   FileUp,
   Loader2,
   MessageSquareText,
   Play,
+  Search,
   Trash2,
   Users,
 } from 'lucide-react';
@@ -34,13 +36,14 @@ import {
 } from '@/hooks/useBroadcasts';
 import { cn } from '@/lib/utils';
 import { parseContactFile } from '@/lib/contacts/import-parser';
+import { apiFetch } from '@/lib/api-client';
 import {
   BROADCAST_STATUS_META,
   RECIPIENT_STATUS_BADGE,
   RECIPIENT_STATUS_LABELS,
   formatTemplateLanguage,
 } from '@/lib/whatsapp/template-meta';
-import type { ZernioBroadcast } from '@/lib/types';
+import type { ZernioBroadcast, ZernioContact } from '@/lib/types';
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -66,13 +69,36 @@ function AddRecipientsDialog({
   onClose: () => void;
 }) {
   const [phonesText, setPhonesText] = useState('');
-  const [mode, setMode] = useState<'phones' | 'file' | 'segment'>('phones');
+  const [mode, setMode] = useState<'phones' | 'file' | 'contacts' | 'segment'>('phones');
   const [filePhones, setFilePhones] = useState<string[]>([]);
   const [fileName, setFileName] = useState('');
   const [fileError, setFileError] = useState<string | null>(null);
   const [readingFile, setReadingFile] = useState(false);
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactResults, setContactResults] = useState<ZernioContact[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const add = useAddRecipients(broadcast.id);
+
+  // Contacts du compte, chargés quand l'onglet « Contacts » est ouvert.
+  useEffect(() => {
+    if (mode !== 'contacts') return;
+    const timer = window.setTimeout(() => {
+      setContactsLoading(true);
+      const params = new URLSearchParams({ accountId: broadcast.accountId, limit: '100' });
+      if (contactSearch.trim()) params.set('search', contactSearch.trim());
+      apiFetch<{ contacts?: ZernioContact[] }>(`/api/contacts?${params.toString()}`)
+        .then((res) => setContactResults(res.contacts ?? []))
+        .catch(() => setContactResults([]))
+        .finally(() => setContactsLoading(false));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [mode, contactSearch, broadcast.accountId]);
+
+  function toggleContact(id: string) {
+    setSelectedContactIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
 
   const phones = phonesText
     .split(/\n|,|;/)
@@ -133,6 +159,20 @@ function AddRecipientsDialog({
       }
       return;
     }
+    if (mode === 'contacts') {
+      if (selectedContactIds.length === 0) return;
+      try {
+        const res = await add.mutateAsync({ contactIds: selectedContactIds });
+        toast.success(
+          `${res.added ?? 0} contact(s) ajouté(s)` +
+            (res.skipped ? `, ${res.skipped} ignoré(s)` : ''),
+        );
+        onClose();
+      } catch {
+        toast.error('L’ajout des contacts a échoué.');
+      }
+      return;
+    }
     const tags = (broadcast.segmentFilters?.tags ?? []).filter(Boolean);
     if (tags.length === 0) {
       toast.error('Cette campagne n’a pas de tags de segment — définissez-les à la création.');
@@ -159,7 +199,7 @@ function AddRecipientsDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <button
               onClick={() => setMode('phones')}
               className={cn(
@@ -172,6 +212,17 @@ function AddRecipientsDialog({
               Numéros
             </button>
             <button
+              onClick={() => setMode('contacts')}
+              className={cn(
+                'rounded-lg border px-3 py-2 text-xs font-medium transition',
+                mode === 'contacts'
+                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  : 'border-[var(--chat-border)] text-muted-foreground',
+              )}
+            >
+              Contacts
+            </button>
+            <button
               onClick={() => setMode('file')}
               className={cn(
                 'rounded-lg border px-3 py-2 text-xs font-medium transition',
@@ -180,7 +231,7 @@ function AddRecipientsDialog({
                   : 'border-[var(--chat-border)] text-muted-foreground',
               )}
             >
-              Fichier CSV/Excel
+              Fichier
             </button>
             <button
               onClick={() => setMode('segment')}
@@ -245,6 +296,77 @@ function AddRecipientsDialog({
               </p>
             </div>
           )}
+          {mode === 'contacts' && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2.5 py-2">
+                <Search className="size-3.5 shrink-0 text-muted-foreground" />
+                <input
+                  value={contactSearch}
+                  onChange={(e) => setContactSearch(e.target.value)}
+                  placeholder="Rechercher un contact…"
+                  className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+                />
+              </label>
+              {contactsLoading ? (
+                <div className="flex items-center justify-center gap-2 py-5 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" /> Chargement des contacts…
+                </div>
+              ) : contactResults.length === 0 ? (
+                <p className="py-5 text-center text-xs text-muted-foreground">
+                  Aucun contact trouvé sur ce compte.
+                </p>
+              ) : (
+                <ul className="max-h-52 space-y-1 overflow-y-auto">
+                  {contactResults.map((contact) => {
+                    const selected = selectedContactIds.includes(contact.id);
+                    return (
+                      <li key={contact.id}>
+                        <button
+                          type="button"
+                          onClick={() => toggleContact(contact.id)}
+                          className={cn(
+                            'flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition',
+                            selected
+                              ? 'border-emerald-500/60 bg-emerald-500/10'
+                              : 'border-transparent hover:bg-[var(--chat-hover)]',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'flex size-4 shrink-0 items-center justify-center rounded border',
+                              selected
+                                ? 'border-emerald-500 bg-emerald-500 text-white'
+                                : 'border-[var(--chat-border)]',
+                            )}
+                          >
+                            {selected && <Check className="size-3" />}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-xs font-medium">
+                              {contact.name || 'Sans nom'}
+                            </span>
+                            <span className="block truncate text-[10px] text-muted-foreground">
+                              {contact.platformIdentifier
+                                ? `+${contact.platformIdentifier.replace(/^\+/, '')}`
+                                : ''}
+                              {(contact.tags?.length ?? 0) > 0
+                                ? ` · ${contact.tags!.slice(0, 3).map((t) => `#${t}`).join(' ')}`
+                                : ''}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {selectedContactIds.length > 0 && (
+                <p className="text-[11px] text-emerald-500">
+                  {selectedContactIds.length} contact(s) sélectionné(s)
+                </p>
+              )}
+            </div>
+          )}
           {mode === 'segment' && (
             <p className="rounded-lg bg-[var(--chat-warning-bg)] px-3 py-2.5 text-xs leading-relaxed text-[var(--chat-warning-fg)]">
               Ajoute automatiquement tous les contacts portant les tags du segment de cette campagne.
@@ -260,7 +382,8 @@ function AddRecipientsDialog({
             disabled={
               add.isPending ||
               (mode === 'phones' && phones.length === 0) ||
-              (mode === 'file' && filePhones.length === 0)
+              (mode === 'file' && filePhones.length === 0) ||
+              (mode === 'contacts' && selectedContactIds.length === 0)
             }
           >
             {add.isPending ? <Loader2 className="size-4 animate-spin" /> : <Users className="size-4" />}

@@ -6,8 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Loader2,
+  MoreVertical,
+  Pencil,
+  Plus,
   RefreshCw,
   Search,
+  Trash2,
   Upload,
   Users,
 } from 'lucide-react';
@@ -22,9 +26,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { useAccounts } from '@/hooks/useAccounts';
 import {
@@ -34,6 +44,7 @@ import {
   type ContactFieldKey,
 } from '@/lib/contacts/import-parser';
 import type { Profile, ZernioContact } from '@/lib/types';
+import { ContactDialog } from './contact-dialog';
 
 interface ContactsResponse {
   contacts?: ZernioContact[];
@@ -355,6 +366,8 @@ export default function ContactsPage() {
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState('');
   const [importOpen, setImportOpen] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<ZernioContact | null>(null);
 
   const query = useQuery({
     queryKey: ['contacts', effectiveAccountId, search.trim(), tagFilter],
@@ -380,6 +393,19 @@ export default function ContactsPage() {
   }, [contacts]);
 
   const refresh = useCallback(() => void query.refetch(), [query]);
+
+  async function deleteContact(contact: ZernioContact) {
+    const label = contact.name || contact.displayIdentifier || 'Ce contact';
+    if (!window.confirm(`Supprimer définitivement « ${label} » et ses canaux ?`)) return;
+    try {
+      await apiFetch(`/api/contacts/${encodeURIComponent(contact.id)}`, { method: 'DELETE' });
+      toast.success('Contact supprimé');
+      refresh();
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`La suppression a échoué.${detail}`);
+    }
+  }
 
   const accountLabel =
     whatsappAccounts.find((a) => a._id === effectiveAccountId)?.displayName ||
@@ -418,8 +444,13 @@ export default function ContactsPage() {
             >
               <RefreshCw className={cn('size-4', query.isFetching && 'animate-spin')} />
             </Button>
-            <Button onClick={() => setImportOpen(true)} disabled={!effectiveAccountId}>
-              <Upload className="size-4" /> Importer
+            <Button onClick={() => { setEditingContact(null); setContactDialogOpen(true); }} disabled={!effectiveAccountId} size="sm">
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Ajouter</span>
+            </Button>
+            <Button onClick={() => setImportOpen(true)} disabled={!effectiveAccountId} size="sm">
+              <Upload className="size-4" />
+              <span className="hidden sm:inline">Importer</span>
             </Button>
           </header>
 
@@ -546,12 +577,51 @@ export default function ContactsPage() {
                       </div>
                     )}
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        aria-label={`Actions pour ${contact.name || 'ce contact'}`}
+                        className="touch-target shrink-0 rounded-lg p-1.5 text-muted-foreground transition hover:bg-[var(--chat-hover)]"
+                      >
+                        <MoreVertical className="size-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setEditingContact(contact);
+                          setContactDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="size-4" /> Modifier (tags, infos…)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => void deleteContact(contact)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="size-4" /> Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))}
           </section>
         </div>
       </div>
 
+      <ContactDialog
+        profile={profile}
+        accountId={effectiveAccountId}
+        accountLabel={accountLabel}
+        contact={editingContact}
+        knownTags={knownTags}
+        open={contactDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setEditingContact(null);
+          setContactDialogOpen(open);
+        }}
+        onSaved={refresh}
+      />
       <ImportDialog
         profile={profile}
         accountId={effectiveAccountId}

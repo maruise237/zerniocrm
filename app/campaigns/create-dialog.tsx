@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Megaphone, Plus, Users } from 'lucide-react';
+import { Check, Loader2, Megaphone, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,10 +17,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
 import { extractPlaceholders } from '@/lib/whatsapp/template-meta';
+import { cn } from '@/lib/utils';
 import type {
   Account,
   Profile,
   ZernioBroadcast,
+  ZernioContact,
   ZernioTemplate,
 } from '@/lib/types';
 
@@ -52,9 +54,16 @@ export function CampaignCreateDialog({
   const [templateName, setTemplateName] = useState('');
   const [language, setLanguage] = useState('');
   const [phonesText, setPhonesText] = useState('');
-  const [tags, setTags] = useState('');
   const [mapping, setMapping] = useState<Record<number, { field: string; custom: string }>>({});
   const [creating, setCreating] = useState(false);
+  const [recipientTab, setRecipientTab] = useState<'phones' | 'contacts' | 'tags'>('phones');
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactResults, setContactResults] = useState<ZernioContact[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [knownTags, setKnownTags] = useState<string[]>([]);
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customTagInput, setCustomTagInput] = useState('');
 
   const effectiveProfileId = profileId || profiles[0]?._id || '';
   const effectiveAccountId = accountId || accounts[0]?._id || '';
@@ -132,14 +141,48 @@ export function CampaignCreateDialog({
     return out;
   }, [phonesText]);
 
-  const parsedTags = useMemo(
-    () =>
-      tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
-    [tags],
-  );
+  // Contacts of the account + available tags, refreshed when the dialog opens
+  // and re-queried on search (debounced 250 ms).
+  useEffect(() => {
+    if (!open || !effectiveAccountId) return;
+    const timer = window.setTimeout(() => {
+      setContactsLoading(true);
+      const params = new URLSearchParams({ accountId: effectiveAccountId, limit: '100' });
+      if (contactSearch.trim()) params.set('search', contactSearch.trim());
+      apiFetch<{ contacts?: ZernioContact[]; filters?: { tags?: string[] } }>(
+        `/api/contacts?${params.toString()}`,
+      )
+        .then((res) => {
+          setContactResults(res.contacts ?? []);
+          const extra = [
+            ...(res.filters?.tags ?? []),
+            ...(res.contacts ?? []).flatMap((c) => c.tags ?? []),
+          ];
+          setKnownTags((prev) => [...new Set([...prev, ...extra])]);
+        })
+        .catch(() => setContactResults([]))
+        .finally(() => setContactsLoading(false));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [open, effectiveAccountId, contactSearch]);
+
+  function toggleContact(id: string) {
+    setSelectedContactIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]));
+  }
+
+  function addCustomTag() {
+    const clean = customTagInput.trim().replace(/^#/, '').toLowerCase();
+    if (!clean) return;
+    setKnownTags((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
+    setSelectedTags((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
+    setCustomTagInput('');
+  }
 
   const canSubmit =
     name.trim().length > 0 &&
@@ -187,27 +230,46 @@ export function CampaignCreateDialog({
             name: name.trim(),
             ...(description.trim() ? { description: description.trim() } : {}),
             template: templatePayload,
-            ...(parsedTags.length > 0 ? { segmentFilters: { tags: parsedTags } } : {}),
+            ...(selectedTags.length > 0 ? { segmentFilters: { tags: selectedTags } } : {}),
           }),
         },
       );
       const broadcast = created.broadcast;
       if (!broadcast?.id) throw new Error('no-broadcast');
 
-      // Step 2: add the manually typed recipients (phones) if any.
-      if (phones.length > 0) {
+      // Step 2 : ajout des destinataires choisis (numéros, contacts, tags).
+      const problems: string[] = [];
+      let totalAdded = 0;
+      const addRecipients = async (body: Record<string, unknown>, source: string) => {
         try {
-          await apiFetch(`/api/broadcasts/${encodeURIComponent(broadcast.id)}/recipients`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phones }),
-          });
+          const res = await apiFetch<{ added?: number; skipped?: number }>(
+            `/api/broadcasts/${encodeURIComponent(broadcast.id)}/recipients`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            },
+          );
+          totalAdded += res.added ?? 0;
         } catch {
-          toast.error('Brouillon créé, mais l’ajout des numéros a échoué — réessayez depuis la campagne.');
+          problems.push(source);
         }
-      }
+      };
+      if (phones.length > 0) await addRecipients({ phones }, 'numéros');
+      if (selectedContactIds.length > 0) await addRecipients({ contactIds: selectedContactIds }, 'contacts');
+      if (selectedTags.length > 0) await addRecipients({ useSegment: true }, 'tags');
 
-      toast.success(`Campagne « ${name.trim()} » créée en brouillon`);
+      if (problems.length > 0) {
+        toast.warning(
+          `Campagne créée, mais l’ajout de destinataires a échoué pour : ${problems.join(', ')} — réessayez depuis la campagne.`,
+        );
+      } else {
+        toast.success(
+          totalAdded > 0
+            ? `Campagne « ${name.trim()} » créée — ${totalAdded} destinataire(s) ajouté(s).`
+            : `Campagne « ${name.trim()} » créée en brouillon — ajoutez des destinataires depuis la campagne.`,
+        );
+      }
       onCreated(broadcast);
     } catch {
       toast.error('La création de la campagne a échoué.');
@@ -400,12 +462,43 @@ export function CampaignCreateDialog({
           )}
 
           <div className="space-y-2.5">
-            <Label>Destinataires</Label>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label>Destinataires (optionnel)</Label>
+              {(phones.length > 0 || selectedContactIds.length > 0 || selectedTags.length > 0) && (
+                <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  {[phones.length > 0 ? `${phones.length} numéro(s)` : '', selectedContactIds.length > 0 ? `${selectedContactIds.length} contact(s)` : '', selectedTags.length > 0 ? `${selectedTags.length} tag(s)` : '']
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ['phones', 'Numéros'],
+                  ['contacts', 'Contacts'],
+                  ['tags', 'Tags'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setRecipientTab(value)}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-xs font-medium transition',
+                    recipientTab === value
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : 'border-[var(--chat-border)] text-muted-foreground',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {recipientTab === 'phones' && (
               <div className="space-y-1.5 rounded-xl border border-[var(--chat-border)] p-3">
-                <p className="flex items-center gap-1.5 text-xs font-medium">
-                  <Users className="size-3.5 text-emerald-500" /> Numéros de téléphone
-                </p>
                 <Textarea
                   value={phonesText}
                   onChange={(e) => setPhonesText(e.target.value)}
@@ -414,24 +507,139 @@ export function CampaignCreateDialog({
                   className="font-mono text-xs"
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  Un numéro par ligne (E.164). {phones.length > 0 && <span className="text-emerald-500">{phones.length} valide(s)</span>}
+                  Un numéro par ligne (E.164).{' '}
+                  {phones.length > 0 && <span className="text-emerald-500">{phones.length} valide(s)</span>}
                 </p>
               </div>
-              <div className="space-y-1.5 rounded-xl border border-[var(--chat-border)] p-3">
-                <p className="flex items-center gap-1.5 text-xs font-medium">
-                  <Plus className="size-3.5 text-emerald-500" /> Tags (segment)
-                </p>
-                <Input
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="vip, abonnes (séparés par des virgules)"
-                  className="text-sm"
-                />
+            )}
+
+            {recipientTab === 'contacts' && (
+              <div className="space-y-2 rounded-xl border border-[var(--chat-border)] p-3">
+                <label className="flex items-center gap-2 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2.5 py-2">
+                  <Search className="size-3.5 shrink-0 text-muted-foreground" />
+                  <input
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    placeholder="Rechercher un contact (nom, e-mail, entreprise)…"
+                    className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+                  />
+                </label>
+                {contactsLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground">
+                    <Loader2 className="size-3.5 animate-spin" /> Chargement des contacts…
+                  </div>
+                ) : contactResults.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-muted-foreground">
+                    Aucun contact sur ce compte — importez des contacts (page Contacts) ou saisissez des
+                    numéros.
+                  </p>
+                ) : (
+                  <ul className="max-h-56 space-y-1 overflow-y-auto">
+                    {contactResults.map((contact) => {
+                      const selected = selectedContactIds.includes(contact.id);
+                      return (
+                        <li key={contact.id}>
+                          <button
+                            type="button"
+                            onClick={() => toggleContact(contact.id)}
+                            className={cn(
+                              'flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition',
+                              selected
+                                ? 'border-emerald-500/60 bg-emerald-500/10'
+                                : 'border-transparent hover:bg-[var(--chat-hover)]',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'flex size-4 shrink-0 items-center justify-center rounded border',
+                                selected
+                                  ? 'border-emerald-500 bg-emerald-500 text-white'
+                                  : 'border-[var(--chat-border)]',
+                              )}
+                            >
+                              {selected && <Check className="size-3" />}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-medium">
+                                {contact.name || 'Sans nom'}
+                              </span>
+                              <span className="block truncate text-[10px] text-muted-foreground">
+                                {contact.platformIdentifier
+                                  ? `+${contact.platformIdentifier.replace(/^\+/, '')}`
+                                  : ''}
+                                {contact.company ? ` · ${contact.company}` : ''}
+                              </span>
+                            </span>
+                            {(contact.tags?.length ?? 0) > 0 && (
+                              <span className="shrink-0 text-[10px] text-emerald-600 dark:text-emerald-400">
+                                {(contact.tags ?? []).slice(0, 2).map((t) => `#${t}`).join(' ')}
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
                 <p className="text-[11px] text-muted-foreground">
-                  Les contacts portant l’un de ces tags rejoindront la campagne (segmentFilters).
+                  Cochez les contacts existants à ajouter à la campagne (100 premiers résultats — affinez
+                  avec la recherche).
                 </p>
               </div>
-            </div>
+            )}
+
+            {recipientTab === 'tags' && (
+              <div className="space-y-2 rounded-xl border border-[var(--chat-border)] p-3">
+                {knownTags.length === 0 ? (
+                  <p className="py-4 text-center text-xs text-muted-foreground">
+                    Aucun tag connu sur ce compte — créez des tags dans la page Contacts (édition d’un
+                    contact ou import).
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {knownTags.map((tag) => {
+                      const active = selectedTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          className={cn(
+                            'rounded-full border px-3 py-1.5 text-xs font-medium transition',
+                            active
+                              ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              : 'border-[var(--chat-border)] text-muted-foreground hover:bg-[var(--chat-hover)]',
+                          )}
+                        >
+                          #{tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={customTagInput}
+                    onChange={(e) => setCustomTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addCustomTag();
+                      }
+                    }}
+                    placeholder="Ou saisissez un nouveau tag…"
+                    className="text-sm"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addCustomTag}>
+                    <Plus className="size-3.5" /> Ajouter
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Tous les contacts portant l’un des tags sélectionnés seront ajoutés comme destinataires
+                  (doublons ignorés). Les tags sont enregistrés comme segment de la campagne.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

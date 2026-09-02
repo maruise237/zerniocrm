@@ -230,6 +230,7 @@ export interface ZernioContact {
   company?: string;
   avatarUrl?: string;
   tags?: string[];
+  notes?: string;
   isSubscribed?: boolean;
   isBlocked?: boolean;
   lastMessageSentAt?: string;
