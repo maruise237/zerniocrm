@@ -35,7 +35,9 @@ import {
   duplicateBroadcast,
   hideCampaign,
   loadCampaignVars,
+  loadDirectResult,
   loadHiddenCampaignIds,
+  wasDirectSent,
 } from '@/lib/campaigns/personalization';
 import { sendPersonalizedCampaign } from '@/lib/campaigns/direct-send';
 import { templateVariableCount } from '@/lib/campaigns/template-check';
@@ -67,7 +69,15 @@ function CampaignRow({
   busy: boolean;
 }) {
   const meta = BROADCAST_STATUS_META[broadcast.status] ?? BROADCAST_STATUS_META.draft;
-  const canRelaunch = ['completed', 'failed', 'cancelled'].includes(broadcast.status);
+  const directDone = broadcast.status === 'draft' && wasDirectSent(broadcast.id);
+  const directResult = directDone ? loadDirectResult(broadcast.id) : null;
+  const canRelaunch =
+    ['completed', 'failed', 'cancelled'].includes(broadcast.status) || directDone;
+  const badgeLabel = directDone ? 'Envoyé (direct)' : meta.label;
+  const badgeClass = directDone
+    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+    : meta.badge;
+  const badgeDot = directDone ? 'bg-emerald-500' : meta.dot;
   return (
     <div className="flex items-stretch rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-2 shadow-sm transition hover:bg-[var(--chat-hover)]">
       <button
@@ -127,25 +137,31 @@ function CampaignRow({
           </span>
           <span className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Users className="size-3" /> {broadcast.recipientCount ?? 0}
-            {(broadcast.sentCount ?? 0) > 0 && <span className="text-sky-500">· {broadcast.sentCount} envoyés</span>}
+            {directResult && <span className="font-medium text-emerald-600 dark:text-emerald-400">· {directResult.sent} envoyés (direct)</span>}
+            {directResult && directResult.failed > 0 && (
+              <span className="text-red-500">· {directResult.failed} échecs</span>
+            )}
+            {!directResult && (broadcast.sentCount ?? 0) > 0 && (
+              <span className="text-sky-500">· {broadcast.sentCount} envoyés</span>
+            )}
             {(broadcast.deliveredCount ?? 0) > 0 && (
               <span className="text-indigo-500">· {broadcast.deliveredCount} livrés</span>
             )}
             {(broadcast.readCount ?? 0) > 0 && <span className="text-emerald-500">· {broadcast.readCount} lus</span>}
-            {(broadcast.failedCount ?? 0) > 0 && (
+            {!directResult && (broadcast.failedCount ?? 0) > 0 && (
               <span className="text-red-500">· {broadcast.failedCount} échecs</span>
             )}
           </span>
         </span>
-        {meta && (
+        {badgeLabel && (
           <span
             className={cn(
               'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium',
-              meta.badge,
+              badgeClass,
             )}
           >
-            <span className={cn('size-1.5 rounded-full', meta.dot)} />
-            {meta.label}
+            <span className={cn('size-1.5 rounded-full', badgeDot)} />
+            {badgeLabel}
           </span>
         )}
       </button>

@@ -48,9 +48,11 @@ import {
   fetchBroadcastRecipients,
   hideCampaign,
   loadCampaignVars,
+  loadDirectResult,
   markDirectSent,
   renderCampaignBody,
   saveCampaignVars,
+  saveDirectResult,
   wasDirectSent,
   type CampaignVars,
 } from '@/lib/campaigns/personalization';
@@ -759,6 +761,17 @@ export function CampaignDetail({
   const isDone = broadcast.status === 'completed' || broadcast.status === 'failed' || broadcast.status === 'cancelled';
   const varsCfg = loadCampaignVars(broadcast.id);
   const hasVars = !!varsCfg && Object.keys(varsCfg.variableMapping).length > 0;
+  const directResult = loadDirectResult(broadcast.id);
+  const isDirectDone = broadcast.status === 'draft' && wasDirectSent(broadcast.id);
+  const badgeLabel = isDirectDone ? 'Envoyé (direct)' : meta?.label ?? broadcast.status;
+  const badgeClass = isDirectDone
+    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+    : (meta?.badge ?? 'bg-slate-500/10 text-slate-600 dark:text-slate-300');
+  const badgeDot = isDirectDone ? 'bg-emerald-500' : (meta?.dot ?? 'bg-slate-400');
+  const statSent = isDirectDone && directResult ? directResult.sent : (broadcast.sentCount ?? 0);
+  const statFailed = isDirectDone && directResult ? directResult.failed : (broadcast.failedCount ?? 0);
+  const statDelivered = isDirectDone ? 0 : (broadcast.deliveredCount ?? 0);
+  const statRead = isDirectDone ? 0 : (broadcast.readCount ?? 0);
 
   function run(fn: () => Promise<unknown>, success: string) {
     fn()
@@ -870,6 +883,7 @@ export function CampaignDetail({
       }
 
       markDirectSent(t.id);
+      saveDirectResult(t.id, { sent, failed: failures.length, at: new Date().toISOString() });
       setDirectErrors(failures.slice(0, 12));
       if (failures.length === 0) {
         toast.success(`${sent} message(s) envoyé(s) avec personnalisation.`);
@@ -1036,10 +1050,18 @@ export function CampaignDetail({
               <h2 className="truncate text-base font-semibold">{broadcast.name}</h2>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              {meta && (
-                <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium', meta.badge)}>
-                  <span className={cn('size-1.5 rounded-full', meta.dot)} />
-                  {meta.label}
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium',
+                  badgeClass,
+                )}
+              >
+                <span className={cn('size-1.5 rounded-full', badgeDot)} />
+                {badgeLabel}
+              </span>
+              {isDirectDone && directResult && directResult.failed > 0 && (
+                <span className="rounded-full bg-red-500/10 px-2.5 py-0.5 text-[11px] font-medium text-red-600 dark:text-red-400">
+                  {directResult.failed} échec(s)
                 </span>
               )}
               {broadcast.template?.name && (
@@ -1062,6 +1084,13 @@ export function CampaignDetail({
               {broadcast.scheduledAt && ` · envoi prévu le ${formatDate(broadcast.scheduledAt)}`}
               {broadcast.completedAt && ` · terminée le ${formatDate(broadcast.completedAt)}`}
             </p>
+            {isDirectDone && directResult && (
+              <p className="mt-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                ✓ Envoyé en direct le {formatDate(directResult.at)} — {directResult.sent} envoyé(s)
+                {directResult.failed > 0 ? `, ${directResult.failed} échec(s)` : ''} · Zernio ne suit pas
+                les statuts de cet envoi.
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <Button
@@ -1091,35 +1120,43 @@ export function CampaignDetail({
                 <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
                   <Users className="size-3.5" /> Destinataires
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setScheduling(true)}
-                  disabled={hasVars}
-                  title={
-                    hasVars
-                      ? 'L’envoi programmé de Zernio ne peut pas personnaliser les variables — utilisez « Envoyer maintenant » (direct).'
-                      : undefined
-                  }
-                >
-                  <CalendarClock className="size-3.5" /> Programmer
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => void sendCampaign()}
-                  disabled={
-                    (hasVars ? directBusy : actions.sendNow.isPending) ||
-                    !broadcast.recipientCount
-                  }
-                  className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
-                >
-                  {(hasVars ? directBusy : actions.sendNow.isPending) ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Play className="size-3.5" />
-                  )}
-                  {hasVars ? 'Envoyer maintenant (personnalisé)' : 'Envoyer maintenant'}
-                </Button>
+                {!isDirectDone && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setScheduling(true)}
+                      disabled={hasVars}
+                      title={
+                        hasVars
+                          ? 'L’envoi programmé de Zernio ne peut pas personnaliser les variables — utilisez « Envoyer maintenant » (direct).'
+                          : undefined
+                      }
+                    >
+                      <CalendarClock className="size-3.5" /> Programmer
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => void sendCampaign()}
+                      disabled={
+                        (hasVars ? directBusy : actions.sendNow.isPending) || !broadcast.recipientCount
+                      }
+                      className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
+                    >
+                      {(hasVars ? directBusy : actions.sendNow.isPending) ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <Play className="size-3.5" />
+                      )}
+                      {hasVars ? 'Envoyer maintenant (personnalisé)' : 'Envoyer maintenant'}
+                    </Button>
+                  </>
+                )}
+                {isDirectDone && (
+                  <Button variant="outline" size="sm" onClick={() => void relaunch()} disabled={duplicating}>
+                    <RotateCcw className="size-3.5" /> Relancer
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1203,11 +1240,11 @@ export function CampaignDetail({
 
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         <StatCard label="Destinataires" value={broadcast.recipientCount ?? 0} />
-        <StatCard label="Envoyés" value={broadcast.sentCount ?? 0} className="text-sky-500" />
-        <StatCard label="Livrés" value={broadcast.deliveredCount ?? 0} className="text-indigo-500" />
-        <StatCard label="Lus" value={broadcast.readCount ?? 0} className="text-emerald-500" />
-        <StatCard label="Échecs" value={broadcast.failedCount ?? 0} className="text-red-500" />
-        <StatCard label="Statut" value={meta?.label ?? broadcast.status} className="col-span-3 sm:col-span-1" />
+        <StatCard label="Envoyés" value={statSent} className="text-sky-500" />
+        <StatCard label="Livrés" value={statDelivered} className="text-indigo-500" />
+        <StatCard label="Lus" value={statRead} className="text-emerald-500" />
+        <StatCard label="Échecs" value={statFailed} className="text-red-500" />
+        <StatCard label="Statut" value={badgeLabel} className="col-span-3 sm:col-span-1" />
       </div>
 
       <div className="rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4 shadow-sm sm:p-5">

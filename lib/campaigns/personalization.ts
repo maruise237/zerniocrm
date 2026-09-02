@@ -162,6 +162,32 @@ export function isCampaignHidden(broadcastId: string): boolean {
   return loadHiddenCampaignIds().includes(broadcastId);
 }
 
+// ─── Résultat d'un envoi direct (affiché quand Zernio reste « draft ») ─────
+export interface DirectSendResultLocal {
+  sent: number;
+  failed: number;
+  at: string;
+}
+
+const DIRECT_RESULT_KEY = (id: string) => `crm-campaign-direct-result:${id}`;
+
+export function saveDirectResult(broadcastId: string, result: DirectSendResultLocal): void {
+  try {
+    window.localStorage.setItem(DIRECT_RESULT_KEY(broadcastId), JSON.stringify(result));
+  } catch {
+    // ignore
+  }
+}
+
+export function loadDirectResult(broadcastId: string): DirectSendResultLocal | null {
+  try {
+    const raw = window.localStorage.getItem(DIRECT_RESULT_KEY(broadcastId));
+    return raw ? (JSON.parse(raw) as DirectSendResultLocal) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Récupère TOUS les destinataires d'une campagne, en paginant par lots de
  * 200 (Zernio refuse un limit supérieur : « Too big: expected number to
