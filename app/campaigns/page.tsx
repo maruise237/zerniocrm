@@ -38,6 +38,7 @@ import {
   loadHiddenCampaignIds,
 } from '@/lib/campaigns/personalization';
 import { sendPersonalizedCampaign } from '@/lib/campaigns/direct-send';
+import { templateVariableCount } from '@/lib/campaigns/template-check';
 import { cn } from '@/lib/utils';
 import { formatInTimezone, getTimezoneSetting } from '@/lib/timezone';
 import { BROADCAST_STATUS_META, formatTemplateLanguage } from '@/lib/whatsapp/template-meta';
@@ -268,6 +269,18 @@ export default function CampaignsPage() {
           );
         }
       } else {
+        if (!copy.template?.name) throw new Error('no-template');
+        const variableCount = await templateVariableCount({
+          accountId: copy.accountId,
+          templateName: copy.template.name,
+          language: copy.template.language ?? null,
+        });
+        if (variableCount > 0) {
+          toast.error(
+            `Le modèle « ${copy.template.name} » contient des variables mais la personnalisation est introuvable — dupliquez puis modifiez les variables avant de relancer.`,
+          );
+          return;
+        }
         await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
         toast.success(`Relance de « ${copy.name} » envoyée.`);
       }

@@ -41,6 +41,7 @@ import {
 import { cn } from '@/lib/utils';
 import { parseContactFile } from '@/lib/contacts/import-parser';
 import { apiFetch, ApiError } from '@/lib/api-client';
+import { templateVariableCount } from '@/lib/campaigns/template-check';
 import {
   campaignVarsToList,
   duplicateBroadcast,
@@ -903,14 +904,36 @@ export function CampaignDetail({
   }
 
   // Choisit le bon moteur d'envoi : direct (valeurs réelles par destinataire)
-  // quand la campagne est personnalisée, sinon envoi groupé Zernio.
+  // quand la campagne est personnalisée, sinon envoi groupé Zernio (seulement
+  // si le modèle ne contient aucune variable).
   async function sendCampaign() {
     if (!broadcast) return;
     if (hasVars) {
       await sendDirectNow();
-    } else {
-      await run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré');
+      return;
     }
+    if (!broadcast.template?.name) {
+      toast.error('Aucun modèle associé à cette campagne.');
+      return;
+    }
+    try {
+      const variableCount = await templateVariableCount({
+        accountId: broadcast.accountId,
+        templateName: broadcast.template.name,
+        language: broadcast.template.language ?? null,
+      });
+      if (variableCount > 0) {
+        toast.error(
+          `Le modèle « ${broadcast.template.name} » contient ${variableCount} variable(s), mais la personnalisation de cette campagne est introuvable (créée avant la mise à jour ou sur un autre appareil). Recréez-la : Dupliquer → Modifier les variables, ou nouvelle campagne.`,
+        );
+        return;
+      }
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`Impossible de vérifier le modèle avant l’envoi.${detail}`);
+      return;
+    }
+    await run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré');
   }
 
   // Suppression (brouillon) ou masquage local (campagnes envoyées/échouées).
