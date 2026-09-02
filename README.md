@@ -1,180 +1,93 @@
-# KamContent
+# WhatsApp CRM
 
-**Plateforme SaaS de stratégie de contenu pilotée par l'IA — pour les créateurs qui veulent rester constants.**
+WhatsApp CRM est une inbox client mobile-first dédiée exclusivement à WhatsApp. L’interface reprend la structure de `zernio-dev/unified-inbox`, avec une liste de conversations, un fil de discussion, un composer tactile et une page de configuration Zernio en français.
 
-KamContent automatise l'idéation, la planification, la rédaction de scripts et le suivi de vos publications sur TikTok, YouTube, Instagram, LinkedIn et WhatsApp.
+## Fonctionnalités livrées
 
----
-
-## Modules
-
-### 🧠 Brain — Génération de sujets
-- Génère jusqu'à 15 sujets/semaine basés sur votre niche, vos canaux et vos idées
-- Chaque sujet inclut : titre, hook d'accroche, angle différenciant, format et canal cibles
-- Filtres par format (court, long, texte) et par canal
-- Mode "Ajouter +15" pour enrichir sans remplacer les idées existantes
-- Sélection jusqu'à 3 sujets à planifier en un clic
-- Réutilisation d'un sujet publié → pré-remplit le Brain avec un nouveau contexte
-
-### 📅 Planner — Calendrier éditorial
-- Vue semaine avec glisser-déposer (drag & drop) entre les créneaux
-- Statuts progressifs : `idée → planifié → scripté → publié`
-- Génération de script IA complet (intro, corps, outro, CTA) en un clic
-- **Mode téléprompter** : lecture plein écran avec taille de police réglable
-- **Défilement automatique** ajustable (vitesse 1× à 10×), tap pour pause
-- Export / copie du script en texte brut
-- Publication directe avec enregistrement de la date
-
-### 📊 Tracker — Suivi de constance
-- Score de constance mensuelle basé sur les 4 dernières semaines
-- Streak de semaines consécutives avec au moins une publication
-- Historique des publications par semaine
-
-### 🏠 Dashboard — Vue d'ensemble
-- Salutation contextuelle selon l'heure
-- Bilan hebdomadaire avec message de coaching personnalisé
-- Prochain contenu à créer mis en avant
-- Raccourcis rapides vers les 3 modules
-
----
-
-## Stack technique
-
-| Couche | Technologie |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Langage | TypeScript |
-| Style | Tailwind CSS v3 + shadcn/ui + Framer Motion |
-| Auth | Clerk |
-| Base de données | PostgreSQL via Supabase |
-| ORM | Drizzle ORM |
-| IA | Vercel AI SDK — Anthropic, OpenAI, Google Gemini, Mistral, DeepSeek |
-| Notifications | Telegram Bot + WhatsApp (Evolution API) |
-| Analytics | Umami (self-hosted ou cloud) |
-| Recherche | SearXNG (moteur privé pour sourcing de contenu) |
-| Infrastructure | Docker + Docker Compose |
-
----
+| Domaine | Réalisation |
+| --- | --- |
+| Interface | Liste, recherche, filtres locaux, vue conversation, envoi optimiste et panneau contact desktop. |
+| Mobile | Navigation par état `list | chat | settings`, cibles tactiles de 44 px, champs à 16 px, clavier préservé et défilement tactile. |
+| Canal | WhatsApp uniquement dans l’expérience cible ; aucun sélecteur omnicanal dans l’interface principale. |
+| Zernio | Clé API masquée, URL webhook individuelle et bouton de copie avec confirmation temporaire. |
+| Neon Postgres | Tables `public.zernio_config` et `public.whatsapp_messages`, index et déduplication des événements. |
+| Neon Auth | SDK Managed Better Auth, handler `/api/auth/[...path]`, middleware et formulaires français `/auth/sign-in` et `/auth/sign-up`. |
+| Webhook | `POST /api/webhooks/zernio?token=...`, validation `message.received`, déduplication par `payload.id` et insertion isolée par utilisateur. |
+| Envoi | `POST /api/messages`, récupération de la clé Zernio côté serveur, appel sortant et journalisation Neon. |
 
 ## Installation
 
-### Prérequis
-
-- Node.js 18+
-- Docker + Docker Compose
-- Comptes : Clerk, Supabase, un fournisseur IA (ex: Anthropic)
-
-### Variables d'environnement
-
-Créez un fichier `.env` à la racine :
-
-```env
-# Base de données
-DATABASE_URL=postgresql://user:password@localhost:5432/kamcontent
-
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/register
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-
-# IA (choisissez un provider)
-AI_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-# OPENAI_API_KEY=sk-...
-# GOOGLE_GENERATIVE_AI_API_KEY=...
-
-# Recherche
-SEARXNG_URL=http://localhost:8080
-
-# Notifications (optionnel)
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
-EVOLUTION_API_URL=...
-EVOLUTION_API_KEY=...
-EVOLUTION_INSTANCE=...
-
-# Sécurité Cron
-CRON_SECRET=votre_secret_ici
-```
-
-### Lancement avec Docker
-
 ```bash
-docker-compose up -d
-```
-
-Cela démarre : l'application Next.js, PostgreSQL et SearXNG.
-
-### Développement local
-
-```bash
-# Installer les dépendances
 npm install
-
-# Pousser le schéma vers la base de données
-npm run db:push
-
-# Démarrer le serveur de développement
+cp .env.example .env.local
+npm run typecheck
+npm run build
 npm run dev
 ```
 
-L'application est disponible sur [http://localhost:3000](http://localhost:3000).
+Le serveur de développement écoute sur le port `4100`.
 
----
+## Variables d’environnement
 
-## Structure du projet
-
-```
-/app
-  /(dashboard)/dashboard/   # Pages Brain, Planner, Tracker, Settings
-  /api/                     # Routes API (topics, scripts, publications, IA…)
-  /(auth)/                  # Pages login / register
-  /                         # Landing page publique
-
-/components
-  /brain/                   # TopicCard, TopicGrid, GenerateButton
-  /planner/                 # ContentSlot (carte + dialog script + téléprompter)
-  /tracker/                 # Graphiques et stats
-  /shared/                  # DashboardHome, StatusBadge, ChannelBadge…
-  /ui/                      # Composants shadcn/ui
-
-/lib
-  /db/                      # Schéma Drizzle + client PostgreSQL
-  /ai/                      # Prompts et appels IA
-  /telegram/                # Client notifications Telegram
-  /whatsapp/                # Client Evolution API
-  utils.ts                  # Utilitaires semaine ISO, constance, formats…
-
-/drizzle/                   # Migrations base de données
-/public/                    # Assets statiques
-/types/                     # Types TypeScript partagés
+```dotenv
+DATABASE_URL=postgresql://...
+NEON_AUTH_BASE_URL=https://...
+NEON_AUTH_COOKIE_SECRET=une-chaine-secrete-d-au-moins-32-caracteres
+APP_URL=https://votre-plateforme.com
+ZERNIO_API_URL=https://zernio.com/api
+DEMO_USER_ID=
 ```
 
----
+La clé Zernio est saisie par l’utilisateur dans `/settings` et n’est pas prévue comme secret global de production. `DEMO_USER_ID` permet uniquement un fonctionnement local contrôlé lorsque Neon Auth n’est pas encore connecté.
 
-## Scripts
+## Migration Neon
+
+Appliquer `drizzle/0000_whatsapp_crm.sql` sur la base Neon après activation de Neon Auth. Le schéma d’authentification managé reste dans `neon_auth`; les tables métier sont créées dans `public`.
 
 ```bash
-npm run dev          # Serveur de développement
-npm run build        # Build production
-npm run lint         # Vérification ESLint
-npm run db:generate  # Générer les migrations Drizzle
-npm run db:migrate   # Appliquer les migrations
-npm run db:push      # Pousser le schéma directement (dev)
-npm run db:studio    # Ouvrir Drizzle Studio (UI base de données)
+npm run db:push
 ```
 
----
+En production, vérifier le SQL généré avant application et conserver `DATABASE_URL` uniquement côté serveur.
 
-## Déploiement
+## Configuration Zernio
 
-Le projet est optimisé pour Vercel. Connectez votre repo, ajoutez les variables d'environnement dans les settings Vercel, et déployez.
+Dans la page **Paramètres**, coller la clé API personnelle, enregistrer, puis copier l’URL webhook retournée. Dans le tableau de bord Zernio, créer un webhook HTTPS et sélectionner l’événement `message.received`.
 
-Pour la base de données en production, utilisez Supabase ou tout provider PostgreSQL compatible (Neon, Railway, etc.).
+```text
+https://votre-plateforme.com/api/webhooks/zernio?token=<token-individuel>
+```
 
----
+Le webhook accepte le format Inbox Webhooks documenté par Zernio. En production, compléter la validation par signature si l’instance Zernio fournit un secret de signature activé pour le webhook.
 
-Développé pour les créateurs de contenu qui veulent construire une audience durable.
+## Vérifications
+
+Les commandes suivantes ont été exécutées avec succès :
+
+```bash
+npm run typecheck
+npm run build
+```
+
+Le build produit les routes `/`, `/settings`, `/auth/sign-in`, `/auth/sign-up`, `/api/settings`, `/api/messages`, `/api/webhooks/zernio` et le handler Neon Auth. Les appels réels nécessitent toutefois les variables Neon et Zernio d’une instance de déploiement.
+
+## Structure utile
+
+```text
+app/page.tsx                         Inbox mobile-first
+app/settings/page.tsx                Configuration Zernio
+app/auth/sign-in/page.tsx            Connexion française
+app/auth/sign-up/page.tsx            Création de compte française
+app/api/auth/[...path]/route.ts      Handler Neon Auth
+app/api/settings/route.ts             Configuration par utilisateur
+app/api/messages/route.ts             Envoi WhatsApp sortant
+app/api/webhooks/zernio/route.ts     Réception WhatsApp entrante
+lib/db/schema.ts                      Schéma Drizzle/Neon
+lib/auth/server.ts                    Instance Managed Better Auth
+drizzle/0000_whatsapp_crm.sql         Migration SQL
+```
+
+## Références
+
+[1]: https://docs.zernio.com/webhooks/inbox "Zernio — Inbox webhooks"
+[2]: https://neon.com/docs/auth/quick-start/nextjs-api-only "Neon — Managed Better Auth avec Next.js"

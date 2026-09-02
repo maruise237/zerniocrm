@@ -1,83 +1,150 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@custom-variant dark (&:is(.dark *));
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 225 36% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 225 36% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 225 36% 4%;
-    --primary: 198 76% 52%;             /* #29AAE2 — cyan de marque */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 225 25% 95%;
-    --secondary-foreground: 225 36% 10%;
-    --muted: 225 25% 95%;
-    --muted-foreground: 225 8% 44%;
-    --accent: 225 25% 95%;
-    --accent-foreground: 225 36% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 225 22% 89%;
-    --input: 225 22% 89%;
-    --ring: 198 76% 52%;                /* cyan de marque */
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 225 36% 4%;           /* #07090F — noir bleuté landing */
-    --foreground: 0 0% 98%;
-    --card: 220 33% 7%;                 /* #0C1018 — fond carte landing */
-    --card-foreground: 0 0% 98%;
-    --popover: 220 33% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 198 76% 52%;             /* cyan de marque */
-    --primary-foreground: 0 0% 100%;    /* boutons cyan + blanc, comme la landing */
-    --secondary: 220 16% 15%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 220 16% 15%;
-    --muted-foreground: 220 8% 65%;
-    --accent: 220 16% 15%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 16% 15%;
-    --input: 220 16% 15%;
-    --ring: 198 76% 52%;                /* cyan de marque */
-  }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  html {
-    scroll-behavior: smooth;
-  }
-  html, body {
-    @apply bg-background text-foreground font-sans;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
-  }
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.65 0.18 35);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0.012 35);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.65 0.18 35);
+
+  /* Chat surface tokens (WhatsApp-style inbox palette) */
+  --chat-canvas: oklch(0.975 0.005 80);
+  --chat-surface: oklch(1 0 0);
+  --chat-bubble-incoming: oklch(0.965 0 0);
+  --chat-bubble-outgoing: color-mix(in oklab, var(--primary) 15%, white);
+  --chat-border: oklch(0.92 0 0);
+  --chat-hover: oklch(0.955 0 0);
+  --chat-input: oklch(0.97 0 0);
+  --chat-check: oklch(0.62 0.17 245); /* read-tick blue */
+  --chat-presence: oklch(0.72 0.19 150); /* online green */
+  --chat-warning-bg: oklch(0.96 0.04 90);
+  --chat-warning-fg: oklch(0.45 0.1 75);
 }
 
-/* Scrollbar personnalisée */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.7 0.17 35);
+  --primary-foreground: oklch(0.145 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0.01 35);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.7 0.17 35);
+
+  /* Chat surface tokens (dark) */
+  --chat-canvas: oklch(0.17 0.005 80);
+  --chat-surface: oklch(0.205 0 0);
+  --chat-bubble-incoming: oklch(0.265 0 0);
+  --chat-bubble-outgoing: color-mix(in oklab, var(--primary) 28%, oklch(0.22 0 0));
+  --chat-border: oklch(1 0 0 / 10%);
+  --chat-hover: oklch(0.25 0 0);
+  --chat-input: oklch(0.25 0 0);
+  --chat-check: #53bdeb; /* WhatsApp read-tick blue */
+  --chat-presence: oklch(0.76 0.19 150);
+  --chat-warning-bg: oklch(0.28 0.04 90);
+  --chat-warning-fg: oklch(0.82 0.1 90);
 }
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
+
+* {
+  border-color: var(--border);
 }
-::-webkit-scrollbar-thumb {
-  @apply bg-zinc-700 rounded-full;
+
+html,
+body {
+  overflow: hidden;
+  height: 100%;
 }
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-zinc-500;
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Manrope', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+input, textarea, select {
+  font-size: 16px;
+}
+
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+button,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

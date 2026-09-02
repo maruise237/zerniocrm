@@ -1,80 +1,35 @@
-import type { Metadata } from 'next'
-import { ClerkProvider } from '@clerk/nextjs'
-import { ThemeProvider } from '@/components/shared/ThemeProvider'
-import { Toaster } from 'sonner'
-import Script from 'next/script'
-import './globals.css'
-
-const BASE_URL = 'https://kamcontent.app'
+import type { Metadata, Viewport } from 'next';
+import { Providers } from '@/components/providers';
+import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
-  title: {
-    default: 'KamContent — Arrête de réfléchir à quoi poster',
-    template: '%s — KamContent',
-  },
-  description: 'Génère tes idées et scripts de contenu IA, planifie ton calendrier éditorial et suis ta constance de publication. Gratuit pendant la bêta.',
-  keywords: ['création de contenu', 'idées contenu IA', 'script TikTok', 'calendrier éditorial', 'YouTube', 'constance créateur', 'KamContent'],
-  authors: [{ name: 'KamContent' }],
-  creator: 'KamContent',
-  icons: {
-    icon: '/logo.svg',
-    shortcut: '/logo.svg',
-    apple: '/logo.svg',
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'fr_FR',
-    url: BASE_URL,
-    siteName: 'KamContent',
-    title: 'KamContent — Arrête de réfléchir à quoi poster',
-    description: 'Génère tes idées et scripts de contenu IA, planifie ton calendrier éditorial et suis ta constance. Gratuit pendant la bêta.',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'KamContent — Arrête de réfléchir à quoi poster',
-    description: 'Génère tes idées et scripts de contenu IA, planifie ton calendrier éditorial et suis ta constance. Gratuit pendant la bêta.',
-    creator: '@kamcontent',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-}
+  title: { default: 'WhatsApp CRM — Inbox client', template: '%s — WhatsApp CRM' },
+  description: 'Une boîte de réception WhatsApp claire, rapide et pensée pour le mobile.',
+  applicationName: 'WhatsApp CRM',
+  icons: { icon: '/icon.svg' },
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#25D366',
+};
+
+const themeInitScript = `
+try {
+  var theme = localStorage.getItem('whatsapp-crm-theme');
+  if (theme !== 'light' && theme !== 'dark') theme = 'dark';
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.documentElement.style.colorScheme = theme;
+} catch (e) {}
+`;
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ClerkProvider>
-      <html lang="fr" suppressHydrationWarning>
-        <body>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster position="bottom-right" richColors theme="dark" />
-          </ThemeProvider>
-          <Script
-            id="umami-analytics"
-            defer
-            src="https://umami.kamtech.online/script.js"
-            data-website-id="c84f2a3a-55f8-4ded-8c85-e073d299171a"
-            strategy="afterInteractive"
-          />
-        </body>
-      </html>
-    </ClerkProvider>
-  )
+    <html lang="fr" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeInitScript }} /></head>
+      <body className="antialiased"><Providers>{children}</Providers></body>
+    </html>
+  );
 }
