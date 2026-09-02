@@ -43,6 +43,7 @@ import { apiFetch, ApiError } from '@/lib/api-client';
 import {
   duplicateBroadcast,
   fetchBroadcastRecipients,
+  hideCampaign,
   loadCampaignVars,
   markDirectSent,
   saveCampaignVars,
@@ -857,6 +858,30 @@ export function CampaignDetail({
     }
   }
 
+  // Suppression (brouillon) ou masquage local (campagnes envoyées/échouées).
+  async function deleteCampaignAction() {
+    if (!broadcast) return;
+    const draft = broadcast.status === 'draft';
+    if (
+      !window.confirm(
+        draft
+          ? `Supprimer définitivement le brouillon « ${broadcast.name} » ?`
+          : `Supprimer « ${broadcast.name} » ?\nZernio ne supprime que les brouillons : la campagne sera masquée de votre liste (elle reste dans l’historique Zernio).`,
+      )
+    ) {
+      return;
+    }
+    if (draft) {
+      run(() => actions.remove.mutateAsync(broadcast.id), 'Brouillon supprimé');
+      onBack();
+    } else {
+      hideCampaign(broadcast.id);
+      toast.success('Campagne masquée de la liste');
+      onBack();
+      onChanged();
+    }
+  }
+
   // Duplique la campagne (nouveau brouillon, destinataires + personnalisation).
   async function duplicate() {
     if (!broadcast) return;
@@ -980,12 +1005,7 @@ export function CampaignDetail({
                   variant="ghost"
                   size="sm"
                   className="text-muted-foreground hover:text-red-500"
-                  onClick={() => {
-                    if (window.confirm(`Supprimer le brouillon « ${broadcast.name} » ?`)) {
-                      run(() => actions.remove.mutateAsync(broadcast.id), 'Brouillon supprimé');
-                      onBack();
-                    }
-                  }}
+                  onClick={() => void deleteCampaignAction()}
                 >
                   <Trash2 className="size-3.5" /> Supprimer
                 </Button>
@@ -1000,14 +1020,24 @@ export function CampaignDetail({
               </>
             )}
             {isScheduled && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => run(() => actions.cancel.mutateAsync(broadcast.id), 'Programmation annulée')}
-                disabled={actions.cancel.isPending}
-              >
-                <CalendarClock className="size-3.5" /> Annuler la programmation
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => run(() => actions.cancel.mutateAsync(broadcast.id), 'Programmation annulée')}
+                  disabled={actions.cancel.isPending}
+                >
+                  <CalendarClock className="size-3.5" /> Annuler la programmation
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-red-500"
+                  onClick={() => void deleteCampaignAction()}
+                >
+                  <Trash2 className="size-3.5" /> Supprimer
+                </Button>
+              </>
             )}
             {isDone && (
               <>
@@ -1022,6 +1052,14 @@ export function CampaignDetail({
                   className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
                 >
                   <RotateCcw className="size-3.5" /> Relancer
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-red-500"
+                  onClick={() => void deleteCampaignAction()}
+                >
+                  <Trash2 className="size-3.5" /> Supprimer
                 </Button>
               </>
             )}

@@ -31,7 +31,11 @@ import {
 import { useAccounts } from '@/hooks/useAccounts';
 import { useBroadcasts } from '@/hooks/useBroadcasts';
 import { apiFetch, ApiError } from '@/lib/api-client';
-import { duplicateBroadcast } from '@/lib/campaigns/personalization';
+import {
+  duplicateBroadcast,
+  hideCampaign,
+  loadHiddenCampaignIds,
+} from '@/lib/campaigns/personalization';
 import { cn } from '@/lib/utils';
 import { formatInTimezone, getTimezoneSetting } from '@/lib/timezone';
 import { BROADCAST_STATUS_META, formatTemplateLanguage } from '@/lib/whatsapp/template-meta';
@@ -60,7 +64,6 @@ function CampaignRow({
   busy: boolean;
 }) {
   const meta = BROADCAST_STATUS_META[broadcast.status] ?? BROADCAST_STATUS_META.draft;
-  const canDelete = broadcast.status === 'draft';
   const canRelaunch = ['completed', 'failed', 'cancelled'].includes(broadcast.status);
   return (
     <div className="flex items-stretch rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-2 shadow-sm transition hover:bg-[var(--chat-hover)]">
@@ -166,15 +169,13 @@ function CampaignRow({
                 <RotateCcw className="size-4" /> Relancer
               </DropdownMenuItem>
             )}
-            {canDelete && (
-              <DropdownMenuItem
-                onSelect={onDelete}
-                disabled={busy}
-                className="text-red-600 focus:text-red-600"
-              >
-                <Trash2 className="size-4" /> Supprimer
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem
+              onSelect={onDelete}
+              disabled={busy}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="size-4" /> Supprimer
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -194,15 +195,17 @@ export default function CampaignsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<string[]>(() => loadHiddenCampaignIds());
 
   // Poll quietly while on the list; the detail view polls itself.
-  const sorted = useMemo(
-    () =>
-      [...broadcasts].sort((a, b) =>
-        (b.createdAt ?? '').localeCompare(a.createdAt ?? ''),
-      ),
-    [broadcasts],
-  );
+  const sorted = useMemo(() => {
+    // hiddenIds = masquages faits depuis cette page ; on relit aussi le
+    // stockage local (une campagne masquée depuis le détail doit disparaître).
+    const hidden = new Set([...hiddenIds, ...loadHiddenCampaignIds()]);
+    return [...broadcasts]
+      .filter((b) => !hidden.has(b.id))
+      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+  }, [broadcasts, hiddenIds]);
 
   const selectedBroadcast = selectedId
     ? broadcasts.find((b) => b.id === selectedId) ?? null
@@ -262,11 +265,26 @@ export default function CampaignsPage() {
 
   async function deleteRow(broadcast: ZernioBroadcast) {
     if (busyId) return;
-    if (!window.confirm(`Supprimer définitivement le brouillon « ${broadcast.name} » ?`)) return;
+    const isDraft = broadcast.status === 'draft';
+    if (
+      !window.confirm(
+        isDraft
+          ? `Supprimer définitivement le brouillon « ${broadcast.name} » ?`
+          : `Supprimer « ${broadcast.name} » ?\nZernio ne supprime que les brouillons : la campagne sera masquée de votre liste (elle reste dans l’historique Zernio).`,
+      )
+    ) {
+      return;
+    }
     setBusyId(broadcast.id);
     try {
-      await apiFetch(`/api/broadcasts/${encodeURIComponent(broadcast.id)}`, { method: 'DELETE' });
-      toast.success('Campagne supprimée');
+      if (isDraft) {
+        await apiFetch(`/api/broadcasts/${encodeURIComponent(broadcast.id)}`, { method: 'DELETE' });
+        toast.success('Campagne supprimée');
+      } else {
+        hideCampaign(broadcast.id);
+        setHiddenIds((prev) => [...prev, broadcast.id]);
+        toast.success('Campagne masquée de la liste');
+      }
       if (selectedId === broadcast.id) setSelectedId(null);
       refresh();
     } catch (err) {

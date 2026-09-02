@@ -54,6 +54,34 @@ export function wasDirectSent(broadcastId: string): boolean {
   }
 }
 
+// ─── Campagnes masquées localement ─────────────────────────────────────────
+// Zernio ne supprime que les brouillons. Une campagne envoyée/échouée peut
+// être « supprimée » de la liste en la masquant localement (elle reste dans
+// l'historique Zernio).
+const HIDDEN_KEY = 'crm-campaign-hidden';
+
+export function loadHiddenCampaignIds(): string[] {
+  try {
+    const raw = window.localStorage.getItem(HIDDEN_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function hideCampaign(broadcastId: string): void {
+  try {
+    const next = [...new Set([...loadHiddenCampaignIds(), broadcastId])];
+    window.localStorage.setItem(HIDDEN_KEY, JSON.stringify(next));
+  } catch {
+    // ignore
+  }
+}
+
+export function isCampaignHidden(broadcastId: string): boolean {
+  return loadHiddenCampaignIds().includes(broadcastId);
+}
+
 /**
  * Récupère TOUS les destinataires d'une campagne, en paginant par lots de
  * 200 (Zernio refuse un limit supérieur : « Too big: expected number to
