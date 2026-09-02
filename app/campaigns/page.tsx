@@ -180,8 +180,13 @@ export default function CampaignsPage() {
           <div className="mt-5">
             <CampaignDetail
               broadcastId={selectedBroadcast.id}
+              profileId={profiles[0]?._id ?? ''}
               onBack={() => setSelectedId(null)}
               onChanged={refresh}
+              onSelectBroadcast={(id) => {
+                setSelectedId(id);
+                refresh();
+              }}
             />
           </div>
         ) : (

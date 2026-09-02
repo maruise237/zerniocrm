@@ -6,10 +6,13 @@ import {
   CalendarClock,
   Check,
   CheckCheck,
+  Copy,
   FileUp,
   Loader2,
   MessageSquareText,
+  Pencil,
   Play,
+  RotateCcw,
   Search,
   Trash2,
   Users,
@@ -37,6 +40,14 @@ import {
 import { cn } from '@/lib/utils';
 import { parseContactFile } from '@/lib/contacts/import-parser';
 import { apiFetch, ApiError } from '@/lib/api-client';
+import {
+  duplicateBroadcast,
+  loadCampaignVars,
+  markDirectSent,
+  saveCampaignVars,
+  wasDirectSent,
+  type CampaignVars,
+} from '@/lib/campaigns/personalization';
 import { formatInTimezone, getTimezoneSetting, zonedLocalToUtcISO } from '@/lib/timezone';
 import {
   BROADCAST_STATUS_META,
@@ -49,40 +60,6 @@ import type { ZernioBroadcast, ZernioBroadcastRecipient, ZernioContact } from '@
 function formatDate(value?: string | null): string {
   if (!value) return '—';
   return formatInTimezone(value, getTimezoneSetting());
-}
-
-// ─── Personnalisation locale des campagnes (envoi direct par destinataire) ──
-// Zernio ne restitue pas le variableMapping d'une campagne ; on persiste la
-// configuration en local pour pouvoir envoyer chaque message avec les vraies
-// valeurs (même chemin que l'envoi d'un template dans une conversation).
-interface CampaignVars {
-  templateName: string;
-  language: string;
-  vars: { pos: number; field: string; custom?: string }[];
-}
-
-const varsStorageKey = (broadcastId: string) => `crm-campaign-vars:${broadcastId}`;
-const directSentKey = (broadcastId: string) => `crm-campaign-direct-sent:${broadcastId}`;
-
-function loadCampaignVars(broadcastId: string): CampaignVars | null {
-  try {
-    const raw = window.localStorage.getItem(varsStorageKey(broadcastId));
-    return raw ? (JSON.parse(raw) as CampaignVars) : null;
-  } catch {
-    return null;
-  }
-}
-
-function campaignHasVars(broadcastId: string): boolean {
-  return (loadCampaignVars(broadcastId)?.vars.length ?? 0) > 0;
-}
-
-function wasDirectSent(broadcastId: string): boolean {
-  try {
-    return window.localStorage.getItem(directSentKey(broadcastId)) === '1';
-  } catch {
-    return false;
-  }
 }
 
 function StatCard({ label, value, className }: { label: string; value: number | string; className?: string }) {
@@ -558,19 +535,185 @@ function RecipientList({ broadcastId }: { broadcastId: string }) {
   );
 }
 
+// ─── Modification d'une campagne (brouillon) ────────────────────────────────
+
+const FIELD_LABELS: Record<string, string> = {
+  custom: 'Valeur fixe',
+  name: 'Nom du contact',
+  phone: 'Numéro du contact',
+  email: 'E-mail du contact',
+  company: 'Entreprise du contact',
+};
+
+function CampaignEditDialog({
+  broadcast,
+  varsCfg,
+  open,
+  onClose,
+  onSaved,
+}: {
+  broadcast: ZernioBroadcast;
+  varsCfg: CampaignVars | null;
+  open: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(broadcast.name);
+  const [description, setDescription] = useState(broadcast.description ?? '');
+  const [rows, setRows] = useState<CampaignVars['vars']>(varsCfg?.vars ?? []);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(broadcast.name);
+    setDescription(broadcast.description ?? '');
+    setRows(varsCfg?.vars ?? []);
+  }, [open, broadcast.name, broadcast.description, varsCfg]);
+
+  async function save() {
+    if (!name.trim() || saving) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/api/broadcasts/${encodeURIComponent(broadcast.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          ...(description.trim() !== broadcast.description ? { description: description.trim() } : {}),
+        }),
+      });
+      if (varsCfg && rows.length > 0) {
+        saveCampaignVars(broadcast.id, {
+          templateName: varsCfg.templateName,
+          language: varsCfg.language,
+          vars: rows,
+        });
+      }
+      toast.success('Campagne modifiée');
+      onSaved();
+      onClose();
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`La modification a échoué.${detail}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Modifier la campagne</DialogTitle>
+          <DialogDescription>
+            {broadcast.template?.name ? (
+              <>
+                Modèle <span className="font-mono">{broadcast.template.name}</span>
+              </>
+            ) : (
+              'Brouillon'
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-name">Nom de la campagne</Label>
+            <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} className="text-sm" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-desc">Description (optionnel)</Label>
+            <Textarea
+              id="edit-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              className="text-sm"
+            />
+          </div>
+          {varsCfg && rows.length > 0 && (
+            <div className="space-y-2.5 rounded-xl border border-sky-500/20 bg-sky-500/5 p-3">
+              <p className="text-xs font-medium text-sky-600 dark:text-sky-400">Variables personnalisées</p>
+              {rows
+                .slice()
+                .sort((a, b) => a.pos - b.pos)
+                .map((row, index) => (
+                  <div key={row.pos} className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+                    <span className="w-10 shrink-0 font-mono text-xs text-muted-foreground">
+                      {'{{' + row.pos + '}}'}
+                    </span>
+                    <select
+                      value={row.field}
+                      onChange={(e) =>
+                        setRows((prev) =>
+                          prev.map((r, i) => (i === index ? { ...r, field: e.target.value } : r)),
+                        )
+                      }
+                      aria-label={`Variable ${row.pos}`}
+                      className="h-9 flex-1 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2 text-xs outline-none"
+                    >
+                      {Object.entries(FIELD_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                    {row.field === 'custom' && (
+                      <Input
+                        value={row.custom ?? ''}
+                        onChange={(e) =>
+                          setRows((prev) =>
+                            prev.map((r, i) => (i === index ? { ...r, custom: e.target.value } : r)),
+                          )
+                        }
+                        placeholder="Valeur fixe"
+                        className="h-9 text-sm sm:max-w-40"
+                      />
+                    )}
+                  </div>
+                ))}
+              <p className="text-[11px] text-muted-foreground">
+                Les champs « nom, e-mail… » sont relus sur la fiche contact au moment de l’envoi.
+              </p>
+            </div>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            Pour changer de modèle ou la liste des destinataires : dupliquez la campagne ou utilisez le
+            bouton « Destinataires ».
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            Annuler
+          </Button>
+          <Button onClick={() => void save()} disabled={!name.trim() || saving}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+            Enregistrer
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function CampaignDetail({
   broadcastId,
+  profileId,
   onBack,
   onChanged,
+  onSelectBroadcast,
 }: {
   broadcastId: string;
+  profileId: string;
   onBack: () => void;
   onChanged: () => void;
+  onSelectBroadcast: (id: string) => void;
 }) {
   const { broadcast, isLoading, error, refresh } = useBroadcastDetail(broadcastId);
   const actions = useBroadcastActions();
   const [adding, setAdding] = useState(false);
   const [scheduling, setScheduling] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [directBusy, setDirectBusy] = useState(false);
 
   if (isLoading && !broadcast) {
@@ -592,6 +735,7 @@ export function CampaignDetail({
   const meta = BROADCAST_STATUS_META[broadcast.status];
   const isDraft = broadcast.status === 'draft';
   const isScheduled = broadcast.status === 'scheduled';
+  const isDone = broadcast.status === 'completed' || broadcast.status === 'failed' || broadcast.status === 'cancelled';
   const varsCfg = loadCampaignVars(broadcast.id);
   const hasVars = (varsCfg?.vars.length ?? 0) > 0;
   const directSent = wasDirectSent(broadcast.id);
@@ -646,14 +790,16 @@ export function CampaignDetail({
 
   // Envoi direct, destinataire par destinataire — le même chemin que l'envoi
   // d'un template dans une conversation (valeurs réelles, pas de mapping).
-  async function sendDirectNow() {
-    if (!broadcast || directBusy || !varsCfg) return;
+  async function sendDirectNow(target?: { id: string; accountId: string; cfg: CampaignVars }) {
+    const t =
+      target ?? (broadcast && varsCfg ? { id: broadcast.id, accountId: broadcast.accountId, cfg: varsCfg } : null);
+    if (!t || directBusy) return;
     setDirectBusy(true);
     try {
       const page = await apiFetch<{
         recipients?: ZernioBroadcastRecipient[];
         pagination?: { total?: number };
-      }>(`/api/broadcasts/${encodeURIComponent(broadcast.id)}/recipients?limit=500`);
+      }>(`/api/broadcasts/${encodeURIComponent(t.id)}/recipients?limit=500`);
       const recipients = (page.recipients ?? []).filter((r) => r.platformIdentifier);
       if (recipients.length === 0) {
         toast.error('Aucun destinataire avec numéro — ajoutez-en d’abord.');
@@ -674,15 +820,15 @@ export function CampaignDetail({
         await Promise.all(
           batch.map(async (recipient) => {
             try {
-              const templateParams = await resolveParams(recipient, varsCfg, contactCache);
+              const templateParams = await resolveParams(recipient, t.cfg, contactCache);
               await apiFetch('/api/conversations', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  accountId: broadcast.accountId,
+                  accountId: t.accountId,
                   participantId: (recipient.platformIdentifier ?? '').replace(/\D/g, ''),
-                  templateName: varsCfg.templateName,
-                  templateLanguage: varsCfg.language,
+                  templateName: t.cfg.templateName,
+                  templateLanguage: t.cfg.language,
                   templateParams,
                 }),
               });
@@ -695,11 +841,7 @@ export function CampaignDetail({
         );
       }
 
-      try {
-        window.localStorage.setItem(directSentKey(broadcast.id), '1');
-      } catch {
-        // ignore
-      }
+      markDirectSent(t.id);
       if (failures.length === 0) {
         toast.success(`${sent} message(s) envoyé(s) avec personnalisation.`);
       } else {
@@ -713,6 +855,60 @@ export function CampaignDetail({
       toast.error(`L’envoi direct a échoué.${detail}`);
     } finally {
       setDirectBusy(false);
+    }
+  }
+
+  // Duplique la campagne (nouveau brouillon, destinataires + personnalisation).
+  async function duplicate() {
+    if (!broadcast) return;
+    setDuplicating(true);
+    try {
+      const copy = await duplicateBroadcast({
+        original: broadcast,
+        profileId,
+        suffix: ' (copie)',
+        copyRecipients: true,
+      });
+      toast.success(`Campagne dupliquée : « ${copy.name} »`);
+      onChanged();
+      onSelectBroadcast(copy.id);
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`La duplication a échoué.${detail}`);
+    } finally {
+      setDuplicating(false);
+    }
+  }
+
+  // Relance la campagne : duplication puis envoi immédiat (direct si personnalisée).
+  async function relaunch() {
+    if (!broadcast) return;
+    const count = broadcast.recipientCount ?? 0;
+    if (!window.confirm(`Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\nUne copie sera créée puis envoyée.`)) {
+      return;
+    }
+    setDuplicating(true);
+    try {
+      const copy = await duplicateBroadcast({
+        original: broadcast,
+        profileId,
+        suffix: ' (relance)',
+        copyRecipients: true,
+      });
+      const cfg = loadCampaignVars(copy.id);
+      if (cfg?.vars.length) {
+        await sendDirectNow({ id: copy.id, accountId: copy.accountId, cfg });
+      } else {
+        await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
+        toast.success(`Relance « ${copy.name} » envoyée.`);
+      }
+      onChanged();
+      onSelectBroadcast(copy.id);
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`La relance a échoué.${detail}`);
+    } finally {
+      setDuplicating(false);
     }
   }
 
@@ -774,7 +970,7 @@ export function CampaignDetail({
           </div>
         </div>
 
-        {(isDraft || isScheduled) && (
+        {(isDraft || isScheduled || isDone) && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {isDraft && (
               <>
@@ -828,6 +1024,19 @@ export function CampaignDetail({
                 >
                   <Trash2 className="size-3.5" /> Supprimer
                 </Button>
+                <span className="mx-1 h-4 w-px bg-[var(--chat-border)]" />
+                <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                  <Pencil className="size-3.5" /> Modifier
+                </Button>
+                {directSent && (
+                  <Button variant="outline" size="sm" onClick={() => void relaunch()} disabled={duplicating}>
+                    <RotateCcw className="size-3.5" /> Relancer
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => void duplicate()} disabled={duplicating}>
+                  {duplicating ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
+                  Dupliquer
+                </Button>
               </>
             )}
             {isScheduled && (
@@ -839,6 +1048,22 @@ export function CampaignDetail({
               >
                 <CalendarClock className="size-3.5" /> Annuler la programmation
               </Button>
+            )}
+            {isDone && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => void duplicate()} disabled={duplicating}>
+                  {duplicating ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
+                  Dupliquer
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => void relaunch()}
+                  disabled={duplicating || !broadcast.recipientCount}
+                  className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
+                >
+                  <RotateCcw className="size-3.5" /> Relancer
+                </Button>
+              </>
             )}
           </div>
         )}
@@ -873,6 +1098,18 @@ export function CampaignDetail({
 
       {adding && <AddRecipientsDialog broadcast={broadcast} onClose={() => setAdding(false)} />}
       {scheduling && <ScheduleDialog broadcast={broadcast} onClose={() => setScheduling(false)} />}
+      {editing && (
+        <CampaignEditDialog
+          broadcast={broadcast}
+          varsCfg={varsCfg}
+          open={editing}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            refresh();
+            onChanged();
+          }}
+        />
+      )}
     </div>
   );
 }

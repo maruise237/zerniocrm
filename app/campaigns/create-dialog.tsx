@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
+import { saveCampaignVars } from '@/lib/campaigns/personalization';
 import { extractPlaceholders } from '@/lib/whatsapp/template-meta';
 import { cn } from '@/lib/utils';
 import type {
@@ -240,22 +241,15 @@ export function CampaignCreateDialog({
       // Persiste la personnalisation localement : le moteur d'envoi direct
       // (par destinataire) en a besoin, Zernio ne la relit pas.
       if (placeholders.length > 0) {
-        try {
-          window.localStorage.setItem(
-            `crm-campaign-vars:${broadcast.id}`,
-            JSON.stringify({
-              templateName: selectedTemplate.name,
-              language: effectiveLanguage,
-              vars: placeholders.map((n) => ({
-                pos: n,
-                field: mapping[n].field,
-                custom: mapping[n].field === 'custom' ? mapping[n].custom.trim() : '',
-              })),
-            }),
-          );
-        } catch {
-          // stockage indisponible — l'envoi direct sera désactivé avec un message
-        }
+        saveCampaignVars(broadcast.id, {
+          templateName: selectedTemplate.name,
+          language: effectiveLanguage,
+          vars: placeholders.map((n) => ({
+            pos: n,
+            field: mapping[n].field,
+            custom: mapping[n].field === 'custom' ? mapping[n].custom.trim() : '',
+          })),
+        });
       }
 
       // Step 2 : ajout des destinataires choisis (numéros, contacts, tags).
