@@ -716,6 +716,7 @@ export function CampaignDetail({
   const [editing, setEditing] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [directBusy, setDirectBusy] = useState(false);
+  const [directErrors, setDirectErrors] = useState<string[]>([]);
 
   if (isLoading && !broadcast) {
     return (
@@ -796,6 +797,7 @@ export function CampaignDetail({
       target ?? (broadcast && varsCfg ? { id: broadcast.id, accountId: broadcast.accountId, cfg: varsCfg } : null);
     if (!t || directBusy) return;
     setDirectBusy(true);
+    setDirectErrors([]);
     try {
       const allRecipients = await fetchBroadcastRecipients(t.id);
       const recipients = allRecipients.filter((r) => r.platformIdentifier);
@@ -828,18 +830,21 @@ export function CampaignDetail({
               sent += 1;
             } catch (err) {
               const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
-              failures.push(`${recipient.contactName || recipient.platformIdentifier}: ${detail || 'erreur'}`);
+              failures.push(
+                `${recipient.contactName || recipient.platformIdentifier}: ${detail || 'erreur inconnue'}`.slice(0, 500),
+              );
             }
           }),
         );
       }
 
       markDirectSent(t.id);
+      setDirectErrors(failures.slice(0, 12));
       if (failures.length === 0) {
         toast.success(`${sent} message(s) envoyé(s) avec personnalisation.`);
       } else {
         toast.warning(
-          `${sent} envoyé(s), ${failures.length} échec(s).${failures[0] ? ` Ex. : ${failures[0].slice(0, 160)}` : ''}`,
+          `${sent} envoyé(s), ${failures.length} échec(s). Détails affichés sous les actions.`,
         );
       }
       refresh();
@@ -1058,6 +1063,21 @@ export function CampaignDetail({
                 </Button>
               </>
             )}
+          </div>
+        )}
+
+        {directErrors.length > 0 && (
+          <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5">
+            <p className="text-xs font-medium text-red-600 dark:text-red-400">
+              {directErrors.length} échec(s) d’envoi — détail (message exact de l’API) :
+            </p>
+            <ul className="mt-1.5 max-h-40 space-y-1 overflow-y-auto text-[11px] text-muted-foreground">
+              {directErrors.map((line, i) => (
+                <li key={i} className="break-words">
+                  {line}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
