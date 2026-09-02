@@ -34,13 +34,13 @@ import type { Account, Conversation, Message, Platform } from '@/lib/types';
 function recipientFieldForPlatform(platform: Platform): { label: string; placeholder: string } {
   switch (platform) {
     case 'bluesky':
-      return { label: 'Handle', placeholder: 'name.bsky.social' };
+      return { label: 'Identifiant', placeholder: 'name.bsky.social' };
     case 'reddit':
-      return { label: 'Username', placeholder: 'u/username' };
+      return { label: "Nom d'utilisateur", placeholder: 'u/identifiant' };
     case 'whatsapp':
-      return { label: 'Phone number', placeholder: '+1 555 123 4567' };
+      return { label: 'Numéro de téléphone', placeholder: '+1 555 123 4567' };
     default:
-      return { label: 'Username or handle', placeholder: '@username' };
+      return { label: "Nom d'utilisateur ou identifiant", placeholder: '@identifiant' };
   }
 }
 
@@ -127,7 +127,7 @@ export function NewMessageDialog({
         body: JSON.stringify(body),
       });
       const data = res.data;
-      if (!data?.conversationId) throw new Error('Failed to start conversation');
+      if (!data?.conversationId) throw new Error('Échec du démarrage de la conversation');
 
       const conversation: Conversation = {
         id: data.conversationId,
@@ -144,7 +144,7 @@ export function NewMessageDialog({
         conversation,
         overrides: { id: `new_${Date.now()}`, message: preview },
       });
-      toast.success('Message sent');
+      toast.success('Message envoyé');
       onCreated({ conversation, optimisticMessage });
       setRecipient('');
       setMessage('');
@@ -154,7 +154,7 @@ export function NewMessageDialog({
       setError(
         e instanceof ApiError || e instanceof Error
           ? e.message
-          : 'Failed to start conversation',
+          : 'Échec du démarrage de la conversation',
       );
     } finally {
       setSending(false);
@@ -165,14 +165,13 @@ export function NewMessageDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New message</DialogTitle>
-          <DialogDescription>Start a new conversation</DialogDescription>
+          <DialogTitle>Nouveau message</DialogTitle>
+          <DialogDescription>Démarrer une nouvelle conversation</DialogDescription>
         </DialogHeader>
 
         {eligible.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            None of your connected accounts support starting a new conversation. X, Bluesky,
-            Reddit, and WhatsApp do.
+            Aucun de vos comptes connectés ne permet de démarrer une conversation. WhatsApp, X, Bluesky et Reddit le permettent.
           </p>
         ) : (
           <div className="space-y-3">
@@ -180,7 +179,7 @@ export function NewMessageDialog({
               <Label className="text-xs">From</Label>
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  aria-label="Select account"
+                  aria-label="Choisir un compte"
                   className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] px-3 text-sm hover:bg-[var(--chat-hover)]"
                 >
                   {account ? (
@@ -191,7 +190,7 @@ export function NewMessageDialog({
                       </span>
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">Select an account...</span>
+                    <span className="text-muted-foreground">Choisir un compte…</span>
                   )}
                   <ChevronDown className="size-4 shrink-0 opacity-60" />
                 </DropdownMenuTrigger>
@@ -222,7 +221,7 @@ export function NewMessageDialog({
             {isWhatsApp ? (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  WhatsApp requires an approved template to start a conversation.
+                  WhatsApp exige un modèle approuvé pour démarrer une conversation.
                 </p>
                 <TemplateFields composer={wa} />
               </div>
@@ -245,7 +244,7 @@ export function NewMessageDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>
-            Cancel
+            Annuler
           </Button>
           <Button
             onClick={() => void handleSend()}

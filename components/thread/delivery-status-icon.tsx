@@ -34,8 +34,8 @@ export function DeliveryStatusIcon({
 }) {
   if (optimistic) {
     return (
-      <WithTooltip content="Sending">
-        <Clock className={`${ICON} opacity-60`} aria-label="Sending" />
+      <WithTooltip content="Envoi…">
+        <Clock className={`${ICON} opacity-60`} aria-label="Envoi…" />
       </WithTooltip>
     );
   }
@@ -43,22 +43,22 @@ export function DeliveryStatusIcon({
 
   if (status === 'sent') {
     return (
-      <WithTooltip content="Sent">
-        <Check className={`${ICON} opacity-60`} aria-label="Sent" />
+      <WithTooltip content="Envoyé">
+        <Check className={`${ICON} opacity-60`} aria-label="Envoyé" />
       </WithTooltip>
     );
   }
   if (status === 'delivered') {
     return (
-      <WithTooltip content="Delivered">
-        <CheckCheck className={`${ICON} opacity-60`} aria-label="Delivered" />
+      <WithTooltip content="Livré">
+        <CheckCheck className={`${ICON} opacity-60`} aria-label="Livré" />
       </WithTooltip>
     );
   }
   if (status === 'read') {
     return (
-      <WithTooltip content="Read">
-        <CheckCheck className={`${ICON} text-[var(--chat-check)]`} aria-label="Read" />
+      <WithTooltip content="Lu">
+        <CheckCheck className={`${ICON} text-[var(--chat-check)]`} aria-label="Lu" />
       </WithTooltip>
     );
   }
@@ -69,7 +69,7 @@ export function DeliveryStatusIcon({
         ? title === message
           ? title
           : `${title}: ${message}`
-        : title || message || 'Failed to send';
+        : title || message || "Échec de l'envoi";
     return (
       <WithTooltip content={tooltip}>
         <AlertCircle className={`${ICON} text-destructive`} aria-label={`Failed: ${tooltip}`} />
@@ -78,8 +78,8 @@ export function DeliveryStatusIcon({
   }
   // deleted
   return (
-    <WithTooltip content="Deleted by sender">
-      <Trash2 className={`${ICON} opacity-60`} aria-label="Deleted" />
+    <WithTooltip content="Supprimé par l'expéditeur">
+      <Trash2 className={`${ICON} opacity-60`} aria-label="Supprimé" />
     </WithTooltip>
   );
 }

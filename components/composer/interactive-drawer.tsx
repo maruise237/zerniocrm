@@ -67,8 +67,8 @@ function Counter({ value, max }: { value: string; max: number }) {
 }
 
 const FLOW_ACTION_LABELS: Record<FlowAction, string> = {
-  navigate: 'Navigate (open a screen)',
-  data_exchange: 'Data exchange (server-driven)',
+  navigate: 'Naviguer (ouvrir un écran)',
+  data_exchange: 'Échange de données (piloté par le serveur)',
 };
 
 /**
@@ -270,8 +270,8 @@ export function InteractiveDrawer({
     const label = callLabel.trim().slice(0, 20);
     onSend({
       body: buildCallButtonBody({ message: callBody.trim(), displayText: callLabel.trim() }),
-      // WhatsApp defaults the button to "Call Now" when no label is set.
-      optimisticMeta: { kind: 'voice_call', label: label || 'Call Now' },
+      // WhatsApp defaults the button to "Appeler" when no label is set.
+      optimisticMeta: { kind: 'voice_call', label: label || 'Appeler' },
       preview: callBody.trim(),
     });
   };
@@ -285,20 +285,20 @@ export function InteractiveDrawer({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Interactive message</DialogTitle>
+          <DialogTitle>Message interactif</DialogTitle>
           <DialogDescription>
-            Send buttons, a list, a link button, a flow, a location request, or a call button
+            Boutons, liste, bouton-lien, flow, demande de localisation ou bouton d'appel
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
           <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="buttons" className="px-1 text-xs">Buttons</TabsTrigger>
-            <TabsTrigger value="list" className="px-1 text-xs">List</TabsTrigger>
-            <TabsTrigger value="cta" className="px-1 text-xs">CTA link</TabsTrigger>
+            <TabsTrigger value="buttons" className="px-1 text-xs">Boutons</TabsTrigger>
+            <TabsTrigger value="list" className="px-1 text-xs">Liste</TabsTrigger>
+            <TabsTrigger value="cta" className="px-1 text-xs">Lien</TabsTrigger>
             <TabsTrigger value="flow" className="px-1 text-xs">Flow</TabsTrigger>
-            <TabsTrigger value="location" className="px-1 text-xs">Location</TabsTrigger>
-            <TabsTrigger value="call" className="px-1 text-xs">Call</TabsTrigger>
+            <TabsTrigger value="location" className="px-1 text-xs">Localisation</TabsTrigger>
+            <TabsTrigger value="call" className="px-1 text-xs">Appel</TabsTrigger>
           </TabsList>
 
           {/* Buttons: body + up to 3 reply buttons */}
@@ -309,18 +309,18 @@ export function InteractiveDrawer({
                 value={btnBody}
                 onChange={(e) => setBtnBody(e.target.value)}
                 rows={3}
-                placeholder="What do you want to ask?"
+                placeholder="Quelle est votre question ?"
               />
             </div>
             <div className="space-y-2">
-              <Label>Buttons (max {MAX_BUTTONS})</Label>
+              <Label>Boutons (max {MAX_BUTTONS})</Label>
               {btnLabels.map((label, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <Input
                     value={label}
                     maxLength={20}
                     onChange={(e) => setLabelAt(i, e.target.value)}
-                    placeholder={`Button ${i + 1}`}
+                    placeholder={`Bouton ${i + 1}`}
                   />
                   <Counter value={label} max={20} />
                   {btnLabels.length > 1 && (
@@ -328,7 +328,7 @@ export function InteractiveDrawer({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      aria-label={`Remove button ${i + 1}`}
+                      aria-label={`Retirer le bouton ${i + 1}`}
                       className="size-8 shrink-0 text-muted-foreground"
                       onClick={() => setBtnLabels((prev) => prev.filter((_, j) => j !== i))}
                     >
@@ -344,7 +344,7 @@ export function InteractiveDrawer({
                   size="sm"
                   onClick={() => setBtnLabels((prev) => [...prev, ''])}
                 >
-                  <Plus className="size-4" /> Add button
+                  <Plus className="size-4" /> Ajouter un bouton
                 </Button>
               )}
             </div>
@@ -358,35 +358,35 @@ export function InteractiveDrawer({
                 value={listBody}
                 onChange={(e) => setListBody(e.target.value)}
                 rows={2}
-                placeholder="Intro text shown above the list"
+                placeholder="Texte d'introduction affiché au-dessus de la liste"
               />
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <Label>List button label</Label>
+                <Label>Libellé du bouton de liste</Label>
                 <Counter value={listButton} max={20} />
               </div>
               <Input
                 value={listButton}
                 maxLength={20}
                 onChange={(e) => setListButton(e.target.value)}
-                placeholder="e.g. View options"
+                placeholder="ex. Voir les options"
               />
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <Label>Section title (optional)</Label>
+                <Label>Titre de section (optionnel)</Label>
                 <Counter value={listSectionTitle} max={24} />
               </div>
               <Input
                 value={listSectionTitle}
                 maxLength={24}
                 onChange={(e) => setListSectionTitle(e.target.value)}
-                placeholder="e.g. Available slots"
+                placeholder="ex. Créneaux disponibles"
               />
             </div>
             <div className="space-y-2">
-              <Label>Rows (max {MAX_LIST_ROWS})</Label>
+              <Label>Options (max {MAX_LIST_ROWS})</Label>
               {listRows.map((row, i) => (
                 <div key={i} className="flex items-start gap-2 rounded-md border border-[var(--chat-border)] p-2">
                   <div className="flex-1 space-y-2">
@@ -395,7 +395,7 @@ export function InteractiveDrawer({
                         value={row.title}
                         maxLength={24}
                         onChange={(e) => setRowAt(i, { title: e.target.value })}
-                        placeholder={`Row ${i + 1} title`}
+                        placeholder={`Titre de l'option ${i + 1}`}
                       />
                       <Counter value={row.title} max={24} />
                     </div>
@@ -404,7 +404,7 @@ export function InteractiveDrawer({
                         value={row.description}
                         maxLength={72}
                         onChange={(e) => setRowAt(i, { description: e.target.value })}
-                        placeholder="Description (optional)"
+                        placeholder="Description (optionnelle)"
                       />
                       <Counter value={row.description} max={72} />
                     </div>
@@ -414,7 +414,7 @@ export function InteractiveDrawer({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      aria-label={`Remove row ${i + 1}`}
+                      aria-label={`Retirer l'option ${i + 1}`}
                       className="size-8 shrink-0 text-muted-foreground"
                       onClick={() => setListRows((prev) => prev.filter((_, j) => j !== i))}
                     >
@@ -430,7 +430,7 @@ export function InteractiveDrawer({
                   size="sm"
                   onClick={() => setListRows((prev) => [...prev, { title: '', description: '' }])}
                 >
-                  <Plus className="size-4" /> Add row
+                  <Plus className="size-4" /> Ajouter une option
                 </Button>
               )}
             </div>
@@ -444,19 +444,19 @@ export function InteractiveDrawer({
                 value={ctaBody}
                 onChange={(e) => setCtaBody(e.target.value)}
                 rows={3}
-                placeholder="Text shown above the button"
+                placeholder="Texte affiché au-dessus du bouton"
               />
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <Label>Button label</Label>
+                <Label>Libellé du bouton</Label>
                 <Counter value={ctaLabel} max={20} />
               </div>
               <Input
                 value={ctaLabel}
                 maxLength={20}
                 onChange={(e) => setCtaLabel(e.target.value)}
-                placeholder="e.g. Visit site"
+                placeholder="ex. Visiter le site"
               />
             </div>
             <div className="space-y-1">
@@ -478,25 +478,25 @@ export function InteractiveDrawer({
                 value={flowBody}
                 onChange={(e) => setFlowBody(e.target.value)}
                 rows={2}
-                placeholder="Text shown above the flow button"
+                placeholder="Texte affiché au-dessus du bouton du flow"
               />
             </div>
             <div className="space-y-1">
               <Label>Flow</Label>
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  aria-label="Select flow"
+                  aria-label="Choisir un flow"
                   className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 text-sm hover:bg-[var(--chat-hover)]"
                 >
                   {flowsQuery.isLoading ? (
                     <span className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="size-4 animate-spin" /> Loading flows...
+                      <Loader2 className="size-4 animate-spin" /> Chargement des flows…
                     </span>
                   ) : selectedFlow ? (
                     <span className="truncate">{selectedFlow.name}</span>
                   ) : (
                     <span className="text-muted-foreground">
-                      {flows.length ? 'Select a published flow...' : 'No published flows'}
+                      {flows.length ? 'Choisir un flow publié…' : 'Aucun flow publié'}
                     </span>
                   )}
                   <ChevronDown className="size-4 shrink-0 opacity-60" />
@@ -512,27 +512,27 @@ export function InteractiveDrawer({
               </DropdownMenu>
               {!flowsQuery.isLoading && flows.length === 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Only published flows can be sent. Publish a flow first.
+                  Seuls les flows publiés peuvent être envoyés. Publiez d'abord un flow.
                 </p>
               )}
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <Label>Button label</Label>
+                <Label>Libellé du bouton</Label>
                 <Counter value={flowCta} max={20} />
               </div>
               <Input
                 value={flowCta}
                 maxLength={20}
                 onChange={(e) => setFlowCta(e.target.value)}
-                placeholder="e.g. Book now"
+                placeholder="ex. Réserver maintenant"
               />
             </div>
             <div className="space-y-1">
               <Label>Action</Label>
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  aria-label="Select flow action"
+                  aria-label="Choisir l'action du flow"
                   className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 text-sm hover:bg-[var(--chat-hover)]"
                 >
                   <span>{FLOW_ACTION_LABELS[flowAction]}</span>
@@ -550,14 +550,14 @@ export function InteractiveDrawer({
             </div>
             {flowAction === 'navigate' && (
               <div className="space-y-1">
-                <Label>First screen ID</Label>
+                <Label>Identifiant du premier écran</Label>
                 <Input
                   value={flowScreen}
                   onChange={(e) => setFlowScreen(e.target.value)}
-                  placeholder="e.g. WELCOME"
+                  placeholder="ex. ACCUEIL"
                 />
                 <p className="text-xs text-muted-foreground">
-                  The screen the flow opens on (must match an ID in the flow JSON).
+                  L'écran sur lequel le flow s'ouvre (doit correspondre à un identifiant du JSON du flow).
                 </p>
               </div>
             )}
@@ -571,11 +571,11 @@ export function InteractiveDrawer({
                 value={locBody}
                 onChange={(e) => setLocBody(e.target.value)}
                 rows={3}
-                placeholder="e.g. Share your location so we can find the nearest store"
+                placeholder="ex. Partagez votre position pour trouver le magasin le plus proche"
               />
               <p className="text-xs text-muted-foreground">
-                WhatsApp shows a &quot;Send location&quot; button below your message. The reply
-                arrives as a location message in this conversation.
+                WhatsApp affiche un bouton « Envoyer la position » sous votre message. La réponse
+                arrive dans la conversation sous forme de message de localisation.
               </p>
             </div>
           </TabsContent>
@@ -588,13 +588,13 @@ export function InteractiveDrawer({
                 value={callBody}
                 onChange={(e) => setCallBody(e.target.value)}
                 rows={3}
-                placeholder="e.g. Want to talk it through? Call us right from this chat"
+                placeholder="ex. Une question ? Appelez-nous directement depuis cette conversation"
               />
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Label>
-                  Button label <span className="font-normal text-muted-foreground">(optional)</span>
+                  Libellé du bouton <span className="font-normal text-muted-foreground">(optional)</span>
                 </Label>
                 <Counter value={callLabel} max={20} />
               </div>
@@ -602,7 +602,7 @@ export function InteractiveDrawer({
                 value={callLabel}
                 maxLength={20}
                 onChange={(e) => setCallLabel(e.target.value)}
-                placeholder="Call Now"
+                placeholder="Appeler"
               />
               <p className="text-xs text-muted-foreground">
                 Tapping the button starts a WhatsApp voice call to this number. Requires Calling
@@ -614,7 +614,7 @@ export function InteractiveDrawer({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>
-            Cancel
+            Annuler
           </Button>
           <Button onClick={handleSend} disabled={!canSend || sending}>
             {sending && <Loader2 className="size-4 animate-spin" />}

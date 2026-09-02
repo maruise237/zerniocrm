@@ -46,7 +46,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
         <Label className="text-xs">Template</Label>
         <DropdownMenu>
           <DropdownMenuTrigger
-            aria-label="Select template"
+            aria-label="Choisir un modèle"
             className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] px-3 text-sm hover:bg-[var(--chat-hover)]"
           >
             {selected ? (
@@ -85,7 +85,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
       {selected && (
         <div className="rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] p-3">
           <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Message preview</p>
-          <p className="text-sm whitespace-pre-wrap">{previewBody || '(empty template body)'}</p>
+          <p className="text-sm whitespace-pre-wrap">{previewBody || '(modèle sans message)'}</p>
         </div>
       )}
 

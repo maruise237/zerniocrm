@@ -76,7 +76,7 @@ export function LocationContactDrawer({
 
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error('Geolocation is not available in this browser');
+      toast.error("La géolocalisation n'est pas disponible dans ce navigateur");
       return;
     }
     setLocating(true);
@@ -87,7 +87,7 @@ export function LocationContactDrawer({
         setLocating(false);
       },
       () => {
-        toast.error('Could not get your location');
+        toast.error("Impossible d'obtenir votre position");
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -134,9 +134,9 @@ export function LocationContactDrawer({
     <Dialog open={mode !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{tab === 'location' ? 'Send location' : 'Send contact'}</DialogTitle>
+          <DialogTitle>{tab === 'location' ? 'Envoyer la localisation' : 'Envoyer le contact'}</DialogTitle>
           <DialogDescription>
-            {tab === 'location' ? 'Share a location pin' : 'Share a contact card'}
+            {tab === 'location' ? 'Partager une position' : 'Partager une carte de contact'}
           </DialogDescription>
         </DialogHeader>
 
@@ -155,7 +155,7 @@ export function LocationContactDrawer({
               disabled={locating}
             >
               <LocateFixed className="size-4" />
-              {locating ? 'Getting location…' : 'Use my current location'}
+              {locating ? 'Localisation en cours…' : 'Utiliser ma position actuelle'}
             </Button>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
@@ -182,7 +182,7 @@ export function LocationContactDrawer({
               <Input
                 value={locName}
                 onChange={(e) => setLocName(e.target.value)}
-                placeholder="e.g. Office"
+                placeholder="ex. Bureau"
               />
             </div>
             <div className="space-y-1">
@@ -190,7 +190,7 @@ export function LocationContactDrawer({
               <Input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Street, city"
+                placeholder="Rue, ville"
               />
             </div>
             {locationValid && (
@@ -207,7 +207,7 @@ export function LocationContactDrawer({
               <Input
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
-                placeholder="Full name"
+                placeholder="Nom complet"
               />
             </div>
             <div className="space-y-1">

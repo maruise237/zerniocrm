@@ -53,7 +53,7 @@ export function BlockMenu({ conversation }: { conversation: Conversation }) {
     const phone = `+${participantId.replace(/^\+/, '')}`;
     if (
       block &&
-      !confirm('Block this contact? They will no longer be able to message you on WhatsApp.')
+      !confirm('Bloquer ce contact ? Il ne pourra plus vous écrire sur WhatsApp.')
     ) {
       return;
     }
@@ -76,7 +76,7 @@ export function BlockMenu({ conversation }: { conversation: Conversation }) {
         toast.error(failed.errors?.[0] || `Could not ${block ? 'block' : 'unblock'} this contact`);
         return;
       }
-      toast.success(block ? 'Contact blocked' : 'Contact unblocked');
+      toast.success(block ? 'Contact bloqué' : 'Contact débloqué');
       setBlocked(block);
     } catch {
       toast.error(`Failed to ${block ? 'block' : 'unblock'} contact`);
@@ -94,7 +94,7 @@ export function BlockMenu({ conversation }: { conversation: Conversation }) {
           variant="ghost"
           size="icon"
           className="text-muted-foreground"
-          aria-label="Conversation actions"
+          aria-label="Actions de la conversation"
         >
           <MoreVertical className="size-4" />
         </Button>

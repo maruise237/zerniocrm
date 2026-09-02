@@ -49,7 +49,7 @@ export function ThreadHeader({
         size="icon"
         className="md:hidden"
         onClick={onBack}
-        aria-label="Back to conversations"
+        aria-label="Retour aux conversations"
       >
         <ArrowLeft className="size-4" />
       </Button>
@@ -81,7 +81,7 @@ export function ThreadHeader({
             size="icon"
             className="text-muted-foreground"
             onClick={onToggleSearch}
-            aria-label="Search in conversation"
+            aria-label="Rechercher dans la conversation"
           >
             <Search className="size-4" />
           </Button>
@@ -92,8 +92,8 @@ export function ThreadHeader({
               href={conversation.url}
               target="_blank"
               rel="nofollow noopener noreferrer"
-              title={`Open in ${PLATFORM_LABELS[conversation.platform]}`}
-              aria-label={`Open in ${PLATFORM_LABELS[conversation.platform]}`}
+              title={`Ouvrir dans ${PLATFORM_LABELS[conversation.platform]}`}
+              aria-label={`Ouvrir dans ${PLATFORM_LABELS[conversation.platform]}`}
             >
               <ExternalLink className="size-4" />
             </a>

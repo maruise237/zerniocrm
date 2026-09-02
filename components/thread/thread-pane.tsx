@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Loader2, MessageSquare, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { CallDialpadDialog } from '@/components/call-dialpad-dialog';
@@ -33,6 +33,8 @@ export interface ThreadPaneProps {
   onBack: () => void;
   /** Optimistic sidebar bump after a send; forwarded to the composer. */
   patchConversation?: (id: string, patch: Partial<Conversation>) => void;
+  /** Extra header actions (options menu, archive…) rendered after the WhatsApp actions. */
+  extraActions?: ReactNode;
 }
 
 const HIGHLIGHT_MS = 2_000;
@@ -47,6 +49,7 @@ export function ThreadPane({
   account,
   onBack,
   patchConversation,
+  extraActions,
 }: ThreadPaneProps) {
   const threadKey = selected ? `${selected.accountId}:${selected.conversationId}` : 'none';
 
@@ -193,7 +196,7 @@ export function ThreadPane({
         }
       } catch (err) {
         clearPatch(msg.id);
-        errorToast(err, 'Failed to react');
+        errorToast(err, 'Échec de la réaction');
       }
     },
     [selected, patchMessage, clearPatch],
@@ -222,9 +225,9 @@ export function ThreadPane({
       );
       setEditing(null);
       await refreshHead();
-      toast.success('Message updated');
+      toast.success('Message modifié');
     } catch (err) {
-      errorToast(err, 'Failed to edit message');
+      errorToast(err, 'Échec de la modification du message');
     } finally {
       setSavingEdit(false);
     }
@@ -233,7 +236,7 @@ export function ThreadPane({
   const handleDelete = useCallback(
     async (msg: Message) => {
       if (!selected) return;
-      if (!confirm('Delete this message?')) return;
+      if (!confirm('Supprimer ce message ?')) return;
       try {
         await apiFetch(
           `/api/conversations/${encodeURIComponent(selected.conversationId)}/messages/${encodeURIComponent(msg.id)}?accountId=${encodeURIComponent(selected.accountId)}`,
@@ -241,7 +244,7 @@ export function ThreadPane({
         );
         await refreshHead();
       } catch (err) {
-        errorToast(err, 'Failed to delete message');
+        errorToast(err, 'Échec de la suppression du message');
       }
     },
     [selected, refreshHead],
@@ -267,17 +270,17 @@ export function ThreadPane({
               size="icon"
               className="absolute top-2.5 left-2 md:hidden"
               onClick={onBack}
-              aria-label="Back to conversations"
+              aria-label="Retour aux conversations"
             >
               <ArrowLeft className="size-4" />
             </Button>
             <Loader2 className="size-6 animate-spin text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">Loading conversation</p>
+            <p className="text-sm text-muted-foreground">Chargement de la conversation…</p>
           </>
         ) : (
           <>
             <MessageSquare className="size-8 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">Select a conversation</p>
+            <p className="text-sm text-muted-foreground">Sélectionnez une conversation</p>
           </>
         )}
       </main>
@@ -309,15 +312,18 @@ export function ThreadPane({
                   size="icon"
                   className="text-muted-foreground"
                   onClick={() => setCallOpen(true)}
-                  title="Call this contact on WhatsApp"
-                  aria-label="Call this contact on WhatsApp"
+                  title="Appeler ce contact sur WhatsApp"
+                  aria-label="Appeler ce contact sur WhatsApp"
                 >
                   <Phone className="size-4" />
                 </Button>
               )}
               <BlockMenu conversation={conversation} />
+              {extraActions}
             </>
-          ) : undefined
+          ) : (
+            extraActions
+          )
         }
       />
       {searchOpen && (
@@ -382,21 +388,21 @@ export function ThreadPane({
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit message</DialogTitle>
+            <DialogTitle>Modifier le message</DialogTitle>
           </DialogHeader>
           <Textarea
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             rows={4}
-            aria-label="Edited message text"
+            aria-label="Texte du message modifié"
           />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditing(null)} disabled={savingEdit}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={() => void saveEdit()} disabled={savingEdit || !editText.trim()}>
               {savingEdit && <Loader2 className="size-4 animate-spin" />}
-              Save
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>

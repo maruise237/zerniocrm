@@ -183,7 +183,7 @@ export function MessageList({
                   className="text-xs text-muted-foreground"
                 >
                   {loadingOlder && <Loader2 className="size-3.5 animate-spin" />}
-                  {loadingOlder ? 'Loading...' : 'Load older messages'}
+                  {loadingOlder ? 'Chargement…' : 'Charger les messages précédents'}
                 </Button>
               </div>
             )}
@@ -204,7 +204,7 @@ export function MessageList({
                   ) : isCallEvent(msg.metadata) ? (
                     // Call-event row (WhatsApp call.received / call.ended):
                     // a centered system pill, not a chat bubble.
-                    <SystemPill className="my-2">{msg.message || '📞 Call'}</SystemPill>
+                    <SystemPill className="my-2">{msg.message || '📞 Appel'}</SystemPill>
                   ) : (
                     <MessageBubble
                       msg={msg}

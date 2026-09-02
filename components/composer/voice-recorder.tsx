@@ -83,7 +83,7 @@ export function VoiceRecorder({
   const start = useCallback(async () => {
     const mimeType = pickMimeType();
     if (!mimeType) {
-      toast.error('Voice recording is not supported in this browser');
+      toast.error("L'enregistrement vocal n'est pas pris en charge par ce navigateur");
       return;
     }
     try {
@@ -150,8 +150,8 @@ export function VoiceRecorder({
       setSeconds(0);
       timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     } catch (err) {
-      console.error('Voice recording failed to start:', err);
-      toast.error('Could not access the microphone');
+      console.error("L'enregistrement vocal n'a pas pu démarrer :", err);
+      toast.error("Impossible d'accéder au microphone");
       teardown();
     }
   }, [onRecorded, teardown]);
@@ -172,8 +172,8 @@ export function VoiceRecorder({
           variant="ghost"
           size="icon"
           onClick={() => finish(true)}
-          title="Discard"
-          aria-label="Discard recording"
+          title="Annuler"
+          aria-label="Annuler l'enregistrement"
           className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-destructive"
         >
           <Trash2 className="size-4" />
@@ -198,8 +198,8 @@ export function VoiceRecorder({
         <Button
           size="icon"
           onClick={() => finish(false)}
-          title="Send voice note"
-          aria-label="Send voice note"
+          title="Envoyer la note vocale"
+          aria-label="Envoyer la note vocale"
           className="size-8 shrink-0 rounded-lg"
         >
           <Send className="size-4" />
@@ -214,8 +214,8 @@ export function VoiceRecorder({
       size="icon"
       onClick={() => void start()}
       disabled={disabled}
-      title="Record voice note"
-      aria-label="Record voice note"
+      title="Enregistrer une note vocale"
+      aria-label="Enregistrer une note vocale"
       className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
     >
       <Mic className="size-4" />

@@ -42,7 +42,7 @@ export function AttachmentView({ att, platform }: { att: Attachment; platform: P
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={url}
-          alt={att.name || 'Image attachment'}
+          alt={att.name || 'Image'}
           loading="lazy"
           className="max-h-48 max-w-full cursor-pointer rounded transition-opacity hover:opacity-90"
         />
@@ -70,7 +70,7 @@ export function AttachmentView({ att, platform }: { att: Attachment; platform: P
     return (
       <a href={linkHref} target="_blank" rel="nofollow noopener noreferrer" className={LINK_ROW}>
         <FileText className="size-5 shrink-0 text-muted-foreground" />
-        <span className="truncate text-sm">{att.name || 'Download file'}</span>
+        <span className="truncate text-sm">{att.name || 'Télécharger le fichier'}</span>
         <Download className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
       </a>
     );
@@ -78,14 +78,14 @@ export function AttachmentView({ att, platform }: { att: Attachment; platform: P
 
   if (att.type === 'sticker' && url) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt="Sticker" loading="lazy" className="max-h-[120px] max-w-[120px] rounded" />;
+    return <img src={url} alt="Autocollant" loading="lazy" className="max-h-[120px] max-w-[120px] rounded" />;
   }
 
   if (SHARE_TYPES.includes(att.type) && rawHref) {
     return (
       <a href={rawHref} target="_blank" rel="nofollow noopener noreferrer" className={LINK_ROW}>
         <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
-        <span className="truncate text-sm">{payloadTitle(att) || 'Shared content'}</span>
+        <span className="truncate text-sm">{payloadTitle(att) || 'Contenu partagé'}</span>
       </a>
     );
   }
@@ -96,9 +96,9 @@ export function AttachmentView({ att, platform }: { att: Attachment; platform: P
     return (
       <a href={rawHref} target="_blank" rel="nofollow noopener noreferrer" className={LINK_ROW}>
         <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
-        <span className="truncate text-sm">{payloadTitle(att) || 'Shared content'}</span>
+        <span className="truncate text-sm">{payloadTitle(att) || 'Contenu partagé'}</span>
       </a>
     );
   }
-  return <span className="text-xs italic text-muted-foreground">{payloadTitle(att) || '[Shared content]'}</span>;
+  return <span className="text-xs italic text-muted-foreground">{payloadTitle(att) || '[Contenu partagé]'}</span>;
 }

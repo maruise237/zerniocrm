@@ -79,7 +79,7 @@ const attachmentKind = (file: File): 'image' | 'video' | 'file' =>
 
 const sentAttachmentLabel = (file: File): string => {
   const kind = attachmentKind(file);
-  return kind === 'image' ? 'Sent an image' : kind === 'video' ? 'Sent a video' : 'Sent a file';
+  return kind === 'image' ? 'Image envoyée' : kind === 'video' ? 'Vidéo envoyée' : 'Fichier envoyé';
 };
 
 interface StagedAttachment {
@@ -150,11 +150,11 @@ export function Composer({
   // picker and drag-and-drop.
   const stageAttachment = useCallback((file: File) => {
     if (!VALID_ATTACHMENT_TYPES.includes(file.type)) {
-      toast.error('Only JPEG, PNG, GIF images and MP4 videos are supported');
+      toast.error('Seuls les images JPEG, PNG, GIF et vidéos MP4 sont prises en charge');
       return;
     }
     if (file.size > MAX_ATTACHMENT_BYTES) {
-      toast.error('File size must be under 25MB');
+      toast.error('Le fichier doit faire moins de 25 Mo');
       return;
     }
     const prev = attachmentRef.current;
@@ -352,7 +352,7 @@ export function Composer({
         });
       },
       preview,
-      errorMessage: 'Failed to send message',
+      errorMessage: "L'envoi du message a échoué",
       onError: () => {
         setText(message);
         // Restore the staged attachment (unless the user already staged a new
@@ -384,14 +384,14 @@ export function Composer({
         form.append('voiceNote', 'true');
         return postFormData(form);
       },
-      preview: 'Voice note',
-      errorMessage: 'Failed to send voice note',
+      preview: 'Note vocale',
+      errorMessage: "L'envoi de la note vocale a échoué",
       setBusy: setSending,
       // The stub is removed on both outcomes; its object URL has no consumer.
     }).finally(() => URL.revokeObjectURL(stubUrl));
   };
 
-  // Interactive message (buttons / list / CTA / flow / location request /
+  // Message interactif (buttons / list / CTA / flow / location request /
   // call button) built in the drawer.
   const sendInteractive = async (payload: InteractiveSendPayload) => {
     const stub = makeOptimisticMessage({
@@ -405,7 +405,7 @@ export function Composer({
       stub,
       request: () => postJson({ accountId: conversation.accountId, ...payload.body }),
       preview: payload.preview,
-      errorMessage: 'Failed to send interactive message',
+      errorMessage: "L'envoi du message interactif a échoué",
       setBusy: setSendingInteractive,
     });
     if (ok) setInteractiveOpen(false);
@@ -421,7 +421,7 @@ export function Composer({
       stub,
       request: () => postJson({ accountId: conversation.accountId, ...payload.body }),
       preview: payload.preview,
-      errorMessage: 'Failed to send',
+      errorMessage: "L'envoi a échoué",
       setBusy: setSendingExtra,
     });
     if (ok) setExtraMode(null);
@@ -440,7 +440,7 @@ export function Composer({
           template: { type: 'generic', elements: [payload] },
         }),
       preview,
-      errorMessage: 'Failed to send template',
+      errorMessage: "L'envoi du modèle a échoué",
       setBusy: setSendingTemplate,
     });
     if (ok) template.reset();
@@ -451,8 +451,8 @@ export function Composer({
       <footer className="flex-none border-t border-[var(--chat-border)] bg-[var(--chat-surface)] p-3">
         <div className="space-y-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-warning-bg)] p-3">
           <p className="text-xs text-[var(--chat-warning-fg)]">
-            It&apos;s been over 24 hours since this contact last messaged you. WhatsApp only
-            delivers approved templates now. Pick one to reach them.
+            Plus de 24 h se sont écoulées depuis le dernier message de ce contact. WhatsApp n'accepte plus que les modèles approuvés
+            Choisissez-en un pour le recontacter.
           </p>
           <TemplateFields composer={template} />
           <div className="flex justify-end">
@@ -462,7 +462,7 @@ export function Composer({
               disabled={!template.canSend || sendingTemplate}
             >
               {sendingTemplate && <Loader2 className="size-4 animate-spin" />}
-              Send template
+              Envoyer le modèle
             </Button>
           </div>
         </div>
@@ -476,7 +476,7 @@ export function Composer({
       {dragging && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-background/80">
           <div className="rounded-xl border-2 border-dashed border-primary bg-[var(--chat-surface)] px-8 py-6 text-sm font-medium">
-            Drop to attach
+            Déposez pour joindre
           </div>
         </div>
       )}
@@ -485,10 +485,10 @@ export function Composer({
         <div className="flex items-center gap-2 rounded-lg border-l-2 border-primary bg-muted/60 px-3 py-1.5">
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium">
-              Replying to{' '}
+              Réponse à{' '}
               {replyingTo.direction === 'outgoing'
-                ? 'yourself'
-                : conversation.participantName || replyingTo.senderName || 'them'}
+                ? 'vous-même'
+                : conversation.participantName || replyingTo.senderName || 'ce contact'}
             </div>
             <div className="truncate text-xs text-muted-foreground">
               {messagePreviewText(replyingTo)}
@@ -497,8 +497,8 @@ export function Composer({
           <button
             type="button"
             onClick={onCancelReply}
-            title="Cancel reply"
-            aria-label="Cancel reply"
+            title="Annuler la réponse"
+            aria-label="Annuler la réponse"
             className="shrink-0 p-1 text-muted-foreground hover:text-foreground"
           >
             <X className="size-4" />
@@ -519,15 +519,15 @@ export function Composer({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={attachment.previewUrl}
-              alt="Attachment preview"
+              alt="Aperçu de la pièce jointe"
               className="max-h-24 rounded-lg border border-[var(--chat-border)]"
             />
           )}
           <button
             type="button"
             onClick={clearAttachment}
-            title="Remove attachment"
-            aria-label="Remove attachment"
+            title="Retirer la pièce jointe"
+            aria-label="Retirer la pièce jointe"
             className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-white hover:bg-destructive/90"
           >
             <X className="size-3.5" />
@@ -570,7 +570,7 @@ export function Composer({
                 void send();
               }
             }}
-            placeholder="Type a message..."
+            placeholder="Écrire un message…"
             aria-label="Message"
             className="max-h-36 min-h-0 flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-base shadow-none field-sizing-fixed focus-visible:ring-0 sm:text-sm"
           />
@@ -582,8 +582,8 @@ export function Composer({
               <Button
                 variant="ghost"
                 size="icon"
-                title="Insert emoji"
-                aria-label="Insert emoji"
+                title="Insérer un émoji"
+                aria-label="Insérer un émoji"
                 className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
               >
                 <SmilePlus className="size-4" />
@@ -618,8 +618,8 @@ export function Composer({
                   variant="ghost"
                   size="icon"
                   disabled={sending}
-                  title="Attach"
-                  aria-label="Attach"
+                  title="Joindre"
+                  aria-label="Joindre"
                   className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
                 >
                   <Paperclip className="size-4" />
@@ -627,10 +627,10 @@ export function Composer({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="top" className="w-52">
                 <DropdownMenuItem onSelect={() => fileInputRef.current?.click()}>
-                  <ImageIcon className="size-4" /> Photo or video
+                  <ImageIcon className="size-4" /> Photo ou vidéo
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => fileInputRef.current?.click()}>
-                  <FileUp className="size-4" /> File
+                  <FileUp className="size-4" /> Fichier
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setExtraMode('location')}>
                   <MapPin className="size-4" /> Location
@@ -639,7 +639,7 @@ export function Composer({
                   <User className="size-4" /> Contact
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setInteractiveOpen(true)}>
-                  <MousePointerClick className="size-4" /> Interactive message
+                  <MousePointerClick className="size-4" /> Message interactif
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -649,8 +649,8 @@ export function Composer({
               size="icon"
               onClick={() => fileInputRef.current?.click()}
               disabled={sending}
-              title="Attach"
-              aria-label="Attach"
+              title="Joindre"
+              aria-label="Joindre"
               className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
             >
               <Paperclip className="size-4" />
@@ -670,7 +670,7 @@ export function Composer({
             size="icon"
             onClick={() => void send()}
             disabled={(!text.trim() && !attachment) || sending}
-            aria-label="Send message"
+            aria-label="Envoyer le message"
             className="size-8 shrink-0 rounded-lg"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}

@@ -59,8 +59,8 @@ export function ThreadSearch({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Search in conversation"
-          aria-label="Search in conversation"
+          placeholder="Rechercher dans la conversation"
+          aria-label="Rechercher dans la conversation"
           className="h-8 rounded-full border-transparent bg-[var(--chat-input)] pl-8 shadow-none dark:bg-[var(--chat-input)]"
         />
       </div>
@@ -70,8 +70,8 @@ export function ThreadSearch({
           className="flex-none text-xs tabular-nums text-muted-foreground"
         >
           {/* activePosition can be null for one frame while the pane snaps to
-              the newest match (position 1); fall back to it, not "No matches". */}
-          {matchCount > 0 ? `${activePosition ?? 1} of ${matchCount}` : 'No matches'}
+              the newest match (position 1); fall back to it, not "Aucun résultat". */}
+          {matchCount > 0 ? `${activePosition ?? 1} of ${matchCount}` : 'Aucun résultat'}
         </span>
       )}
       {searching && hasMore && (
@@ -83,7 +83,7 @@ export function ThreadSearch({
           className="hidden flex-none text-xs text-muted-foreground hover:text-foreground sm:inline-flex"
         >
           {loadingOlder && <Loader2 className="size-3.5 animate-spin" />}
-          {loadingOlder ? 'Loading...' : 'Search older messages'}
+          {loadingOlder ? 'Chargement…' : 'Chercher dans les messages plus anciens'}
         </Button>
       )}
       <div className="flex flex-none items-center">
@@ -93,7 +93,7 @@ export function ThreadSearch({
           className="size-8"
           onClick={onNext}
           disabled={matchCount === 0}
-          aria-label="Next match (older)"
+          aria-label="Occurrence suivante (plus ancienne)"
         >
           <ChevronUp className="size-4" />
         </Button>
@@ -103,7 +103,7 @@ export function ThreadSearch({
           className="size-8"
           onClick={onPrev}
           disabled={matchCount === 0}
-          aria-label="Previous match (newer)"
+          aria-label="Occurrence précédente (plus récente)"
         >
           <ChevronDown className="size-4" />
         </Button>
@@ -112,7 +112,7 @@ export function ThreadSearch({
           size="icon"
           className="size-8"
           onClick={onClose}
-          aria-label="Close search"
+          aria-label="Fermer la recherche"
         >
           <X className="size-4" />
         </Button>

@@ -85,8 +85,8 @@ function MessageActionButtons({
             onReply(msg);
             onAction?.();
           }}
-          title="Reply"
-          aria-label="Reply"
+          title="Répondre"
+          aria-label="Répondre"
           className="p-1 text-muted-foreground hover:text-foreground"
         >
           <Reply className="size-4" />
@@ -99,8 +99,8 @@ function MessageActionButtons({
             onEdit(msg);
             onAction?.();
           }}
-          title="Edit"
-          aria-label="Edit message"
+          title="Modifier"
+          aria-label="Modifier le message"
           className="p-1 text-muted-foreground hover:text-foreground"
         >
           <Pencil className="size-4" />
@@ -113,8 +113,8 @@ function MessageActionButtons({
             onDelete(msg);
             onAction?.();
           }}
-          title="Delete"
-          aria-label="Delete message"
+          title="Supprimer"
+          aria-label="Supprimer le message"
           className="p-1 text-muted-foreground hover:text-destructive"
         >
           <Trash2 className="size-4" />
@@ -184,8 +184,8 @@ export function MessageBubble({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  title="Message actions"
-                  aria-label="Message actions"
+                  title="Actions du message"
+                  aria-label="Actions du message"
                   className="p-1 text-muted-foreground hover:text-foreground"
                 >
                   <SmilePlus className="size-4" />
@@ -233,7 +233,7 @@ export function MessageBubble({
                 : 'Message'}
             </span>
             <span className="block truncate opacity-70">
-              {quoted ? messagePreviewText(quoted) : 'Original message'}
+              {quoted ? messagePreviewText(quoted) : "Message d'origine"}
             </span>
           </button>
         )}
@@ -270,7 +270,7 @@ export function MessageBubble({
           >
             <MapPin className="size-4 shrink-0" />
             <span className="min-w-0">
-              <span className="block truncate font-medium">{location.name || 'Location'}</span>
+              <span className="block truncate font-medium">{location.name || 'Localisation'}</span>
               {location.address && (
                 <span className="block truncate text-xs opacity-70">{location.address}</span>
               )}
@@ -297,7 +297,7 @@ export function MessageBubble({
               <span
                 key={i}
                 className="inline-flex items-center rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs"
-                title={r.fromMe ? 'You reacted' : 'They reacted'}
+                title={r.fromMe ? 'Vous avez réagi' : 'Le contact a réagi'}
               >
                 {r.emoji}
               </span>
