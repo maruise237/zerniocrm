@@ -58,6 +58,10 @@ async function fetchConversationsPage({
   if (platform !== 'all') params.set('platform', platform);
   if (accountId) params.set('accountId', accountId);
   if (cursor) params.set('cursor', cursor);
+  // L'inbox principale n'affiche que les conversations actives : les
+  // conversations archivées (ou nouvellement archivées) ne doivent jamais
+  // réapparaître tant que la liste n'est pas rechargée côté upstream.
+  params.set('status', 'active');
   const body = await apiFetch<ConversationsResponse>(`/api/conversations?${params}`);
   return {
     conversations: body.data ?? [],

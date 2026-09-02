@@ -19,8 +19,9 @@ import {
 } from 'lucide-react';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useConversations } from '@/hooks/useConversations';
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import type { Account, Conversation } from '@/lib/types';
 import { NewMessageDialog } from '@/components/new-message-dialog';
 import {
@@ -88,12 +89,16 @@ export default function Home() {
     [conversations],
   );
   const visibleConversations = useMemo(() => {
-    if (filterMode === 'unread') return conversations.filter((c) => (c.unreadCount || 0) > 0);
+    // Filet de sécurité côté client : une conversation archivée ne doit plus
+    // s'afficher même si la réponse upstream la contient encore (course entre
+    // l'archivage et le prochain poll).
+    const active = conversations.filter((c) => c.status !== 'archived');
+    if (filterMode === 'unread') return active.filter((c) => (c.unreadCount || 0) > 0);
     if (filterMode === 'recent') {
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      return conversations.filter((c) => new Date(c.updatedTime).getTime() >= weekAgo);
+      return active.filter((c) => new Date(c.updatedTime).getTime() >= weekAgo);
     }
-    return conversations;
+    return active;
   }, [conversations, filterMode]);
 
   function selectConversation(conversation: Conversation) {
@@ -110,25 +115,42 @@ export default function Home() {
   }
 
   async function markRead() {
-    if (!activeConversation) return;
-    await apiFetch(`/api/conversations/${encodeURIComponent(activeConversation.id)}/read`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accountId: activeConversation.accountId }),
-    });
-    await refresh();
+    const conversation = activeConversation;
+    if (!conversation) return;
+    try {
+      await apiFetch(`/api/conversations/${encodeURIComponent(conversation.id)}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId: conversation.accountId }),
+      });
+      patchConversation(conversation.id, { unreadCount: 0 });
+      await refresh();
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`Impossible de marquer comme lu.${detail}`);
+    }
   }
 
   async function archiveConversation() {
-    if (!activeConversation) return;
-    await apiFetch(`/api/conversations/${encodeURIComponent(activeConversation.id)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accountId: activeConversation.accountId, status: 'archived' }),
-    });
-    setSelected(null);
-    setCurrentView('list');
-    await refresh();
+    const conversation = activeConversation;
+    if (!conversation) return;
+    try {
+      await apiFetch(`/api/conversations/${encodeURIComponent(conversation.id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId: conversation.accountId, status: 'archived' }),
+      });
+      // Masquage immédiat (le filtre statut=active + le filtre client prennent
+      // le relais au prochain poll).
+      patchConversation(conversation.id, { status: 'archived' });
+      setSelected(null);
+      setCurrentView('list');
+      toast.success('Conversation archivée');
+      await refresh();
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`Impossible d’archiver la conversation.${detail}`);
+    }
   }
 
   return (
