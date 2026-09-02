@@ -42,6 +42,7 @@ import { parseContactFile } from '@/lib/contacts/import-parser';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import {
   duplicateBroadcast,
+  fetchBroadcastRecipients,
   loadCampaignVars,
   markDirectSent,
   saveCampaignVars,
@@ -796,19 +797,11 @@ export function CampaignDetail({
     if (!t || directBusy) return;
     setDirectBusy(true);
     try {
-      const page = await apiFetch<{
-        recipients?: ZernioBroadcastRecipient[];
-        pagination?: { total?: number };
-      }>(`/api/broadcasts/${encodeURIComponent(t.id)}/recipients?limit=500`);
-      const recipients = (page.recipients ?? []).filter((r) => r.platformIdentifier);
+      const allRecipients = await fetchBroadcastRecipients(t.id);
+      const recipients = allRecipients.filter((r) => r.platformIdentifier);
       if (recipients.length === 0) {
         toast.error('Aucun destinataire avec numéro — ajoutez-en d’abord.');
         return;
-      }
-      if ((page.pagination?.total ?? recipients.length) > recipients.length) {
-        toast.warning(
-          `Attention : ${page.pagination?.total} destinataires au total, seuls ${recipients.length} seront traités (limite d’un lot).`,
-        );
       }
 
       const contactCache = new Map<string, { email?: string; company?: string }>();

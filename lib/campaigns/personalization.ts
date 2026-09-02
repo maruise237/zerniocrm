@@ -6,7 +6,7 @@
  * by the direct per-recipient send engine and by duplication/relaunch.
  */
 import { apiFetch } from '@/lib/api-client';
-import type { ZernioBroadcast } from '@/lib/types';
+import type { ZernioBroadcast, ZernioBroadcastRecipient } from '@/lib/types';
 
 export interface CampaignVars {
   templateName: string;
@@ -54,6 +54,33 @@ export function wasDirectSent(broadcastId: string): boolean {
   }
 }
 
+/**
+ * Récupère TOUS les destinataires d'une campagne, en paginant par lots de
+ * 200 (Zernio refuse un limit supérieur : « Too big: expected number to
+ * be <=200 »).
+ */
+export async function fetchBroadcastRecipients(
+  broadcastId: string,
+  cap = 1000,
+): Promise<ZernioBroadcastRecipient[]> {
+  const out: ZernioBroadcastRecipient[] = [];
+  let skip = 0;
+  let total = Infinity;
+  while (out.length < cap && out.length < total) {
+    const page = await apiFetch<{
+      recipients?: ZernioBroadcastRecipient[];
+      pagination?: { total?: number };
+    }>(`/api/broadcasts/${encodeURIComponent(broadcastId)}/recipients?limit=200&skip=${skip}`);
+    const rows = page.recipients ?? [];
+    if (rows.length === 0) break;
+    out.push(...rows);
+    total = page.pagination?.total ?? out.length;
+    skip += rows.length;
+    if (rows.length < 200) break;
+  }
+  return out.slice(0, cap);
+}
+
 export interface DuplicateOptions {
   original: ZernioBroadcast;
   profileId: string;
@@ -98,14 +125,7 @@ export async function duplicateBroadcast(opts: DuplicateOptions): Promise<Zernio
   if (varsCfg) saveCampaignVars(copy.id, varsCfg);
 
   if (opts.copyRecipients) {
-    const page = await apiFetch<{
-      recipients?: {
-        id: string;
-        contactId?: string;
-        platformIdentifier?: string;
-      }[];
-    }>(`/api/broadcasts/${encodeURIComponent(original.id)}/recipients?limit=500`);
-    const recipients = page.recipients ?? [];
+    const recipients = await fetchBroadcastRecipients(original.id);
     const contactIds = [...new Set(recipients.map((r) => r.contactId).filter((c): c is string => !!c))];
     const phones = [
       ...new Set(
