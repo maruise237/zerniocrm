@@ -6,18 +6,32 @@ import {
   ArrowLeft,
   CalendarClock,
   CheckCheck,
+  Copy,
+  Eye,
   Loader2,
   Megaphone,
   MessageCircle,
+  MoreVertical,
   Plus,
   RefreshCw,
+  RotateCcw,
   Send,
+  Trash2,
   Users,
   XCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useBroadcasts } from '@/hooks/useBroadcasts';
+import { apiFetch, ApiError } from '@/lib/api-client';
+import { duplicateBroadcast } from '@/lib/campaigns/personalization';
 import { cn } from '@/lib/utils';
 import { formatInTimezone, getTimezoneSetting } from '@/lib/timezone';
 import { BROADCAST_STATUS_META, formatTemplateLanguage } from '@/lib/whatsapp/template-meta';
@@ -33,83 +47,138 @@ function formatListDate(value?: string | null): string {
 function CampaignRow({
   broadcast,
   onSelect,
+  onDuplicate,
+  onRelaunch,
+  onDelete,
+  busy,
 }: {
   broadcast: ZernioBroadcast;
   onSelect: () => void;
+  onDuplicate: () => void;
+  onRelaunch: () => void;
+  onDelete: () => void;
+  busy: boolean;
 }) {
   const meta = BROADCAST_STATUS_META[broadcast.status] ?? BROADCAST_STATUS_META.draft;
+  const canDelete = broadcast.status === 'draft';
+  const canRelaunch = ['completed', 'failed', 'cancelled'].includes(broadcast.status);
   return (
-    <button
-      onClick={onSelect}
-      className="flex w-full items-center gap-3 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-3.5 text-left shadow-sm transition hover:bg-[var(--chat-hover)]"
-    >
-      <div
-        className={cn(
-          'flex size-9 shrink-0 items-center justify-center rounded-xl',
-          broadcast.status === 'completed'
-            ? 'bg-emerald-500/10 text-emerald-500'
-            : broadcast.status === 'failed'
-              ? 'bg-red-500/10 text-red-500'
-              : broadcast.status === 'sending'
-                ? 'bg-amber-500/10 text-amber-500'
-                : 'bg-slate-500/10 text-slate-500',
-        )}
+    <div className="flex items-stretch rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-2 shadow-sm transition hover:bg-[var(--chat-hover)]">
+      <button
+        onClick={onSelect}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-2 text-left"
       >
-        {broadcast.status === 'completed' ? (
-          <CheckCheck className="size-4.5" />
-        ) : broadcast.status === 'failed' ? (
-          <XCircle className="size-4.5" />
-        ) : broadcast.status === 'scheduled' ? (
-          <CalendarClock className="size-4.5" />
-        ) : broadcast.status === 'sending' ? (
-          <Send className="size-4.5" />
-        ) : (
-          <Megaphone className="size-4.5" />
-        )}
-      </div>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold">{broadcast.name}</span>
-          <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:block">
-            {formatListDate(broadcast.createdAt)}
+        <div
+          className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-xl',
+            broadcast.status === 'completed'
+              ? 'bg-emerald-500/10 text-emerald-500'
+              : broadcast.status === 'failed'
+                ? 'bg-red-500/10 text-red-500'
+                : broadcast.status === 'sending'
+                  ? 'bg-amber-500/10 text-amber-500'
+                  : 'bg-slate-500/10 text-slate-500',
+          )}
+        >
+          {broadcast.status === 'completed' ? (
+            <CheckCheck className="size-4.5" />
+          ) : broadcast.status === 'failed' ? (
+            <XCircle className="size-4.5" />
+          ) : broadcast.status === 'scheduled' ? (
+            <CalendarClock className="size-4.5" />
+          ) : broadcast.status === 'sending' ? (
+            <Send className="size-4.5" />
+          ) : (
+            <Megaphone className="size-4.5" />
+          )}
+        </div>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center justify-between gap-2">
+            <span className="truncate text-sm font-semibold">{broadcast.name}</span>
+            <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:block">
+              {formatListDate(broadcast.createdAt)}
+            </span>
           </span>
-        </span>
-        <span className="mt-1 flex items-center justify-between gap-2">
-          <span className="truncate text-[11px] text-muted-foreground">
-            {broadcast.template?.name ? (
-              <>
-                Modèle <span className="font-mono text-emerald-600 dark:text-emerald-400">{broadcast.template.name}</span>
-                {broadcast.template.language ? ` · ${formatTemplateLanguage(broadcast.template.language)}` : ''}
-              </>
-            ) : (
-              broadcast.messagePreview || 'Message libre'
+          <span className="mt-1 flex items-center justify-between gap-2">
+            <span className="truncate text-[11px] text-muted-foreground">
+              {broadcast.template?.name ? (
+                <>
+                  Modèle{' '}
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">{broadcast.template.name}</span>
+                  {broadcast.template.language
+                    ? ` · ${formatTemplateLanguage(broadcast.template.language)}`
+                    : ''}
+                </>
+              ) : (
+                broadcast.messagePreview || 'Message libre'
+              )}
+            </span>
+            {broadcast.accountName && (
+              <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:block">
+                {broadcast.accountName}
+              </span>
             )}
           </span>
-          {broadcast.accountName && <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:block">{broadcast.accountName}</span>}
+          <span className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Users className="size-3" /> {broadcast.recipientCount ?? 0}
+            {(broadcast.sentCount ?? 0) > 0 && <span className="text-sky-500">· {broadcast.sentCount} envoyés</span>}
+            {(broadcast.deliveredCount ?? 0) > 0 && (
+              <span className="text-indigo-500">· {broadcast.deliveredCount} livrés</span>
+            )}
+            {(broadcast.readCount ?? 0) > 0 && <span className="text-emerald-500">· {broadcast.readCount} lus</span>}
+            {(broadcast.failedCount ?? 0) > 0 && (
+              <span className="text-red-500">· {broadcast.failedCount} échecs</span>
+            )}
+          </span>
         </span>
-        <span className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Users className="size-3" /> {broadcast.recipientCount ?? 0}
-          {(broadcast.sentCount ?? 0) > 0 && (
-            <span className="text-sky-500">· {broadcast.sentCount} envoyés</span>
-          )}
-          {(broadcast.deliveredCount ?? 0) > 0 && (
-            <span className="text-indigo-500">· {broadcast.deliveredCount} livrés</span>
-          )}
-          {(broadcast.readCount ?? 0) > 0 && (
-            <span className="text-emerald-500">· {broadcast.readCount} lus</span>
-          )}
-          {(broadcast.failedCount ?? 0) > 0 && (
-            <span className="text-red-500">· {broadcast.failedCount} échecs</span>
-          )}
-        </span>
-      </span>
-      {meta && (
-        <span className={cn('inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium', meta.badge)}>
-          <span className={cn('size-1.5 rounded-full', meta.dot)} />
-          {meta.label}
-        </span>
-      )}
-    </button>
+        {meta && (
+          <span
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium',
+              meta.badge,
+            )}
+          >
+            <span className={cn('size-1.5 rounded-full', meta.dot)} />
+            {meta.label}
+          </span>
+        )}
+      </button>
+
+      <div className="flex items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label={`Actions pour ${broadcast.name}`}
+              className="touch-target shrink-0 rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)]"
+            >
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <MoreVertical className="size-4" />}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onSelect={onSelect}>
+              <Eye className="size-4" /> Ouvrir la campagne
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onDuplicate} disabled={busy}>
+              <Copy className="size-4" /> Dupliquer
+            </DropdownMenuItem>
+            {canRelaunch && (
+              <DropdownMenuItem onSelect={onRelaunch} disabled={busy || !(broadcast.recipientCount ?? 0)}>
+                <RotateCcw className="size-4" /> Relancer
+              </DropdownMenuItem>
+            )}
+            {canDelete && (
+              <DropdownMenuItem
+                onSelect={onDelete}
+                disabled={busy}
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="size-4" /> Supprimer
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 }
 
@@ -124,6 +193,7 @@ export default function CampaignsPage() {
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   // Poll quietly while on the list; the detail view polls itself.
   const sorted = useMemo(
@@ -137,6 +207,70 @@ export default function CampaignsPage() {
   const selectedBroadcast = selectedId
     ? broadcasts.find((b) => b.id === selectedId) ?? null
     : null;
+
+  async function duplicateRow(broadcast: ZernioBroadcast) {
+    if (busyId) return;
+    setBusyId(broadcast.id);
+    try {
+      const copy = await duplicateBroadcast({
+        original: broadcast,
+        profileId: profiles[0]?._id ?? '',
+        suffix: ' (copie)',
+        copyRecipients: true,
+      });
+      toast.success(`Campagne dupliquée : « ${copy.name} »`);
+      refresh();
+      setSelectedId(copy.id);
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`La duplication a échoué.${detail}`);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function relaunchRow(broadcast: ZernioBroadcast) {
+    if (busyId) return;
+    const count = broadcast.recipientCount ?? 0;
+    if (!window.confirm(`Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\nUne copie sera créée puis envoyée.`)) {
+      return;
+    }
+    setBusyId(broadcast.id);
+    try {
+      const copy = await duplicateBroadcast({
+        original: broadcast,
+        profileId: profiles[0]?._id ?? '',
+        suffix: ' (relance)',
+        copyRecipients: true,
+      });
+      await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
+      toast.success(`Relance « ${copy.name} » envoyée.`);
+      refresh();
+      setSelectedId(copy.id);
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`La relance a échoué.${detail}`);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteRow(broadcast: ZernioBroadcast) {
+    if (busyId) return;
+    if (!window.confirm(`Supprimer définitivement le brouillon « ${broadcast.name} » ?`)) return;
+    setBusyId(broadcast.id);
+    try {
+      await apiFetch(`/api/broadcasts/${encodeURIComponent(broadcast.id)}`, { method: 'DELETE' });
+      toast.success('Campagne supprimée');
+      if (selectedId === broadcast.id) setSelectedId(null);
+      refresh();
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`La suppression a échoué.${detail}`);
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
@@ -211,13 +345,19 @@ export default function CampaignsPage() {
                 </p>
               </div>
             )}
-            {!isLoading && !error && sorted.map((broadcast) => (
-              <CampaignRow
-                key={broadcast.id}
-                broadcast={broadcast}
-                onSelect={() => setSelectedId(broadcast.id)}
-              />
-            ))}
+            {!isLoading &&
+              !error &&
+              sorted.map((broadcast) => (
+                <CampaignRow
+                  key={broadcast.id}
+                  broadcast={broadcast}
+                  onSelect={() => setSelectedId(broadcast.id)}
+                  onDuplicate={() => void duplicateRow(broadcast)}
+                  onRelaunch={() => void relaunchRow(broadcast)}
+                  onDelete={() => void deleteRow(broadcast)}
+                  busy={busyId === broadcast.id}
+                />
+              ))}
           </section>
         )}
 

@@ -739,8 +739,6 @@ export function CampaignDetail({
   const isScheduled = broadcast.status === 'scheduled';
   const isDone = broadcast.status === 'completed' || broadcast.status === 'failed' || broadcast.status === 'cancelled';
   const varsCfg = loadCampaignVars(broadcast.id);
-  const hasVars = (varsCfg?.vars.length ?? 0) > 0;
-  const directSent = wasDirectSent(broadcast.id);
 
   function run(fn: () => Promise<unknown>, success: string) {
     fn()
@@ -749,7 +747,10 @@ export function CampaignDetail({
         onChanged();
         refresh();
       })
-      .catch(() => toast.error('L’action a échoué.'));
+      .catch((err: unknown) => {
+        const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+        toast.error(`L’action a échoué.${detail}`);
+      });
   }
 
   // Résout les valeurs d'une variable pour un destinataire donné.
@@ -893,13 +894,8 @@ export function CampaignDetail({
         suffix: ' (relance)',
         copyRecipients: true,
       });
-      const cfg = loadCampaignVars(copy.id);
-      if (cfg?.vars.length) {
-        await sendDirectNow({ id: copy.id, accountId: copy.accountId, cfg });
-      } else {
-        await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
-        toast.success(`Relance « ${copy.name} » envoyée.`);
-      }
+      await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
+      toast.success(`Relance « ${copy.name} » envoyée.`);
       onChanged();
       onSelectBroadcast(copy.id);
     } catch (err) {
@@ -952,19 +948,6 @@ export function CampaignDetail({
               {broadcast.scheduledAt && ` · envoi prévu le ${formatDate(broadcast.scheduledAt)}`}
               {broadcast.completedAt && ` · terminée le ${formatDate(broadcast.completedAt)}`}
             </p>
-            {hasVars && isDraft && (
-              <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
-                ℹ️ Cette campagne utilise la personnalisation : l’envoi se fait directement, destinataire
-                par destinataire, avec les vraies valeurs (nom du contact, valeurs fixes…) — même principe
-                que l’envoi d’un modèle dans une conversation.
-              </p>
-            )}
-            {directSent && (
-              <p className="mt-3 rounded-lg bg-[var(--chat-warning-bg)] px-3 py-2 text-[11px] leading-relaxed text-[var(--chat-warning-fg)]">
-                Envoi direct déjà effectué pour cette campagne — les statuts de livraison ci-dessous ne
-                sont pas suivis par Zernio pour cet envoi.
-              </p>
-            )}
           </div>
         </div>
 
@@ -975,40 +958,18 @@ export function CampaignDetail({
                 <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
                   <Users className="size-3.5" /> Destinataires
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setScheduling(true)}
-                  disabled={hasVars}
-                  title={
-                    hasVars
-                      ? 'La programmation utilise l’envoi Zernio qui ne personnalise pas — utilisez « Envoyer maintenant ».'
-                      : undefined
-                  }
-                >
+                <Button variant="outline" size="sm" onClick={() => setScheduling(true)}>
                   <CalendarClock className="size-3.5" /> Programmer
                 </Button>
-                {hasVars ? (
-                  <Button
-                    size="sm"
-                    onClick={() => void sendDirectNow()}
-                    disabled={directBusy || !broadcast.recipientCount || !varsCfg}
-                    className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
-                  >
-                    {directBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
-                    {directBusy ? 'Envoi en cours…' : 'Envoyer maintenant (personnalisé)'}
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré')}
-                    disabled={actions.sendNow.isPending || !broadcast.recipientCount}
-                    className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
-                  >
-                    {actions.sendNow.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
-                    Envoyer maintenant
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  onClick={() => run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré')}
+                  disabled={actions.sendNow.isPending || !broadcast.recipientCount}
+                  className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
+                >
+                  {actions.sendNow.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+                  Envoyer maintenant
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1026,11 +987,6 @@ export function CampaignDetail({
                 <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                   <Pencil className="size-3.5" /> Modifier
                 </Button>
-                {directSent && (
-                  <Button variant="outline" size="sm" onClick={() => void relaunch()} disabled={duplicating}>
-                    <RotateCcw className="size-3.5" /> Relancer
-                  </Button>
-                )}
                 <Button variant="outline" size="sm" onClick={() => void duplicate()} disabled={duplicating}>
                   {duplicating ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
                   Dupliquer
@@ -1063,21 +1019,6 @@ export function CampaignDetail({
                 </Button>
               </>
             )}
-          </div>
-        )}
-
-        {directErrors.length > 0 && (
-          <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5">
-            <p className="text-xs font-medium text-red-600 dark:text-red-400">
-              {directErrors.length} échec(s) d’envoi — détail (message exact de l’API) :
-            </p>
-            <ul className="mt-1.5 max-h-40 space-y-1 overflow-y-auto text-[11px] text-muted-foreground">
-              {directErrors.map((line, i) => (
-                <li key={i} className="break-words">
-                  {line}
-                </li>
-              ))}
-            </ul>
           </div>
         )}
       </div>
