@@ -20,11 +20,13 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { ApiError } from '@/lib/api-client';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useCreateTemplate, useDeleteTemplate, useTemplateEvents, useTemplates } from '@/hooks/useTemplates';
 import { cn } from '@/lib/utils';
 import {
   EVENT_SEVERITY_DOT,
+  HEADER_FORMAT_LABELS,
   TEMPLATE_CATEGORY_LABELS,
   TEMPLATE_STATUS_META,
   formatTemplateLanguage,
@@ -78,7 +80,7 @@ function ComponentPreview({ template }: { template: ZernioTemplate }) {
         )}
         {header?.format && header.format !== 'TEXT' && (
           <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
-            🖼 En-tête {header.format.toLowerCase()}
+            🖼 En-tête {HEADER_FORMAT_LABELS[header.format] ?? header.format.toLowerCase()}
           </p>
         )}
         {body?.text ? (
@@ -464,9 +466,11 @@ export default function TemplatesPage() {
                   ? 'Modèle créé (pré-approuvé)'
                   : 'Modèle créé — en attente de la revue Meta',
               );
-            } catch {
+            } catch (err) {
+              const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
               toast.error(
-                "Le modèle n'a pas pu être créé — vérifiez les champs (exemples de variables requis par Meta).",
+                "Le modèle n'a pas pu être créé. Vérifiez les champs (exemples de variables et média d'en-tête requis par Meta)." +
+                  detail,
               );
             }
           }}

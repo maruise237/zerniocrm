@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Check, Loader2, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Check, Loader2, Plus, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { TEMPLATE_LANGUAGES, extractPlaceholders } from '@/lib/whatsapp/template-meta';
 import type { ZernioTemplateComponent, ZernioTemplateComponentButton } from '@/lib/types';
@@ -23,8 +24,25 @@ const MAX_BODY = 1024;
 const MAX_HEADER = 60;
 const MAX_FOOTER = 60;
 const MAX_QUICK_REPLY = 25;
+const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
 
 type ButtonRow = { type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'; text: string; url: string; phone: string; sample: string };
+
+type HeaderKind = 'none' | 'text' | 'image' | 'video' | 'document';
+
+const HEADER_OPTIONS: { value: HeaderKind; label: string }[] = [
+  { value: 'none', label: 'Aucun' },
+  { value: 'text', label: 'Texte' },
+  { value: 'image', label: 'Image' },
+  { value: 'video', label: 'Vidéo' },
+  { value: 'document', label: 'Document' },
+];
+
+const HEADER_ACCEPT: Record<'image' | 'video' | 'document', string> = {
+  image: 'image/jpeg,image/png,image/webp,image/gif',
+  video: 'video/mp4,video/3gpp',
+  document: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt',
+};
 
 export interface CreateTemplatePayload {
   accountId: string;
@@ -53,8 +71,12 @@ export function TemplateCreateDialog({
   const [name, setName] = useState('');
   const [category, setCategory] = useState('MARKETING');
   const [language, setLanguage] = useState('fr');
-  const [headerType, setHeaderType] = useState<'none' | 'text'>('none');
+  const [headerType, setHeaderType] = useState<HeaderKind>('none');
   const [headerText, setHeaderText] = useState('');
+  const [headerMediaUrl, setHeaderMediaUrl] = useState('');
+  const [headerMediaName, setHeaderMediaName] = useState('');
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const [bodyText, setBodyText] = useState('');
   const [footerText, setFooterText] = useState('');
   const [buttons, setButtons] = useState<ButtonRow[]>([]);
@@ -69,6 +91,8 @@ export function TemplateCreateDialog({
     setLanguage('fr');
     setHeaderType('none');
     setHeaderText('');
+    setHeaderMediaUrl('');
+    setHeaderMediaName('');
     setBodyText('');
     setFooterText('');
     setButtons([]);
@@ -82,11 +106,16 @@ export function TemplateCreateDialog({
     [bodyPlaceholders, examples],
   );
 
+  const headerMediaKind =
+    headerType === 'image' || headerType === 'video' || headerType === 'document' ? headerType : null;
+
   const canSubmit =
     NAME_RE.test(name.trim()) &&
     category.length > 0 &&
     bodyText.trim().length > 0 &&
     (bodyPlaceholders.length === 0 || placeholderOk) &&
+    (!headerMediaKind || (headerMediaUrl.trim().length > 0 && !uploadingMedia)) &&
+    (category !== 'AUTHENTICATION' || !headerMediaKind) &&
     buttons.every((b) => {
       if (b.type === 'QUICK_REPLY') return b.text.trim().length > 0;
       if (b.type === 'URL') return b.text.trim().length > 0 && b.url.trim().length > 0;
@@ -97,10 +126,46 @@ export function TemplateCreateDialog({
     setButtons((prev) => [...prev, { type, text: '', url: '', phone: '', sample: '' }]);
   }
 
+  /** Upload the header media and keep the temporary public URL as the sample. */
+  async function uploadHeaderMedia(file: File | undefined | null) {
+    if (!file || !headerMediaKind) return;
+    if (file.size > MAX_MEDIA_BYTES) {
+      setErrors('Le fichier média doit faire moins de 25 Mo.');
+      return;
+    }
+    setUploadingMedia(true);
+    setErrors(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await apiFetch<{ url?: string; error?: string }>('/api/media/upload-direct', {
+        method: 'POST',
+        body: form,
+      });
+      if (res.url) {
+        setHeaderMediaUrl(res.url);
+        setHeaderMediaName(file.name);
+      } else {
+        setErrors("L’upload du média a échoué — réessayez.");
+      }
+    } catch (err) {
+      setErrors(err instanceof Error ? err.message : "L’upload du média a échoué.");
+    } finally {
+      setUploadingMedia(false);
+    }
+  }
+
   function buildComponents(): ZernioTemplateComponent[] {
     const components: ZernioTemplateComponent[] = [];
     if (headerType === 'text' && headerText.trim()) {
       components.push({ type: 'HEADER', format: 'TEXT', text: headerText.trim() });
+    }
+    if (headerMediaKind && headerMediaUrl.trim()) {
+      components.push({
+        type: 'HEADER',
+        format: headerMediaKind.toUpperCase(),
+        example: { header_handle: [headerMediaUrl.trim()] },
+      });
     }
     const bodyComponent: ZernioTemplateComponent = { type: 'BODY', text: bodyText.trim() };
     if (bodyPlaceholders.length > 0) {
@@ -152,6 +217,14 @@ export function TemplateCreateDialog({
     }
     if (buttons.length > 3) {
       setErrors('Maximum 3 boutons.');
+      return;
+    }
+    if (category === 'AUTHENTICATION' && headerMediaKind) {
+      setErrors('Les modèles de catégorie Authentification n’acceptent pas d’en-tête média.');
+      return;
+    }
+    if (headerMediaKind && !headerMediaUrl.trim()) {
+      setErrors('Ajoutez le média d’en-tête (fichier importé ou URL).');
       return;
     }
     setErrors(null);
@@ -218,7 +291,13 @@ export function TemplateCreateDialog({
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setCategory(c)}
+                  onClick={() => {
+                    setCategory(c);
+                    if (c === 'AUTHENTICATION' && headerMediaKind) {
+                      setHeaderType('text');
+                      setErrors('Authentification : Meta n’autorise pas d’en-tête média — passage en en-tête texte.');
+                    }
+                  }}
                   className={cn(
                     'rounded-lg border px-3 py-2 text-xs font-medium transition',
                     category === c
@@ -237,11 +316,23 @@ export function TemplateCreateDialog({
             <select
               id="tpl-header-type"
               value={headerType}
-              onChange={(e) => setHeaderType(e.target.value as 'none' | 'text')}
+              onChange={(e) => {
+                const next = e.target.value as HeaderKind;
+                if (category === 'AUTHENTICATION' && next !== 'none' && next !== 'text') {
+                  setHeaderType('text');
+                  setErrors('Authentification : Meta n’autorise pas d’en-tête média — choix remis sur « Texte ».');
+                  return;
+                }
+                setHeaderType(next);
+                setErrors(null);
+              }}
               className="h-10 w-full rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-sm outline-none"
             >
-              <option value="none">Aucun</option>
-              <option value="text">Texte</option>
+              {HEADER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             {headerType === 'text' && (
               <Input
@@ -250,6 +341,67 @@ export function TemplateCreateDialog({
                 placeholder="Titre de l’en-tête (max 60 caractères, sans variable)"
                 className="mt-1.5 text-sm"
               />
+            )}
+            {headerMediaKind && (
+              <div className="mt-2 space-y-2.5 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)]/40 p-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => mediaInputRef.current?.click()}
+                    disabled={uploadingMedia}
+                    className="flex items-center gap-1.5 rounded-lg bg-[var(--chat-surface)] px-3 py-2 text-xs font-medium text-muted-foreground transition hover:bg-[var(--chat-hover)] disabled:opacity-60"
+                  >
+                    {uploadingMedia ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="size-3.5" />
+                    )}
+                    {uploadingMedia ? 'Upload…' : headerMediaName ? 'Remplacer le fichier' : 'Importer le fichier'}
+                  </button>
+                  <span className="min-w-0 flex-1 truncate text-right text-[11px] text-muted-foreground">
+                    {headerMediaName || (headerMediaUrl ? 'URL fournie' : 'JPEG/PNG, MP4 ou PDF — max 25 Mo')}
+                  </span>
+                </div>
+                <input
+                  ref={mediaInputRef}
+                  type="file"
+                  accept={HEADER_ACCEPT[headerMediaKind]}
+                  className="hidden"
+                  onChange={(e) => void uploadHeaderMedia(e.target.files?.[0])}
+                />
+                {headerMediaUrl &&
+                  (headerMediaKind === 'image' ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={headerMediaUrl}
+                      alt="Aperçu de l’en-tête"
+                      className="max-h-40 w-full rounded-lg border border-[var(--chat-border)] object-contain"
+                    />
+                  ) : headerMediaKind === 'video' ? (
+                    <video
+                      src={headerMediaUrl}
+                      controls
+                      className="max-h-40 w-full rounded-lg border border-[var(--chat-border)]"
+                    />
+                  ) : null)}
+                <div className="space-y-1.5">
+                  <Label htmlFor="tpl-header-media-url" className="text-xs">
+                    URL du média (ou handle Meta avancé)
+                  </Label>
+                  <Input
+                    id="tpl-header-media-url"
+                    value={headerMediaUrl}
+                    onChange={(e) => setHeaderMediaUrl(e.target.value)}
+                    placeholder="https://…"
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Le fichier importé est hébergé temporairement (7 jours) et sert d’échantillon à la revue
+                    Meta. Pour un média déjà en ligne, collez son URL publique — ou un handle Meta obtenu par
+                    Resumable Upload pour un usage avancé.
+                  </p>
+                </div>
+              </div>
             )}
           </div>
 
