@@ -22,6 +22,8 @@ export interface CampaignVarValue {
 export interface CampaignVars {
   templateName: string;
   language: string;
+  /** Corps du template (pour construire l'aperçu du message à l'envoi direct). */
+  bodyText?: string;
   components: {
     type: 'body';
     parameters: { type: 'text'; text: string }[];
@@ -65,7 +67,17 @@ function migrate(raw: unknown): CampaignVars | null {
     language,
     components: Array.isArray(obj.components) ? (obj.components as CampaignVars['components']) : [],
     variableMapping: (obj.variableMapping ?? {}) as Record<string, CampaignVarValue>,
+    ...(typeof obj.bodyText === 'string' ? { bodyText: obj.bodyText } : {}),
   };
+}
+
+/** Remplace {{1}}, {{2}}… dans le corps par les valeurs résolues (ordre pos). */
+export function renderCampaignBody(cfg: CampaignVars, valuesByPos: Record<number, string>): string {
+  if (!cfg.bodyText) return '';
+  return cfg.bodyText.replace(/\{\{\s*(\d+)\s*\}\}/g, (match, n: string) => {
+    const value = valuesByPos[Number(n)];
+    return value !== undefined && value.trim() ? value : match;
+  });
 }
 
 /** Liste triée par position des variables, pour l'édition UI. */

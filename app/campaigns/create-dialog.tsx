@@ -261,6 +261,7 @@ export function CampaignCreateDialog({
         saveCampaignVars(broadcast.id, {
           templateName: selectedTemplate.name,
           language: effectiveLanguage,
+          bodyText: bodyComponent?.text ?? '',
           components,
           variableMapping,
         });

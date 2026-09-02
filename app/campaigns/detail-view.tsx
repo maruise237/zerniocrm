@@ -48,6 +48,7 @@ import {
   hideCampaign,
   loadCampaignVars,
   markDirectSent,
+  renderCampaignBody,
   saveCampaignVars,
   wasDirectSent,
   type CampaignVars,
@@ -600,6 +601,7 @@ function CampaignEditDialog({
         saveCampaignVars(broadcast.id, {
           templateName: varsCfg.templateName,
           language: varsCfg.language,
+          ...(varsCfg.bodyText !== undefined ? { bodyText: varsCfg.bodyText } : {}),
           components: varsCfg.components,
           variableMapping,
         });
@@ -755,6 +757,7 @@ export function CampaignDetail({
   const isScheduled = broadcast.status === 'scheduled';
   const isDone = broadcast.status === 'completed' || broadcast.status === 'failed' || broadcast.status === 'cancelled';
   const varsCfg = loadCampaignVars(broadcast.id);
+  const hasVars = !!varsCfg && Object.keys(varsCfg.variableMapping).length > 0;
 
   function run(fn: () => Promise<unknown>, success: string) {
     fn()
@@ -833,12 +836,22 @@ export function CampaignDetail({
           batch.map(async (recipient) => {
             try {
               const templateParams = await resolveParams(recipient, t.cfg, contactCache);
+              const list = campaignVarsToList(t.cfg);
+              const valuesByPos: Record<number, string> = {};
+              list.forEach((v, index) => {
+                valuesByPos[v.pos] = templateParams[index] ?? ' ';
+              });
+              const preview =
+                renderCampaignBody(t.cfg, valuesByPos) ||
+                (t.cfg.bodyText ?? '') ||
+                `[template] ${t.cfg.templateName}`;
               await apiFetch('/api/conversations', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   accountId: t.accountId,
                   participantId: (recipient.platformIdentifier ?? '').replace(/\D/g, ''),
+                  message: preview,
                   templateName: t.cfg.templateName,
                   templateLanguage: t.cfg.language,
                   templateParams,
@@ -886,6 +899,17 @@ export function CampaignDetail({
     } catch (err) {
       const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
       toast.error(`Impossible de lire la campagne chez Zernio.${detail}`);
+    }
+  }
+
+  // Choisit le bon moteur d'envoi : direct (valeurs réelles par destinataire)
+  // quand la campagne est personnalisée, sinon envoi groupé Zernio.
+  async function sendCampaign() {
+    if (!broadcast) return;
+    if (hasVars) {
+      await sendDirectNow();
+    } else {
+      await run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré');
     }
   }
 
@@ -956,8 +980,13 @@ export function CampaignDetail({
         suffix: '',
         copyRecipients: true,
       });
-      await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
-      toast.success(`Relance de « ${copy.name} » envoyée.`);
+      const copyCfg = loadCampaignVars(copy.id);
+      if (copyCfg && Object.keys(copyCfg.variableMapping).length > 0) {
+        await sendDirectNow({ id: copy.id, accountId: copy.accountId, cfg: copyCfg });
+      } else {
+        await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
+        toast.success(`Relance de « ${copy.name} » envoyée.`);
+      }
       onChanged();
       onSelectBroadcast(copy.id);
     } catch (err) {
@@ -1024,6 +1053,14 @@ export function CampaignDetail({
           </div>
         </div>
 
+        {hasVars && isDraft && (
+          <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
+            ℹ️ Campagne personnalisée : Zernio n’enregistre pas les variables d’une campagne (vérifié avec
+            « Inspecter ») — l’envoi se fait donc directement, destinataire par destinataire, avec les
+            vraies valeurs (même mécanisme que l’envoi d’un modèle dans une conversation).
+          </p>
+        )}
+
         {(isDraft || isScheduled || isDone) && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {isDraft && (
@@ -1031,17 +1068,34 @@ export function CampaignDetail({
                 <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
                   <Users className="size-3.5" /> Destinataires
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setScheduling(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setScheduling(true)}
+                  disabled={hasVars}
+                  title={
+                    hasVars
+                      ? 'L’envoi programmé de Zernio ne peut pas personnaliser les variables — utilisez « Envoyer maintenant » (direct).'
+                      : undefined
+                  }
+                >
                   <CalendarClock className="size-3.5" /> Programmer
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré')}
-                  disabled={actions.sendNow.isPending || !broadcast.recipientCount}
+                  onClick={() => void sendCampaign()}
+                  disabled={
+                    (hasVars ? directBusy : actions.sendNow.isPending) ||
+                    !broadcast.recipientCount
+                  }
                   className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
                 >
-                  {actions.sendNow.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
-                  Envoyer maintenant
+                  {(hasVars ? directBusy : actions.sendNow.isPending) ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Play className="size-3.5" />
+                  )}
+                  {hasVars ? 'Envoyer maintenant (personnalisé)' : 'Envoyer maintenant'}
                 </Button>
                 <Button
                   variant="ghost"
@@ -1105,6 +1159,21 @@ export function CampaignDetail({
                 </Button>
               </>
             )}
+          </div>
+        )}
+
+        {directErrors.length > 0 && (
+          <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5">
+            <p className="text-xs font-medium text-red-600 dark:text-red-400">
+              {directErrors.length} échec(s) d’envoi — détail (message exact de l’API) :
+            </p>
+            <ul className="mt-1.5 max-h-40 space-y-1 overflow-y-auto text-[11px] text-muted-foreground">
+              {directErrors.map((line, i) => (
+                <li key={i} className="break-words">
+                  {line}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

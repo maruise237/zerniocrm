@@ -34,8 +34,10 @@ import { apiFetch, ApiError } from '@/lib/api-client';
 import {
   duplicateBroadcast,
   hideCampaign,
+  loadCampaignVars,
   loadHiddenCampaignIds,
 } from '@/lib/campaigns/personalization';
+import { sendPersonalizedCampaign } from '@/lib/campaigns/direct-send';
 import { cn } from '@/lib/utils';
 import { formatInTimezone, getTimezoneSetting } from '@/lib/timezone';
 import { BROADCAST_STATUS_META, formatTemplateLanguage } from '@/lib/whatsapp/template-meta';
@@ -251,8 +253,24 @@ export default function CampaignsPage() {
         suffix: '',
         copyRecipients: true,
       });
-      await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
-      toast.success(`Relance de « ${copy.name} » envoyée.`);
+      const copyCfg = loadCampaignVars(copy.id);
+      if (copyCfg && Object.keys(copyCfg.variableMapping).length > 0) {
+        const result = await sendPersonalizedCampaign({
+          broadcastId: copy.id,
+          accountId: copy.accountId,
+          cfg: copyCfg,
+        });
+        if (result.failures.length === 0) {
+          toast.success(`Relance de « ${copy.name} » : ${result.sent} message(s) envoyé(s).`);
+        } else {
+          toast.warning(
+            `Relance de « ${copy.name} » : ${result.sent} envoyé(s), ${result.failures.length} échec(s).${result.failures[0] ? ` Ex. : ${result.failures[0].slice(0, 220)}` : ''}`,
+          );
+        }
+      } else {
+        await apiFetch(`/api/broadcasts/${encodeURIComponent(copy.id)}/send`, { method: 'POST' });
+        toast.success(`Relance de « ${copy.name} » envoyée.`);
+      }
       refresh();
       setSelectedId(copy.id);
     } catch (err) {
