@@ -2,6 +2,15 @@ import { hasApiKey, missingKeyResponse, proxy } from '@/lib/server/zernio';
 
 type Ctx = { params: Promise<{ contactId: string }> };
 
+export async function GET(req: Request, ctx: Ctx) {
+  if (!hasApiKey()) return missingKeyResponse();
+  const { contactId } = await ctx.params;
+  return proxy({
+    req,
+    path: `/v1/contacts/${encodeURIComponent(contactId)}`,
+  });
+}
+
 export async function PATCH(req: Request, ctx: Ctx) {
   if (!hasApiKey()) return missingKeyResponse();
   const { contactId } = await ctx.params;

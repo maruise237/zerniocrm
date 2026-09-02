@@ -237,6 +237,27 @@ export function CampaignCreateDialog({
       const broadcast = created.broadcast;
       if (!broadcast?.id) throw new Error('no-broadcast');
 
+      // Persiste la personnalisation localement : le moteur d'envoi direct
+      // (par destinataire) en a besoin, Zernio ne la relit pas.
+      if (placeholders.length > 0) {
+        try {
+          window.localStorage.setItem(
+            `crm-campaign-vars:${broadcast.id}`,
+            JSON.stringify({
+              templateName: selectedTemplate.name,
+              language: effectiveLanguage,
+              vars: placeholders.map((n) => ({
+                pos: n,
+                field: mapping[n].field,
+                custom: mapping[n].field === 'custom' ? mapping[n].custom.trim() : '',
+              })),
+            }),
+          );
+        } catch {
+          // stockage indisponible — l'envoi direct sera désactivé avec un message
+        }
+      }
+
       // Step 2 : ajout des destinataires choisis (numéros, contacts, tags).
       const problems: string[] = [];
       let totalAdded = 0;

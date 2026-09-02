@@ -36,7 +36,7 @@ import {
 } from '@/hooks/useBroadcasts';
 import { cn } from '@/lib/utils';
 import { parseContactFile } from '@/lib/contacts/import-parser';
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, ApiError } from '@/lib/api-client';
 import { formatInTimezone, getTimezoneSetting, zonedLocalToUtcISO } from '@/lib/timezone';
 import {
   BROADCAST_STATUS_META,
@@ -44,11 +44,45 @@ import {
   RECIPIENT_STATUS_LABELS,
   formatTemplateLanguage,
 } from '@/lib/whatsapp/template-meta';
-import type { ZernioBroadcast, ZernioContact } from '@/lib/types';
+import type { ZernioBroadcast, ZernioBroadcastRecipient, ZernioContact } from '@/lib/types';
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
   return formatInTimezone(value, getTimezoneSetting());
+}
+
+// ─── Personnalisation locale des campagnes (envoi direct par destinataire) ──
+// Zernio ne restitue pas le variableMapping d'une campagne ; on persiste la
+// configuration en local pour pouvoir envoyer chaque message avec les vraies
+// valeurs (même chemin que l'envoi d'un template dans une conversation).
+interface CampaignVars {
+  templateName: string;
+  language: string;
+  vars: { pos: number; field: string; custom?: string }[];
+}
+
+const varsStorageKey = (broadcastId: string) => `crm-campaign-vars:${broadcastId}`;
+const directSentKey = (broadcastId: string) => `crm-campaign-direct-sent:${broadcastId}`;
+
+function loadCampaignVars(broadcastId: string): CampaignVars | null {
+  try {
+    const raw = window.localStorage.getItem(varsStorageKey(broadcastId));
+    return raw ? (JSON.parse(raw) as CampaignVars) : null;
+  } catch {
+    return null;
+  }
+}
+
+function campaignHasVars(broadcastId: string): boolean {
+  return (loadCampaignVars(broadcastId)?.vars.length ?? 0) > 0;
+}
+
+function wasDirectSent(broadcastId: string): boolean {
+  try {
+    return window.localStorage.getItem(directSentKey(broadcastId)) === '1';
+  } catch {
+    return false;
+  }
 }
 
 function StatCard({ label, value, className }: { label: string; value: number | string; className?: string }) {
@@ -537,6 +571,7 @@ export function CampaignDetail({
   const actions = useBroadcastActions();
   const [adding, setAdding] = useState(false);
   const [scheduling, setScheduling] = useState(false);
+  const [directBusy, setDirectBusy] = useState(false);
 
   if (isLoading && !broadcast) {
     return (
@@ -557,6 +592,9 @@ export function CampaignDetail({
   const meta = BROADCAST_STATUS_META[broadcast.status];
   const isDraft = broadcast.status === 'draft';
   const isScheduled = broadcast.status === 'scheduled';
+  const varsCfg = loadCampaignVars(broadcast.id);
+  const hasVars = (varsCfg?.vars.length ?? 0) > 0;
+  const directSent = wasDirectSent(broadcast.id);
 
   function run(fn: () => Promise<unknown>, success: string) {
     fn()
@@ -566,6 +604,116 @@ export function CampaignDetail({
         refresh();
       })
       .catch(() => toast.error('L’action a échoué.'));
+  }
+
+  // Résout les valeurs d'une variable pour un destinataire donné.
+  async function resolveParams(
+    recipient: ZernioBroadcastRecipient,
+    cfg: CampaignVars,
+    contactCache: Map<string, { email?: string; company?: string }>,
+  ): Promise<string[]> {
+    const phone = (recipient.platformIdentifier ?? '').replace(/\D/g, '');
+    const values: string[] = [];
+    for (const v of [...cfg.vars].sort((a, b) => a.pos - b.pos)) {
+      let value = '';
+      if (v.field === 'custom') value = v.custom ?? '';
+      else if (v.field === 'phone') value = phone ? `+${phone}` : '';
+      else if (v.field === 'name') value = recipient.contactName ?? '';
+      else if (v.field === 'email' || v.field === 'company') {
+        if (recipient.contactId) {
+          if (!contactCache.has(recipient.contactId)) {
+            try {
+              const detail = await apiFetch<{ contact?: { email?: string; company?: string } }>(
+                `/api/contacts/${encodeURIComponent(recipient.contactId)}`,
+              );
+              contactCache.set(recipient.contactId, {
+                email: detail.contact?.email,
+                company: detail.contact?.company,
+              });
+            } catch {
+              contactCache.set(recipient.contactId, {});
+            }
+          }
+          const info = contactCache.get(recipient.contactId);
+          value = (v.field === 'email' ? info?.email : info?.company) ?? '';
+        }
+      }
+      // Meta refuse un paramètre vide : une espace évite l'erreur 132000.
+      values.push(value.trim() ? value : ' ');
+    }
+    return values;
+  }
+
+  // Envoi direct, destinataire par destinataire — le même chemin que l'envoi
+  // d'un template dans une conversation (valeurs réelles, pas de mapping).
+  async function sendDirectNow() {
+    if (!broadcast || directBusy || !varsCfg) return;
+    setDirectBusy(true);
+    try {
+      const page = await apiFetch<{
+        recipients?: ZernioBroadcastRecipient[];
+        pagination?: { total?: number };
+      }>(`/api/broadcasts/${encodeURIComponent(broadcast.id)}/recipients?limit=500`);
+      const recipients = (page.recipients ?? []).filter((r) => r.platformIdentifier);
+      if (recipients.length === 0) {
+        toast.error('Aucun destinataire avec numéro — ajoutez-en d’abord.');
+        return;
+      }
+      if ((page.pagination?.total ?? recipients.length) > recipients.length) {
+        toast.warning(
+          `Attention : ${page.pagination?.total} destinataires au total, seuls ${recipients.length} seront traités (limite d’un lot).`,
+        );
+      }
+
+      const contactCache = new Map<string, { email?: string; company?: string }>();
+      let sent = 0;
+      const failures: string[] = [];
+      const batchSize = 5;
+      for (let i = 0; i < recipients.length; i += batchSize) {
+        const batch = recipients.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(async (recipient) => {
+            try {
+              const templateParams = await resolveParams(recipient, varsCfg, contactCache);
+              await apiFetch('/api/conversations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  accountId: broadcast.accountId,
+                  participantId: (recipient.platformIdentifier ?? '').replace(/\D/g, ''),
+                  templateName: varsCfg.templateName,
+                  templateLanguage: varsCfg.language,
+                  templateParams,
+                }),
+              });
+              sent += 1;
+            } catch (err) {
+              const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+              failures.push(`${recipient.contactName || recipient.platformIdentifier}: ${detail || 'erreur'}`);
+            }
+          }),
+        );
+      }
+
+      try {
+        window.localStorage.setItem(directSentKey(broadcast.id), '1');
+      } catch {
+        // ignore
+      }
+      if (failures.length === 0) {
+        toast.success(`${sent} message(s) envoyé(s) avec personnalisation.`);
+      } else {
+        toast.warning(
+          `${sent} envoyé(s), ${failures.length} échec(s).${failures[0] ? ` Ex. : ${failures[0].slice(0, 160)}` : ''}`,
+        );
+      }
+      refresh();
+    } catch (err) {
+      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      toast.error(`L’envoi direct a échoué.${detail}`);
+    } finally {
+      setDirectBusy(false);
+    }
   }
 
   return (
@@ -610,6 +758,19 @@ export function CampaignDetail({
               {broadcast.scheduledAt && ` · envoi prévu le ${formatDate(broadcast.scheduledAt)}`}
               {broadcast.completedAt && ` · terminée le ${formatDate(broadcast.completedAt)}`}
             </p>
+            {hasVars && isDraft && (
+              <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
+                ℹ️ Cette campagne utilise la personnalisation : l’envoi se fait directement, destinataire
+                par destinataire, avec les vraies valeurs (nom du contact, valeurs fixes…) — même principe
+                que l’envoi d’un modèle dans une conversation.
+              </p>
+            )}
+            {directSent && (
+              <p className="mt-3 rounded-lg bg-[var(--chat-warning-bg)] px-3 py-2 text-[11px] leading-relaxed text-[var(--chat-warning-fg)]">
+                Envoi direct déjà effectué pour cette campagne — les statuts de livraison ci-dessous ne
+                sont pas suivis par Zernio pour cet envoi.
+              </p>
+            )}
           </div>
         </div>
 
@@ -620,18 +781,40 @@ export function CampaignDetail({
                 <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
                   <Users className="size-3.5" /> Destinataires
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setScheduling(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setScheduling(true)}
+                  disabled={hasVars}
+                  title={
+                    hasVars
+                      ? 'La programmation utilise l’envoi Zernio qui ne personnalise pas — utilisez « Envoyer maintenant ».'
+                      : undefined
+                  }
+                >
                   <CalendarClock className="size-3.5" /> Programmer
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré')}
-                  disabled={actions.sendNow.isPending || !broadcast.recipientCount}
-                  className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
-                >
-                  {actions.sendNow.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
-                  Envoyer maintenant
-                </Button>
+                {hasVars ? (
+                  <Button
+                    size="sm"
+                    onClick={() => void sendDirectNow()}
+                    disabled={directBusy || !broadcast.recipientCount || !varsCfg}
+                    className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
+                  >
+                    {directBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+                    {directBusy ? 'Envoi en cours…' : 'Envoyer maintenant (personnalisé)'}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => run(() => actions.sendNow.mutateAsync(broadcast.id), 'Envoi démarré')}
+                    disabled={actions.sendNow.isPending || !broadcast.recipientCount}
+                    className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
+                  >
+                    {actions.sendNow.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+                    Envoyer maintenant
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
