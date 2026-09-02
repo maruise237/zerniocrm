@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useBroadcasts } from '@/hooks/useBroadcasts';
 import { cn } from '@/lib/utils';
+import { formatInTimezone, getTimezoneSetting } from '@/lib/timezone';
 import { BROADCAST_STATUS_META, formatTemplateLanguage } from '@/lib/whatsapp/template-meta';
 import type { ZernioBroadcast } from '@/lib/types';
 import { CampaignCreateDialog } from './create-dialog';
@@ -26,9 +27,7 @@ import { CampaignDetail } from './detail-view';
 
 function formatListDate(value?: string | null): string {
   if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  return formatInTimezone(value, getTimezoneSetting());
 }
 
 function CampaignRow({

@@ -37,6 +37,7 @@ import {
 import { cn } from '@/lib/utils';
 import { parseContactFile } from '@/lib/contacts/import-parser';
 import { apiFetch } from '@/lib/api-client';
+import { formatInTimezone, getTimezoneSetting, zonedLocalToUtcISO } from '@/lib/timezone';
 import {
   BROADCAST_STATUS_META,
   RECIPIENT_STATUS_BADGE,
@@ -47,9 +48,7 @@ import type { ZernioBroadcast, ZernioContact } from '@/lib/types';
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  return formatInTimezone(value, getTimezoneSetting());
 }
 
 function StatCard({ label, value, className }: { label: string; value: number | string; className?: string }) {
@@ -404,12 +403,17 @@ function ScheduleDialog({
 }) {
   const { schedule } = useBroadcastActions();
   const [value, setValue] = useState('');
+  const timeZone = getTimezoneSetting();
 
   async function submit() {
     if (!value) return;
     try {
-      await schedule.mutateAsync({ id: broadcast.id, scheduledAt: new Date(value).toISOString() });
-      toast.success('Campagne programmée');
+      // L'heure saisie est une heure « murale » dans le fuseau actif du CRM.
+      await schedule.mutateAsync({
+        id: broadcast.id,
+        scheduledAt: zonedLocalToUtcISO(value, timeZone),
+      });
+      toast.success(`Campagne programmée (${timeZone})`);
       onClose();
     } catch {
       toast.error('La programmation a échoué.');
@@ -421,7 +425,10 @@ function ScheduleDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Programmer l’envoi</DialogTitle>
-          <DialogDescription>La campagne partira automatiquement à la date choisie (heure locale).</DialogDescription>
+          <DialogDescription>
+            La campagne partira automatiquement à cette heure — interprétée dans votre fuseau actif :{' '}
+            <span className="font-medium text-foreground">{timeZone}</span>
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-1.5">
           <Label htmlFor="schedule-at">Date et heure</Label>
@@ -429,9 +436,13 @@ function ScheduleDialog({
             id="schedule-at"
             type="datetime-local"
             value={value}
+            min={new Date(Date.now() - 60_000).toISOString().slice(0, 16)}
             onChange={(e) => setValue(e.target.value)}
             className="text-sm"
           />
+          <p className="text-[11px] text-muted-foreground">
+            Réglable dans Paramètres → Fuseau horaire &amp; heures (détection automatique par défaut).
+          </p>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={schedule.isPending}>
