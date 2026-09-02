@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   Smartphone,
   Users,
+  Workflow,
 } from 'lucide-react';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useConversations } from '@/hooks/useConversations';
@@ -205,6 +206,14 @@ export default function Home() {
               <LayoutTemplate className="h-4 w-4" />
             </Link>
             <Link
+              aria-label="Flows"
+              href="/flows"
+              title="Flows WhatsApp"
+              className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] lg:flex"
+            >
+              <Workflow className="h-4 w-4" />
+            </Link>
+            <Link
               aria-label="Paramètres"
               href="/settings"
               className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] sm:flex"
@@ -243,6 +252,13 @@ export default function Home() {
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
               >
                 <Users className="h-4 w-4" /> Contacts & import
+              </Link>
+              <Link
+                href="/flows"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
+              >
+                <Workflow className="h-4 w-4" /> Flows WhatsApp
               </Link>
               <Link
                 href="/templates"

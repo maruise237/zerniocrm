@@ -108,10 +108,30 @@ export interface TemplateComponent {
   [k: string]: unknown;
 }
 
+export interface ZernioFlowValidationError {
+  error?: string;
+  error_type?: string;
+  message?: string;
+  line_start?: number;
+  line_end?: number;
+  column_start?: number;
+  column_end?: number;
+  [k: string]: unknown;
+}
+
 export interface ZernioFlow {
   id: string;
   name: string;
   status: string;
+  categories?: string[];
+  /** 1-based version within the flow's clone lineage (Zernio-tracked). */
+  version?: number;
+  /** Stable group key for the flow's version lineage (the root flow's ID). */
+  lineageId?: string;
+  validation_errors?: ZernioFlowValidationError[];
+  json_version?: string;
+  endpoint_uri?: string;
+  preview?: { preview_url?: string | null; expires_at?: string | null };
 }
 
 export type WhatsAppTemplateStatus =
