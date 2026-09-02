@@ -51,8 +51,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-dvh overflow-y-auto bg-[var(--chat-canvas)] px-4 py-5 sm:px-6 sm:py-8">
-      <div className="mx-auto max-w-2xl">
+    <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6 sm:py-8">
         <header className="flex items-center gap-2"><Link href="/" aria-label="Retour à la boîte de réception" className="touch-target flex items-center justify-center rounded-xl text-muted-foreground transition hover:bg-[var(--chat-hover)] hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-white"><MessageCircle className="h-5 w-5" /></div><div className="flex-1"><h1 className="text-base font-semibold tracking-tight">Paramètres</h1><p className="text-xs text-muted-foreground">WhatsApp CRM</p></div><button onClick={toggleTheme} aria-label={dark ? 'Activer le thème clair' : 'Activer le thème sombre'} className="touch-target flex items-center justify-center rounded-xl text-muted-foreground transition hover:bg-[var(--chat-hover)] hover:text-foreground">{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</button></header>
 
         <section className="mt-8"><div className="mb-4"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">Canal unique</p><h2 className="mt-1 text-2xl font-bold tracking-tight">Connecter votre compte Zernio</h2><p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">Utilisez votre propre clé API pour isoler les messages et les conversations de votre espace WhatsApp.</p></div>
@@ -66,6 +67,7 @@ export default function SettingsPage() {
         <section className="mt-6 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-5"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500"><ShieldCheck className="h-5 w-5" /></div><h3 className="mt-4 text-sm font-semibold">Données isolées</h3><p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Chaque compte possède son propre token de webhook et ses propres messages dans Neon Postgres.</p></div><div className="rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-5"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500"><MessageCircle className="h-5 w-5" /></div><h3 className="mt-4 text-sm font-semibold">WhatsApp uniquement</h3><p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Aucun sélecteur omnicanal, aucune attribution d’équipe : une inbox directe, rapide et lisible.</p></div></section>
 
         <footer className="mt-8 flex items-center justify-center gap-2 pb-5 text-xs text-muted-foreground"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Connexion sécurisée par Neon Auth</footer>
+      </div>
       </div>
     </main>
   );

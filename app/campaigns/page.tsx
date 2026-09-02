@@ -71,7 +71,7 @@ function CampaignRow({
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
           <span className="truncate text-sm font-semibold">{broadcast.name}</span>
-          <span className="shrink-0 text-[10px] text-muted-foreground">
+          <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:block">
             {formatListDate(broadcast.createdAt)}
           </span>
         </span>
@@ -140,8 +140,9 @@ export default function CampaignsPage() {
     : null;
 
   return (
-    <main className="min-h-dvh overflow-y-auto bg-[var(--chat-canvas)] px-4 py-5 sm:px-6 sm:py-8">
-      <div className="mx-auto max-w-3xl">
+    <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
         <header className="flex items-center gap-2">
           <Link
             href="/"
@@ -220,6 +221,7 @@ export default function CampaignsPage() {
           <MessageCircle className="size-3.5" /> Les campagnes utilisent les modèles approuvés — chaque
           destinataire compte un message.
         </footer>
+      </div>
       </div>
 
       <CampaignCreateDialog

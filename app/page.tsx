@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   Archive,
   CheckCheck,
+  Contact,
   LayoutTemplate,
   Megaphone,
   Menu,
@@ -166,6 +167,14 @@ export default function Home() {
               <Megaphone className="h-4 w-4" />
             </Link>
             <Link
+              aria-label="Contacts"
+              href="/contacts"
+              title="Contacts et import"
+              className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] lg:flex"
+            >
+              <Contact className="h-4 w-4" />
+            </Link>
+            <Link
               aria-label="Modèles"
               href="/templates"
               title="Modèles WhatsApp"
@@ -205,6 +214,13 @@ export default function Home() {
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
               >
                 <Megaphone className="h-4 w-4" /> Campagnes WhatsApp
+              </Link>
+              <Link
+                href="/contacts"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
+              >
+                <Users className="h-4 w-4" /> Contacts & import
               </Link>
               <Link
                 href="/templates"

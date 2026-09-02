@@ -250,8 +250,9 @@ export default function TemplatesPage() {
   }
 
   return (
-    <main className="min-h-dvh overflow-y-auto bg-[var(--chat-canvas)] px-4 py-5 sm:px-6 sm:py-8">
-      <div className="mx-auto max-w-3xl">
+    <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
         <header className="flex items-center gap-2">
           <Link
             href="/"
@@ -438,6 +439,7 @@ export default function TemplatesPage() {
           </div>
           <EventsList events={events} loading={isLoading} />
         </section>
+      </div>
       </div>
 
       {effectiveAccountId && (

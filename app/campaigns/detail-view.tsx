@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ArrowLeft,
   CalendarClock,
   CheckCheck,
+  FileUp,
   Loader2,
   MessageSquareText,
   Play,
@@ -32,6 +33,7 @@ import {
   useBroadcastRecipients,
 } from '@/hooks/useBroadcasts';
 import { cn } from '@/lib/utils';
+import { parseContactFile } from '@/lib/contacts/import-parser';
 import {
   BROADCAST_STATUS_META,
   RECIPIENT_STATUS_BADGE,
@@ -49,9 +51,9 @@ function formatDate(value?: string | null): string {
 
 function StatCard({ label, value, className }: { label: string; value: number | string; className?: string }) {
   return (
-    <div className={cn('rounded-xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-3', className)}>
-      <p className="text-xl font-bold tabular-nums leading-none">{value}</p>
-      <p className="mt-1.5 text-[11px] text-muted-foreground">{label}</p>
+    <div className={cn('min-w-0 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-3', className)}>
+      <p className="text-lg font-bold tabular-nums leading-none sm:text-xl">{value}</p>
+      <p className="mt-1.5 break-words text-[11px] leading-snug text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -64,7 +66,12 @@ function AddRecipientsDialog({
   onClose: () => void;
 }) {
   const [phonesText, setPhonesText] = useState('');
-  const [mode, setMode] = useState<'phones' | 'segment'>('phones');
+  const [mode, setMode] = useState<'phones' | 'file' | 'segment'>('phones');
+  const [filePhones, setFilePhones] = useState<string[]>([]);
+  const [fileName, setFileName] = useState('');
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [readingFile, setReadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const add = useAddRecipients(broadcast.id);
 
   const phones = phonesText
@@ -73,6 +80,30 @@ function AddRecipientsDialog({
     .filter((clean) => /^\+?\d{8,15}$/.test(clean))
     .map((clean) => (clean.startsWith('+') ? clean : `+${clean}`));
 
+  async function handleFile(file: File | undefined | null) {
+    if (!file) return;
+    setReadingFile(true);
+    setFileError(null);
+    try {
+      const result = await parseContactFile(file);
+      const found = [...new Set(result.rows.map((r) => r.phone).filter((p): p is string => !!p))];
+      if (found.length === 0) {
+        setFileError(
+          'Aucun numéro de téléphone détecté — ajoutez une colonne « téléphone » ou « numéro » dans le fichier.',
+        );
+        setFilePhones([]);
+      } else {
+        setFilePhones(found);
+        setFileName(file.name);
+      }
+    } catch {
+      setFileError('Impossible de lire ce fichier (CSV, XLSX ou XLS attendu).');
+      setFilePhones([]);
+    } finally {
+      setReadingFile(false);
+    }
+  }
+
   async function submit() {
     if (mode === 'phones') {
       if (phones.length === 0) return;
@@ -80,6 +111,20 @@ function AddRecipientsDialog({
         const res = await add.mutateAsync({ phones });
         toast.success(
           `${res.added ?? 0} destinataire(s) ajouté(s)` +
+            (res.skipped ? `, ${res.skipped} ignoré(s)` : ''),
+        );
+        onClose();
+      } catch {
+        toast.error('L’ajout des destinataires a échoué.');
+      }
+      return;
+    }
+    if (mode === 'file') {
+      if (filePhones.length === 0) return;
+      try {
+        const res = await add.mutateAsync({ phones: filePhones });
+        toast.success(
+          `${res.added ?? 0} destinataire(s) ajouté(s) depuis le fichier` +
             (res.skipped ? `, ${res.skipped} ignoré(s)` : ''),
         );
         onClose();
@@ -114,7 +159,7 @@ function AddRecipientsDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setMode('phones')}
               className={cn(
@@ -124,7 +169,18 @@ function AddRecipientsDialog({
                   : 'border-[var(--chat-border)] text-muted-foreground',
               )}
             >
-              Numéros de téléphone
+              Numéros
+            </button>
+            <button
+              onClick={() => setMode('file')}
+              className={cn(
+                'rounded-lg border px-3 py-2 text-xs font-medium transition',
+                mode === 'file'
+                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  : 'border-[var(--chat-border)] text-muted-foreground',
+              )}
+            >
+              Fichier CSV/Excel
             </button>
             <button
               onClick={() => setMode('segment')}
@@ -136,10 +192,10 @@ function AddRecipientsDialog({
                   : 'border-[var(--chat-border)] text-muted-foreground disabled:opacity-50',
               )}
             >
-              Depuis le segment
+              Segment
             </button>
           </div>
-          {mode === 'phones' ? (
+          {mode === 'phones' && (
             <div className="space-y-1.5">
               <Label htmlFor="add-phones">Numéros (un par ligne)</Label>
               <Textarea
@@ -154,7 +210,42 @@ function AddRecipientsDialog({
                 <p className="text-[11px] text-emerald-500">{phones.length} numéro(s) valide(s)</p>
               )}
             </div>
-          ) : (
+          )}
+          {mode === 'file' && (
+            <div className="space-y-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={readingFile}
+                className="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-[var(--chat-border)] bg-[var(--chat-input)]/40 px-4 py-6 text-center transition hover:border-emerald-500/50"
+              >
+                {readingFile ? (
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                ) : (
+                  <FileUp className="size-5 text-muted-foreground" />
+                )}
+                <span className="text-xs font-medium">
+                  {fileName || 'Choisir un fichier (CSV, XLSX)'}
+                </span>
+                {filePhones.length > 0 && (
+                  <span className="text-[11px] text-emerald-500">
+                    {filePhones.length} numéro(s) détecté(s)
+                  </span>
+                )}
+              </button>
+              {fileError && <p className="text-[11px] text-red-500">{fileError}</p>}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.xlsx,.xls,.txt"
+                className="hidden"
+                onChange={(e) => void handleFile(e.target.files?.[0])}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                La colonne « téléphone / numéro » est détectée automatiquement ; les doublons sont ignorés.
+              </p>
+            </div>
+          )}
+          {mode === 'segment' && (
             <p className="rounded-lg bg-[var(--chat-warning-bg)] px-3 py-2.5 text-xs leading-relaxed text-[var(--chat-warning-fg)]">
               Ajoute automatiquement tous les contacts portant les tags du segment de cette campagne.
             </p>
@@ -164,7 +255,14 @@ function AddRecipientsDialog({
           <Button variant="ghost" onClick={onClose} disabled={add.isPending}>
             Annuler
           </Button>
-          <Button onClick={() => void submit()} disabled={add.isPending || (mode === 'phones' && phones.length === 0)}>
+          <Button
+            onClick={() => void submit()}
+            disabled={
+              add.isPending ||
+              (mode === 'phones' && phones.length === 0) ||
+              (mode === 'file' && filePhones.length === 0)
+            }
+          >
             {add.isPending ? <Loader2 className="size-4 animate-spin" /> : <Users className="size-4" />}
             Ajouter
           </Button>
@@ -435,7 +533,7 @@ export function CampaignDetail({
         <StatCard label="Livrés" value={broadcast.deliveredCount ?? 0} className="text-indigo-500" />
         <StatCard label="Lus" value={broadcast.readCount ?? 0} className="text-emerald-500" />
         <StatCard label="Échecs" value={broadcast.failedCount ?? 0} className="text-red-500" />
-        <StatCard label="Statut" value={meta?.label ?? broadcast.status} />
+        <StatCard label="Statut" value={meta?.label ?? broadcast.status} className="col-span-3 sm:col-span-1" />
       </div>
 
       <div className="rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4 shadow-sm sm:p-5">
