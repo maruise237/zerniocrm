@@ -4,7 +4,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: { default: 'WhatsApp CRM — Inbox client', template: '%s — WhatsApp CRM' },
-  description: 'Une boîte de réception WhatsApp claire, rapide et pensée pour le mobile.',
+  description:
+    'Une boîte de réception WhatsApp claire, rapide et pensée pour le mobile — propulsée par Kamtech.',
   applicationName: 'WhatsApp CRM',
   icons: { icon: '/icon.svg' },
 };

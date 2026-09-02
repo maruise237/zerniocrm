@@ -169,7 +169,7 @@ export default function Home() {
             </div>
             <div>
               <p className="text-sm font-semibold tracking-tight">WhatsApp CRM</p>
-              <p className="text-[11px] text-muted-foreground">Inbox client</p>
+              <p className="text-[11px] text-muted-foreground">Inbox client · par Kamtech</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -391,9 +391,10 @@ export default function Home() {
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Données Zernio
           </span>
-          <Link href="/settings" className="hover:text-foreground">
-            Configurer
-          </Link>
+          <span className="flex items-center gap-2">
+            <span className="hidden sm:inline">Propulsé par <span className="font-medium text-foreground">Kamtech</span></span>
+            <Link href="/settings" className="hover:text-foreground">Configurer</Link>
+          </span>
         </div>
       </aside>
 

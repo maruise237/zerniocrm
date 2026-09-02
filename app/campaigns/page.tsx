@@ -216,9 +216,10 @@ export default function CampaignsPage() {
           </section>
         )}
 
-        <footer className="mt-8 flex items-center justify-center gap-1.5 pb-5 text-[11px] text-muted-foreground">
-          <MessageCircle className="size-3.5" /> Les campagnes utilisent les modèles approuvés — chaque
-          destinataire compte un message.
+        <footer className="mt-8 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 pb-5 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5"><MessageCircle className="size-3.5" /> Les campagnes utilisent les modèles approuvés — chaque destinataire compte un message.</span>
+          <span className="opacity-50">·</span>
+          <span>Propulsé par <span className="font-medium text-foreground">Kamtech</span> · WhatsApp CRM</span>
         </footer>
       </div>
       </div>

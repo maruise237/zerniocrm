@@ -441,6 +441,10 @@ export default function TemplatesPage() {
           </div>
           <EventsList events={events} loading={isLoading} />
         </section>
+
+        <p className="mt-8 pb-4 text-center text-[11px] text-muted-foreground">
+          Propulsé par <span className="font-medium text-foreground">Kamtech</span> · WhatsApp CRM
+        </p>
       </div>
       </div>
 
