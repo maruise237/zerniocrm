@@ -458,6 +458,45 @@ export function CampaignCreateDialog({
                 « Nom du contact » est remplacé individuellement au moment de l’envoi ; la valeur fixe est
                 identique pour tous les destinataires.
               </p>
+
+              <div className="rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)]/50 p-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Exemple de rendu
+                </p>
+                <p className="mt-1 text-xs leading-relaxed">
+                  {(bodyComponent?.text ?? '').split(/(\{\{\d+\}\})/g).map((part, i) => {
+                    const match = /^\{\{(\d+)\}\}$/.exec(part);
+                    if (!match) return <span key={i}>{part}</span>;
+                    const row = mapping[Number(match[1])];
+                    const sample =
+                      row?.field === 'custom'
+                        ? row.custom.trim() || '…'
+                        : row?.field === 'name'
+                          ? 'Marie'
+                          : row?.field === 'phone'
+                            ? '+237612345678'
+                            : row?.field === 'email'
+                              ? 'client@mail.com'
+                              : row?.field === 'company'
+                                ? 'ACME SARL'
+                                : part;
+                    return (
+                      <span key={i} className="rounded bg-emerald-500/15 px-1 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
+                        {sample}
+                      </span>
+                    );
+                  })}
+                </p>
+              </div>
+
+              {placeholders.some((n) => (mapping[n]?.field ?? 'custom') !== 'custom') && (
+                <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                  ⚠️ Les champs « Nom », « Entreprise », « E-mail »… sont lus sur la fiche contact de
+                  chaque destinataire au moment de l’envoi : ajoutez vos destinataires comme contacts
+                  (page Contacts / import) pour garantir la personnalisation. À défaut, préférez « Valeur
+                  fixe ».
+                </p>
+              )}
             </div>
           )}
 
