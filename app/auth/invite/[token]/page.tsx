@@ -42,9 +42,11 @@ export default function InviteAcceptPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
-      const body = await res.json().catch(() => null);
+      const body = await res.json().catch(() => null) as (PreviewData & { error?: string }) | null;
       if (!res.ok || !body) {
-        setPreview({ status: 'invalid', error: "Impossible de vérifier ce lien d'invitation." });
+        // Le serveur renvoie un message explicite quand il sait pourquoi
+        // (base injoignable, migrations manquantes…) — l'afficher tel quel.
+        setPreview({ status: 'invalid', error: body?.error ?? "Impossible de vérifier ce lien d'invitation." });
         return;
       }
       setPreview(body as PreviewData);

@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '@/lib/db';
 import { hashInviteToken } from '@/lib/team/tokens';
 import { roleLabel } from '@/lib/team/roles';
+import { classifyDbError } from '@/lib/server/workspace';
 
 // Route PUBLIQUE (exclue du proxy/middleware) : vérifie un jeton de lien
 // magique et renvoie les informations affichables sur la page d'acceptation.
@@ -37,11 +38,21 @@ export async function POST(request: Request) {
       .from(schema.teamInvitations)
       .where(eq(schema.teamInvitations.tokenHash, hashInviteToken(token)))
       .limit(1);
-  } catch {
-    return Response.json({
-      status: 'invalid',
-      error: 'La base de données est momentanément indisponible. Réessayez dans un instant.',
-    });
+  } catch (err) {
+    // Distinguer « tables non créées » (migrations à appliquer) d'une base
+    // réellement injoignable — sinon le diagnostic est impossible côté prod.
+    const reason = err ? classifyDbError(err).reason : 'unreachable';
+    return Response.json(
+      {
+        status: 'invalid',
+        code: `db_${reason}`,
+        error:
+          reason === 'schema_missing'
+            ? "La base de données est connectée, mais ses tables n'existent pas encore : les migrations doivent être appliquées une fois sur le projet (commande « npm run db:push » — voir README, section Déploiement)."
+            : 'La base de données est momentanément indisponible. Réessayez dans un instant — si le problème persiste, vérifiez la configuration DATABASE_URL.',
+      },
+      { status: 503 },
+    );
   }
 
   if (!invitation) {

@@ -47,7 +47,7 @@ export class DbUnavailableError extends Error {
  * Classe l'erreur Drizzle/postgres : tables absentes (migrations non appliquées)
  * vs base injoignable (URL fausse, réseau, projet en pause…).
  */
-function classifyDbError(err: unknown): DbUnavailableError {
+export function classifyDbError(err: unknown): DbUnavailableError {
   const code = (err as { code?: string } | null)?.code;
   const message = err instanceof Error ? err.message : String(err);
   if (code === '42P01' || /does not exist/i.test(message)) {
