@@ -25,7 +25,7 @@ export async function GET(req: Request, ctx: Ctx) {
   if (!upstream.ok) return passthrough(upstream);
 
   const body = (await upstream.json()) as { data?: ZernioInboxMessage[] };
-  // Synchro du journal (alimente /dashboard) : les messages réellement
+  // Synchro du journal : les messages réellement
   // renvoyés par Zernio sont enregistrés, dédupliqués, sans jamais bloquer
   // l'affichage de la conversation.
   await syncInboxMessages({

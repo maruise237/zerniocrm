@@ -1,6 +1,6 @@
 import { db, schema } from '@/lib/db';
 
-// ── Journal des messages (alimente /dashboard) ─────────────────────────────
+// ── Journal des messages de l'espace ─────────────────────────────────────
 // Le CRM ne crée rien : ce module enregistre fidèlement ce qui passe déjà par
 // Zernio (messages consultés dans la boîte de réception, réponses envoyées,
 // messages reçus via webhook). Chaque ligne est dédupliquée par l'identifiant

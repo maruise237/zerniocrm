@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   }, resolved.apiKey);
   if (!upstream.ok || !db) return passthrough(upstream);
 
-  // Journalisation locale (alimente /dashboard) : la création de conversation
+  // Journalisation locale : la création de conversation
   // porte son premier message (texte ou template campagnes).
   const participant = typeof body.participantId === 'string' ? body.participantId : '';
   const message = typeof body.message === 'string' ? body.message : '';

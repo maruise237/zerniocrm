@@ -21,7 +21,6 @@ export const PERMISSIONS = {
   contactsManage: 'contacts.manage',
   templatesManage: 'templates.manage',
   flowsManage: 'flows.manage',
-  statsView: 'stats.view',
   settingsManage: 'settings.manage',
   teamManage: 'team.manage',
 } as const;
@@ -35,7 +34,6 @@ export const ALL_PERMISSIONS: string[] = [
   PERMISSIONS.contactsManage,
   PERMISSIONS.templatesManage,
   PERMISSIONS.flowsManage,
-  PERMISSIONS.statsView,
   PERMISSIONS.settingsManage,
   PERMISSIONS.teamManage,
 ];
@@ -49,8 +47,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.contactsView]: 'Voir les contacts',
   [PERMISSIONS.contactsManage]: 'Ajouter et modifier les contacts',
   [PERMISSIONS.templatesManage]: 'Gérer les modèles WhatsApp',
-  [PERMISSIONS.flowsManage]: 'Gérer les formulaires (Flows)',
-  [PERMISSIONS.statsView]: 'Consulter les statistiques',
+  [PERMISSIONS.flowsManage]: 'Gérer les automatisations',
   [PERMISSIONS.settingsManage]: 'Gérer les paramètres et la clé API',
   [PERMISSIONS.teamManage]: 'Inviter et gérer les collaborateurs',
 };
@@ -80,7 +77,6 @@ export const ROLE_DEFINITIONS: Record<TeamRole, RoleDefinition> = {
       PERMISSIONS.contactsManage,
       PERMISSIONS.templatesManage,
       PERMISSIONS.flowsManage,
-      PERMISSIONS.statsView,
     ],
   },
   agent: {
@@ -91,17 +87,15 @@ export const ROLE_DEFINITIONS: Record<TeamRole, RoleDefinition> = {
       PERMISSIONS.messagesSend,
       PERMISSIONS.campaignsView,
       PERMISSIONS.contactsView,
-      PERMISSIONS.statsView,
     ],
   },
   viewer: {
     label: 'Observateur',
-    description: 'Consulte les conversations et les statistiques, sans rien modifier.',
+    description: 'Consulte les conversations, sans rien modifier.',
     permissions: [
       PERMISSIONS.messagesView,
       PERMISSIONS.campaignsView,
       PERMISSIONS.contactsView,
-      PERMISSIONS.statsView,
     ],
   },
 };

@@ -12,7 +12,6 @@ WhatsApp CRM est une inbox client mobile-first dédiée exclusivement à WhatsAp
 | Zernio | Clé API **par utilisateur** (saisie dans `/settings`), URL webhook individuelle et bouton de copie avec confirmation temporaire. |
 | Campagnes | Broadcasts avec templates Meta, mapping de variables, envoi direct personnalisé, planification. |
 | Contacts | CRUD, tags, notes, import CSV/Excel avec détection de colonnes FR/EN. |
-| Statistiques | `/dashboard` : volume in/out 30 j, conversations actives, taux de réponse, série 14 jours, top contacts — alimenté par le journal local `whatsapp_messages`. |
 | Neon Postgres | Tables `public.zernio_config`, `public.whatsapp_messages`, `public.team_invitations`, `public.team_members` — index et déduplication des événements. |
 | Neon Auth | SDK Managed Better Auth, handler `/api/auth/[...path]`, middleware et formulaires français `/auth/sign-in` et `/auth/sign-up`. |
 | Webhook | `POST /api/webhooks/zernio?token=...`, validation `message.received`, déduplication par `payload.id` et insertion isolée par utilisateur. |
@@ -28,8 +27,8 @@ Le CRM supporte les **collaborateurs** (`/team`) : le propriétaire d'un espace 
 
 - **Création** (`POST /api/team/invite`, autorisation `team.manage`) : email + rôle + expiration (24 h / 3 j / 7 j / 30 j) → jeton 256 bits URL-safe, stocké uniquement en **empreinte SHA-256** (`team_invitations.token_hash`). Le lien `${APP_URL}/auth/invite/<jeton>` n'est affiché qu'une seule fois (copie ou mailto pré-rempli).
 - **Acceptation** : la page publique `/auth/invite/[token]` (hors proxy via le matcher `auth/` et `api/invitations`) affiche l'invitation, puis l'invité se connecte/crée son compte Neon Auth. `POST /api/invitations/accept` vérifie session, expiration, révocation et **correspondance stricte de l'email visé** avant de créer la ligne `team_members`.
-- **Rôles prédéfinis** (`lib/team/roles.ts`, libellés français) : Administrateur (tout), Gestionnaire (campagnes/conversations/contacts), Agent (messages), Observateur (lecture seule) — ajustables permission par permission à l'invitation (11 autorisations par module, stockées en JSON).
-- **Résolution workspace** (`lib/server/workspace.ts`) : `resolveWorkspace()` rattache chaque utilisateur à son espace (config propre → propriétaire, sinon membership active), avec cache 60 s. Les collaborateurs agissent avec la **clé du propriétaire** et le journal/statistiques est rattaché au workspace (`resolveUserKey().workspaceOwnerId`). Les routes d'écriture (conversations, broadcasts, contacts, templates, flows, appels, blocages, médias, settings) sont gardées par `requirePermission()` — **fail-closed** : base injoignable → 503, jamais de permissions ouvertes.
+- **Rôles prédéfinis** (`lib/team/roles.ts`, libellés français) : Administrateur (tout), Gestionnaire (campagnes/conversations/contacts), Agent (messages), Observateur (lecture seule) — ajustables permission par permission à l'invitation (10 autorisations par module, stockées en JSON).
+- **Résolution workspace** (`lib/server/workspace.ts`) : `resolveWorkspace()` rattache chaque utilisateur à son espace (config propre → propriétaire, sinon membership active), avec cache 60 s. Les collaborateurs agissent avec la **clé du propriétaire** et le journal des messages est rattaché au workspace (`resolveUserKey().workspaceOwnerId`). Les routes d'écriture (conversations, broadcasts, contacts, templates, flows, appels, blocages, médias, settings) sont gardées par `requirePermission()` — **fail-closed** : base injoignable → 503, jamais de permissions ouvertes.
 - **Gestion courante** : renvoyer une invitation remplace l'ancien lien (révocation automatique), changement de rôle/statut (suspendre/réactiver), retrait immédiat (caches invalidés), lecture de l'équipe accessible à tous les membres (transparence du rôle).
 
 ## Automatisations (Workflows Zernio)
@@ -109,13 +108,12 @@ npm run typecheck
 npm run build
 ```
 
-Le build produit les routes `/`, `/dashboard`, `/settings`, `/auth/sign-in`, `/auth/sign-up`, `/api/settings`, `/api/stats`, `/api/webhooks/zernio` et le handler Neon Auth. Les appels réels nécessitent toutefois les variables Neon et Zernio d’une instance de déploiement.
+Le build produit les routes `/`, `/settings`, `/auth/sign-in`, `/auth/sign-up`, `/api/settings`, `/api/webhooks/zernio` et le handler Neon Auth. Les appels réels nécessitent toutefois les variables Neon et Zernio d’une instance de déploiement.
 
 ## Structure utile
 
 ```text
 app/page.tsx                         Inbox mobile-first
-app/dashboard/page.tsx               Statistiques (volume, taux de réponse, top contacts)
 app/settings/page.tsx                Configuration Zernio
 app/auth/sign-in/page.tsx            Connexion française
 app/auth/sign-up/page.tsx            Création de compte française

@@ -57,7 +57,6 @@ describe('rôles d’équipe', () => {
   it('l’observateur est en lecture seule', () => {
     const perms = permissionsForRole('viewer');
     expect(hasPermission(perms, PERMISSIONS.messagesView)).toBe(true);
-    expect(hasPermission(perms, PERMISSIONS.statsView)).toBe(true);
     expect(hasPermission(perms, PERMISSIONS.messagesSend)).toBe(false);
     expect(hasPermission(perms, PERMISSIONS.contactsManage)).toBe(false);
   });
@@ -81,11 +80,11 @@ describe('rôles d’équipe', () => {
     const result = sanitizePermissions([
       PERMISSIONS.messagesView,
       'pirate.mode',
-      PERMISSIONS.statsView,
+      PERMISSIONS.flowsManage,
       PERMISSIONS.messagesView,
       123,
     ]);
-    expect(result).toEqual([PERMISSIONS.messagesView, PERMISSIONS.statsView]);
+    expect(result).toEqual([PERMISSIONS.messagesView, PERMISSIONS.flowsManage]);
     expect(sanitizePermissions('not-an-array')).toEqual([]);
   });
 });

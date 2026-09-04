@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BarChart3,
   LayoutTemplate,
   Megaphone,
   MessageCircle,
@@ -28,7 +27,6 @@ const PRIMARY_LINKS: NavLink[] = [
   { href: '/', label: 'Messages', icon: MessageCircle, exact: true },
   { href: '/campaigns', label: 'Campagnes', icon: Megaphone },
   { href: '/contacts', label: 'Contacts', icon: Users },
-  { href: '/dashboard', label: 'Stats', icon: BarChart3 },
 ];
 
 const SECONDARY_LINKS = [

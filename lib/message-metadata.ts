@@ -40,8 +40,8 @@ export function getQuickReplyBadge(meta: Meta): string | undefined {
 
 // ── WhatsApp interactive (metadata.waInteractive) ───────────────────────────
 // Compact mirror of what the recipient sees (buttons / list / CTA / flow /
-// location request / call button). Shapes match the dashboard's
-// whatsapp-interactive-meta; anything unrecognized parses to { kind: 'unknown' }
+// location request / call button). Shapes mirror whatsapp-interactive-meta;
+// anything unrecognized parses to { kind: 'unknown' }
 // so the bubble still shows a generic "Interactive message" chip.
 
 export type WaInteractive =
