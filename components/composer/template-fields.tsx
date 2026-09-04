@@ -2,6 +2,7 @@
 
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +21,10 @@ import type { TemplateComposer } from '@/hooks/useTemplateComposer';
  * drive the send button + payload.
  */
 export function TemplateFields({ composer }: { composer: TemplateComposer }) {
-  const { templates, loading, setTemplateName, selected, tokens, params, setParam, previewBody } =
-    composer;
+  const {
+    templates, loading, loadError, retry, setTemplateName, selected, tokens, params, setParam,
+    previewBody,
+  } = composer;
 
   if (loading) {
     return (
@@ -33,10 +36,26 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
   }
 
   if (templates.length === 0) {
+    if (loadError) {
+      return (
+        <div className="space-y-2 text-sm">
+          <p className="text-destructive">
+            Impossible de charger vos modèles WhatsApp. Vérifiez votre connexion, puis réessayez.
+          </p>
+          <Button size="sm" variant="outline" onClick={retry}>
+            Réessayer
+          </Button>
+        </div>
+      );
+    }
     return (
-      <p className="text-sm text-muted-foreground">
-        No approved templates for this WhatsApp account yet
-      </p>
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>Aucun modèle approuvé pour ce compte WhatsApp pour l instant.</p>
+        <p>
+          Créez un modèle dans WhatsApp Manager (ou depuis l onglet Modèles), attendez son
+          approbation par Meta, puis revenez ici — il apparaîtra automatiquement.
+        </p>
+      </div>
     );
   }
 

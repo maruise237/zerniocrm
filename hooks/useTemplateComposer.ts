@@ -21,6 +21,10 @@ export interface TemplatePayload {
 export interface TemplateComposer {
   templates: ZernioTemplate[];
   loading: boolean;
+  /** La liste des modèles n a pas pu être chargée (réseau / API). */
+  loadError: boolean;
+  /** Relance le chargement des modèles (après un échec). */
+  retry: () => void;
   templateName: string;
   setTemplateName: (name: string) => void;
   selected: ZernioTemplate | undefined;
@@ -99,6 +103,8 @@ export function useTemplateComposer({
   return {
     templates,
     loading: query.isLoading,
+    loadError: query.isError,
+    retry: () => void query.refetch(),
     templateName,
     setTemplateName,
     selected,

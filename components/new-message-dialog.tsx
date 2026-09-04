@@ -27,6 +27,7 @@ import { useTemplateComposer } from '@/hooks/useTemplateComposer';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import { NEW_CONVERSATION_PLATFORMS } from '@/lib/capabilities';
 import { makeOptimisticMessage } from '@/lib/optimistic';
+import { whatsappSendErrorFr } from '@/lib/whatsapp/send-errors';
 import { cn } from '@/lib/utils';
 import type { Account, Conversation, Message, Platform } from '@/lib/types';
 
@@ -151,11 +152,11 @@ export function NewMessageDialog({
       wa.reset();
       onOpenChange(false);
     } catch (e) {
-      setError(
+      const raw =
         e instanceof ApiError || e instanceof Error
           ? e.message
-          : 'Échec du démarrage de la conversation',
-      );
+          : 'Échec du démarrage de la conversation';
+      setError(whatsappSendErrorFr(raw));
     } finally {
       setSending(false);
     }
@@ -221,7 +222,10 @@ export function NewMessageDialog({
             {isWhatsApp ? (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  WhatsApp exige un modèle approuvé pour démarrer une conversation.
+                  Nouveau contact&nbsp;? WhatsApp impose de démarrer par un modèle approuvé&nbsp;:
+                  choisissez un modèle, remplissez ses champs, puis envoyez. Le contact le reçoit
+                  comme un message normal — et vous pourrez ensuite discuter librement dès sa
+                  réponse.
                 </p>
                 <TemplateFields composer={wa} />
               </div>
@@ -251,7 +255,7 @@ export function NewMessageDialog({
             disabled={sendDisabled || sending || eligible.length === 0}
           >
             {sending && <Loader2 className="size-4 animate-spin" />}
-            Send
+            Envoyer
           </Button>
         </DialogFooter>
       </DialogContent>

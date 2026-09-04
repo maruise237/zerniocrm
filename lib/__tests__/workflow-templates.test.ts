@@ -89,7 +89,7 @@ describe('workflow templates', () => {
     expect(prompt).toContain('Vous livrez ? Oui, en 48 h.');
   });
 
-  it('construit un graphe mot-clé minimal avec onlyFirstMessage', () => {
+  it('construit un graphe mot-clé qui se déclenche sur chaque message (pas seulement le premier)', () => {
     const wf = buildWorkflowGraph('keyword-reply', {
       keywords: 'PRIX, TARIFS',
       reply: 'Voici le catalogue : https://exemple.com',
@@ -100,7 +100,9 @@ describe('workflow templates', () => {
     const trigger = wf!.nodes.find((n) => n.type === 'trigger')!;
     expect(trigger.config.keywords).toEqual(['PRIX', 'TARIFS']);
     expect(trigger.config.matchType).toBe('contains');
-    expect(trigger.config.onlyFirstMessage).toBe(true);
+    // Une auto-réponse par mot-clé doit réagir à CHAQUE message contenant le
+    // mot-clé — y compris sur une conversation déjà existante.
+    expect(trigger.config.onlyFirstMessage).toBe(false);
     expect(wf!.nodes.some((n) => n.type === 'add_tag')).toBe(true);
   });
 

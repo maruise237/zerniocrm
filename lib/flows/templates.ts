@@ -381,7 +381,11 @@ function buildKeywordReply(f: TemplateFieldValues): BuiltWorkflow {
         triggerType: 'inbound_message',
         keywords,
         matchType: 'contains',
-        onlyFirstMessage: true,
+        // Une réponse par mot-clé doit se déclencher sur CHAQUE message qui
+        // contient le mot-clé — pas seulement le premier de la conversation.
+        // Avec onlyFirstMessage:true, tout test sur une conversation existante
+        // ne déclenche jamais rien (comportement constaté en production).
+        onlyFirstMessage: false,
       },
     },
   ];

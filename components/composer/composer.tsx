@@ -27,6 +27,7 @@ import { apiFetch, ApiError } from '@/lib/api-client';
 import { isWhatsApp, supportsAttachments, supportsReply, supportsTyping } from '@/lib/capabilities';
 import { messagePreviewText } from '@/lib/format';
 import { isWhatsAppOutside24h, makeOptimisticMessage } from '@/lib/optimistic';
+import { whatsappSendErrorFr } from '@/lib/whatsapp/send-errors';
 import { useTemplateComposer } from '@/hooks/useTemplateComposer';
 import type { Account, Conversation, Message } from '@/lib/types';
 import { InteractiveDrawer, type InteractiveSendPayload } from './interactive-drawer';
@@ -288,7 +289,9 @@ export function Composer({
     } catch (err) {
       removeOptimistic(stub.id);
       onError?.();
-      toast.error(err instanceof ApiError ? err.message : errorMessage);
+      toast.error(
+        err instanceof ApiError ? whatsappSendErrorFr(err.message) : errorMessage,
+      );
       return false;
     } finally {
       setBusy?.(false);
@@ -447,13 +450,25 @@ export function Composer({
   };
 
   if (outside24h) {
+    // Deux cas distincts : le contact n a JAMAIS écrit (nouveau contact) ou
+    // son dernier message date de plus de 24 h. Dans les deux cas WhatsApp
+    // n accepte qu un modèle approuvé, mais le bon message est différent.
+    const neverIncoming = !messages.some((m) => m.direction === 'incoming');
     return (
       <footer className="flex-none border-t border-[var(--chat-border)] bg-[var(--chat-surface)] p-3">
         <div className="space-y-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-warning-bg)] p-3">
-          <p className="text-xs text-[var(--chat-warning-fg)]">
-            Plus de 24 h se sont écoulées depuis le dernier message de ce contact. WhatsApp n'accepte plus que les modèles approuvés
-            Choisissez-en un pour le recontacter.
-          </p>
+          {neverIncoming ? (
+            <p className="text-xs text-[var(--chat-warning-fg)]">
+              Ce contact ne vous a jamais écrit&nbsp;: WhatsApp impose de démarrer la conversation
+              par un modèle approuvé. Choisissez un modèle ci-dessous et envoyez — dès sa réponse,
+              vous pourrez discuter librement.
+            </p>
+          ) : (
+            <p className="text-xs text-[var(--chat-warning-fg)]">
+              Plus de 24 h se sont écoulées depuis le dernier message de ce contact. WhatsApp
+              n&apos;accepte plus que les modèles approuvés — choisissez-en un pour le recontacter.
+            </p>
+          )}
           <TemplateFields composer={template} />
           <div className="flex justify-end">
             <Button
