@@ -1,11 +1,9 @@
-import { hasApiKey, missingKeyResponse, zernioFetch } from '@/lib/server/zernio';
+import { zernioFetch } from '@/lib/server/zernio';
 
 const WHATSAPP_MEDIA_PATH = /^\/api\/v1\/whatsapp\/media\/[^?]+/;
 const TELEGRAM_FILE_URL = /^https:\/\/api\.telegram\.org\/file\//;
 
 export async function GET(req: Request) {
-  if (!hasApiKey()) return missingKeyResponse();
-
   // searchParams already decoded once; collapse any remaining encoded layers
   // (stable point, max 3) so %2E%2E / double-encoding can't smuggle a
   // traversal past the '..' check below. The decoded form is also what gets

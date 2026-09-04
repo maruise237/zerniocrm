@@ -20,6 +20,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
+import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -345,7 +346,7 @@ export default function CampaignsPage() {
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
+        <div className="mx-auto max-w-3xl px-4 py-5 pb-28 sm:px-6 sm:py-8 lg:pb-8">
         <header className="flex items-center gap-2">
           <Link
             href="/"
@@ -374,11 +375,15 @@ export default function CampaignsPage() {
             <RefreshCw className={cn('size-4', isFetching && 'animate-spin')} />
           </Button>
           {!selectedBroadcast && (
-            <Button onClick={() => setCreateOpen(true)} disabled={whatsappAccounts.length === 0}>
-              <Plus className="size-4" /> Nouvelle campagne
+            <Button onClick={() => setCreateOpen(true)} disabled={whatsappAccounts.length === 0} className="shrink-0 px-3 sm:px-4" aria-label="Nouvelle campagne">
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">Nouvelle campagne</span>
             </Button>
           )}
         </header>
+        <div className="hidden lg:mt-4 lg:block lg:border-b lg:border-[var(--chat-border)] lg:pb-3">
+          <DesktopNav className="flex flex-wrap" />
+        </div>
 
         {selectedBroadcast ? (
           <div className="mt-5">
@@ -450,6 +455,7 @@ export default function CampaignsPage() {
           setSelectedId(broadcast.id);
         }}
       />
+          <BottomNav />
     </main>
   );
 }

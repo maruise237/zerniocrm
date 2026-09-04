@@ -1,0 +1,81 @@
+import { eq } from 'drizzle-orm';
+import { db, schema } from '@/lib/db';
+import { hashInviteToken } from '@/lib/team/tokens';
+import { roleLabel } from '@/lib/team/roles';
+
+// Route PUBLIQUE (exclue du proxy/middleware) : vérifie un jeton de lien
+// magique et renvoie les informations affichables sur la page d'acceptation.
+// Aucune donnée sensible : email visé, rôle, expiration et statut seulement.
+
+export const dynamic = 'force-dynamic';
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => null) as { token?: unknown } | null;
+  const token = typeof body?.token === 'string' ? body.token.trim() : '';
+  if (!token) {
+    return Response.json({ error: "Lien d'invitation invalide.", status: 'invalid', code: 'invalid_token' }, { status: 400 });
+  }
+
+  if (!db) {
+    return Response.json(
+      { error: "Les invitations nécessitent une base de données configurée.", status: 'invalid', code: 'database_required' },
+      { status: 409 },
+    );
+  }
+
+  let invitation;
+  try {
+    [invitation] = await db
+      .select({
+        email: schema.teamInvitations.email,
+        role: schema.teamInvitations.role,
+        invitedByEmail: schema.teamInvitations.invitedByEmail,
+        expiresAt: schema.teamInvitations.expiresAt,
+        acceptedAt: schema.teamInvitations.acceptedAt,
+        revokedAt: schema.teamInvitations.revokedAt,
+      })
+      .from(schema.teamInvitations)
+      .where(eq(schema.teamInvitations.tokenHash, hashInviteToken(token)))
+      .limit(1);
+  } catch {
+    return Response.json({
+      status: 'invalid',
+      error: 'La base de données est momentanément indisponible. Réessayez dans un instant.',
+    });
+  }
+
+  if (!invitation) {
+    return Response.json({
+      status: 'invalid',
+      error: "Ce lien d'invitation est invalide ou a déjà été utilisé.",
+    });
+  }
+
+  if (invitation.revokedAt) {
+    return Response.json({
+      status: 'revoked',
+      error: "Cette invitation a été annulée. Demandez un nouveau lien à l'expéditeur.",
+    });
+  }
+  if (invitation.acceptedAt) {
+    return Response.json({
+      status: 'accepted',
+      error: "Cette invitation a déjà été acceptée. Vous pouvez vous connecter normalement.",
+    });
+  }
+  if (new Date(invitation.expiresAt).getTime() <= Date.now()) {
+    return Response.json({
+      status: 'expired',
+      error: "Ce lien d'invitation a expiré. Demandez un nouveau lien à l'expéditeur.",
+    });
+  }
+
+  return Response.json({
+    status: 'pending',
+    email: invitation.email,
+    role: invitation.role,
+    roleLabel: roleLabel(invitation.role),
+    invitedByEmail: invitation.invitedByEmail,
+    expiresAt: invitation.expiresAt,
+  });
+}

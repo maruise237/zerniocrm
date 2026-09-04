@@ -6,10 +6,12 @@ export const SETTINGS_COOKIE_NAME = 'unified-inbox-settings';
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 const ACCOUNTS_CACHE_TTL_MS = 60 * 1000;
-let cache: {
-  data: { accounts: Account[]; profiles: Profile[] };
-  expiresAt: number;
-} | null = null;
+// Cache séparé par utilisateur : chaque utilisateur possède sa propre clé
+// Zernio et ne doit jamais voir les comptes connectés d'un autre.
+const accountsCache = new Map<
+  string,
+  { data: { accounts: Account[]; profiles: Profile[] }; expiresAt: number }
+>();
 
 /**
  * Fetch connected accounts (filtered to messaging platforms) + profiles.
@@ -21,16 +23,19 @@ let cache: {
  * upstream). Error Responses are never cached. Pass `forceRefresh: true` to
  * bypass the cache (settings page data paths, where staleness is user-visible).
  */
-export async function fetchMessageAccounts(opts?: {
+export async function fetchMessageAccounts(opts: {
+  userId: string;
+  apiKey: string;
   forceRefresh?: boolean;
 }): Promise<{ accounts: Account[]; profiles: Profile[] } | Response> {
-  if (!opts?.forceRefresh && cache && cache.expiresAt > Date.now()) {
-    return cache.data;
+  const cached = accountsCache.get(opts.userId);
+  if (!opts.forceRefresh && cached && cached.expiresAt > Date.now()) {
+    return cached.data;
   }
 
   const [accountsRes, profilesRes] = await Promise.all([
-    zernioFetch('/v1/accounts'),
-    zernioFetch('/v1/profiles'),
+    zernioFetch('/v1/accounts', undefined, opts.apiKey),
+    zernioFetch('/v1/profiles', undefined, opts.apiKey),
   ]);
   if (!accountsRes.ok) return passthrough(accountsRes);
   if (!profilesRes.ok) return passthrough(profilesRes);
@@ -43,7 +48,7 @@ export async function fetchMessageAccounts(opts?: {
       MESSAGE_PLATFORMS.includes(a.platform) && a.isActive !== false && a.enabled !== false,
   );
   const data = { accounts, profiles: profilesBody.profiles ?? [] };
-  cache = { data, expiresAt: Date.now() + ACCOUNTS_CACHE_TTL_MS };
+  accountsCache.set(opts.userId, { data, expiresAt: Date.now() + ACCOUNTS_CACHE_TTL_MS });
   return data;
 }
 

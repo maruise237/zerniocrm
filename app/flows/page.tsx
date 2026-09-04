@@ -17,6 +17,7 @@ import {
   Workflow,
   XCircle,
 } from 'lucide-react';
+import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -209,7 +210,7 @@ export default function FlowsPage() {
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
+        <div className="mx-auto max-w-3xl px-4 py-5 pb-28 sm:px-6 sm:py-8 lg:pb-8">
           <header className="flex items-center gap-2">
             <Link
               href="/"
@@ -238,9 +239,13 @@ export default function FlowsPage() {
               <RefreshCw className={cn('size-4', query.isFetching && 'animate-spin')} />
             </Button>
             <Button onClick={() => setCreateOpen(true)} disabled={!effectiveAccountId}>
-              <Plus className="size-4" /> Nouveau flow
+              <Plus className="size-4" />
+                <span className="hidden sm:inline">Nouveau flow</span>
             </Button>
           </header>
+        <div className="hidden lg:mt-4 lg:block lg:border-b lg:border-[var(--chat-border)] lg:pb-3">
+          <DesktopNav className="flex flex-wrap" />
+        </div>
 
           <section className="mt-5 flex flex-col gap-2 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4 shadow-sm sm:flex-row sm:items-center">
             <label className="flex flex-1 items-center gap-2 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 py-2">
@@ -286,7 +291,8 @@ export default function FlowsPage() {
                   publiez-le pour l’envoyer dans les conversations.
                 </p>
                 <Button size="sm" className="mt-4" onClick={() => setCreateOpen(true)} disabled={!effectiveAccountId}>
-                  <Plus className="size-4" /> Nouveau flow
+                  <Plus className="size-4" />
+                <span className="hidden sm:inline">Nouveau flow</span>
                 </Button>
               </div>
             )}
@@ -448,6 +454,7 @@ export default function FlowsPage() {
         onSaved={refreshDetail}
       />
       <FlowDetailDialog flow={detail} onClose={() => setDetail(null)} />
+          <BottomNav />
     </main>
   );
 }

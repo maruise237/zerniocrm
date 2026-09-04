@@ -1,4 +1,5 @@
-import { hasApiKey, missingKeyResponse, proxy } from '@/lib/server/zernio';
+import { proxy } from '@/lib/server/zernio';
+import { requirePermission } from '@/lib/server/workspace';
 
 type Ctx = { params: Promise<{ templateName: string }> };
 
@@ -8,7 +9,8 @@ type Ctx = { params: Promise<{ templateName: string }> };
  * a single variant. Query params: accountId (required), language (optional).
  */
 export async function DELETE(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('templates.manage');
+  if (!gate.ok) return gate.response;
   const { templateName } = await ctx.params;
   return proxy({
     req,

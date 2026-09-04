@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="100" y1="0" x2="100" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BEF0"/>
+      <stop offset="100%" stop-color="#1A9DD2"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="200" height="200" rx="42" fill="url(#bg)"/>
+
+  <!-- K letter -->
+  <rect x="24" y="35" width="19" height="130" rx="4" fill="white"/>
+  <polygon points="43,100 43,35 100,35 100,58 65,100" fill="white"/>
+  <polygon points="43,100 43,165 100,165 100,142 65,100" fill="white"/>
+
+  <!-- Smartphone outline (simplified) -->
+  <rect x="100" y="35" width="66" height="130" rx="13" fill="none" stroke="white" stroke-width="7"/>
+  <rect x="117" y="50" width="32" height="100" rx="6" fill="white" opacity="0.35"/>
+</svg>

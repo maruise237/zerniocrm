@@ -12,4 +12,5 @@ export const queryKeys = {
   broadcastRecipients: (id: string) => ['broadcast-recipients', id] as const,
   contacts: (accountId: string) => ['contacts', accountId] as const,
   settings: ['settings'] as const,
+  team: ['team'] as const,
 };

@@ -15,6 +15,7 @@ import {
   Upload,
   Users,
 } from 'lucide-react';
+import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -415,7 +416,7 @@ export default function ContactsPage() {
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
+        <div className="mx-auto max-w-3xl px-4 py-5 pb-28 sm:px-6 sm:py-8 lg:pb-8">
           <header className="flex items-center gap-2">
             <Link
               href="/"
@@ -453,6 +454,9 @@ export default function ContactsPage() {
               <span className="hidden sm:inline">Importer</span>
             </Button>
           </header>
+        <div className="hidden lg:mt-4 lg:block lg:border-b lg:border-[var(--chat-border)] lg:pb-3">
+          <DesktopNav className="flex flex-wrap" />
+        </div>
 
           <section className="mt-5 space-y-3 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4 shadow-sm">
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -634,6 +638,7 @@ export default function ContactsPage() {
         onOpenChange={setImportOpen}
         onImported={refresh}
       />
+          <BottomNav />
     </main>
   );
 }

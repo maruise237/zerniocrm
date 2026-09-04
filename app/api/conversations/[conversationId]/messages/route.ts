@@ -1,7 +1,6 @@
+import { requirePermission } from '@/lib/server/workspace';
 import {
   forwardMultipart,
-  hasApiKey,
-  missingKeyResponse,
   passthrough,
   proxy,
 } from '@/lib/server/zernio';
@@ -9,7 +8,6 @@ import {
 type Ctx = { params: Promise<{ conversationId: string }> };
 
 export async function GET(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
   const { conversationId } = await ctx.params;
   return proxy({
     req,
@@ -19,7 +17,8 @@ export async function GET(req: Request, ctx: Ctx) {
 }
 
 export async function POST(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('messages.send');
+  if (!gate.ok) return gate.response;
   const { conversationId } = await ctx.params;
   const path = `/v1/inbox/conversations/${encodeURIComponent(conversationId)}/messages`;
 

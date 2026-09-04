@@ -5,14 +5,10 @@ import Link from 'next/link';
 import {
   Archive,
   CheckCheck,
-  Contact,
-  LayoutTemplate,
-  Megaphone,
-  Menu,
   MessageCircle,
   MoreVertical,
+  Plus,
   Search,
-  Settings,
   SlidersHorizontal,
   Smartphone,
   Users,
@@ -24,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Account, Conversation } from '@/lib/types';
 import { NewMessageDialog } from '@/components/new-message-dialog';
+import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,7 +62,6 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [newMessageOpen, setNewMessageOpen] = useState(false);
 
   const { accounts, isLoading: accountsLoading, error: accountsError } = useAccounts();
@@ -104,7 +100,6 @@ export default function Home() {
   function selectConversation(conversation: Conversation) {
     setSelected({ conversationId: conversation.id, accountId: conversation.accountId });
     setCurrentView('chat');
-    setMobileMenuOpen(false);
     void apiFetch(`/api/conversations/${encodeURIComponent(conversation.id)}/read`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -154,7 +149,25 @@ export default function Home() {
   }
 
   return (
-    <main className="flex h-dvh min-h-dvh w-full overflow-hidden bg-[var(--chat-canvas)] text-foreground">
+    <main className="flex h-dvh min-h-dvh w-full flex-col overflow-hidden bg-[var(--chat-canvas)] text-foreground">
+      {/* ── Barre de navigation desktop (au-dessus des colonnes) ─────────── */}
+      <div className="hidden shrink-0 items-center gap-2 border-b border-[var(--chat-border)] bg-[var(--chat-surface)] px-4 py-2 lg:flex">
+        <div className="flex items-center gap-2.5 pr-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366] text-white">
+            <MessageCircle className="h-4 w-4" />
+          </div>
+          <p className="text-sm font-semibold tracking-tight">WhatsApp CRM</p>
+        </div>
+        <DesktopNav className="flex flex-1" />
+        <button
+          onClick={() => setNewMessageOpen(true)}
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1ebe5b]"
+        >
+          <Users className="h-4 w-4" /> Nouvelle conversation
+        </button>
+      </div>
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
       {/* ── Colonne conversation ─────────────────────────────────────────── */}
       <aside
         className={cn(
@@ -164,102 +177,21 @@ export default function Home() {
       >
         <header className="relative flex items-center justify-between border-b border-[var(--chat-border)] px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-white lg:hidden">
               <MessageCircle className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold tracking-tight">WhatsApp CRM</p>
-              <p className="text-[11px] text-muted-foreground">Inbox client · par Kamtech</p>
+              <p className="text-sm font-semibold tracking-tight">Messages</p>
+              <p className="text-[11px] text-muted-foreground">Boîte de réception WhatsApp</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setNewMessageOpen(true)}
-              aria-label="Nouvelle conversation"
-              className="touch-target rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)]"
-            >
-              <Users className="h-4 w-4" />
-            </button>
-            <Link
-              aria-label="Campagnes"
-              href="/campaigns"
-              title="Campagnes WhatsApp"
-              className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] sm:flex"
-            >
-              <Megaphone className="h-4 w-4" />
-            </Link>
-            <Link
-              aria-label="Contacts"
-              href="/contacts"
-              title="Contacts et import"
-              className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] lg:flex"
-            >
-              <Contact className="h-4 w-4" />
-            </Link>
-            <Link
-              aria-label="Modèles"
-              href="/templates"
-              title="Modèles WhatsApp"
-              className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] sm:flex"
-            >
-              <LayoutTemplate className="h-4 w-4" />
-            </Link>
-            <Link
-              aria-label="Paramètres"
-              href="/settings"
-              className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] sm:flex"
-            >
-              <Settings className="h-4 w-4" />
-            </Link>
-            <button
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              aria-label="Menu"
-              className="touch-target rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] md:hidden"
-            >
-              <Menu className="h-4 w-4" />
-            </button>
-          </div>
-          {mobileMenuOpen && (
-            <div className="absolute right-3 top-14 z-20 w-56 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-1 shadow-lg md:hidden">
-              <button
-                onClick={() => {
-                  setNewMessageOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs hover:bg-[var(--chat-hover)]"
-              >
-                <Users className="h-4 w-4" /> Nouvelle conversation
-              </button>
-              <Link
-                href="/campaigns"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
-              >
-                <Megaphone className="h-4 w-4" /> Campagnes WhatsApp
-              </Link>
-              <Link
-                href="/contacts"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
-              >
-                <Users className="h-4 w-4" /> Contacts & import
-              </Link>
-              <Link
-                href="/templates"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
-              >
-                <LayoutTemplate className="h-4 w-4" /> Modèles WhatsApp
-              </Link>
-              <Link
-                href="/settings"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-[var(--chat-hover)]"
-              >
-                <Settings className="h-4 w-4" /> Paramètres
-              </Link>
-            </div>
-          )}
+          <button
+            onClick={() => setNewMessageOpen(true)}
+            aria-label="Nouvelle conversation"
+            className="touch-target hidden rounded-lg p-2 text-muted-foreground transition hover:bg-[var(--chat-hover)] md:flex lg:hidden"
+          >
+            <Users className="h-4 w-4" />
+          </button>
         </header>
 
         <div className="space-y-3 border-b border-[var(--chat-border)] p-3">
@@ -324,7 +256,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrolling-touch">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrolling-touch pb-[5.25rem] md:pb-0">
           {failedAccounts.length > 0 && (
             <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
               Certains comptes n’ont pas répondu : {failedAccounts.join(', ')}
@@ -387,7 +319,7 @@ export default function Home() {
             )}
         </div>
 
-        <div className="mt-auto flex items-center justify-between border-t border-[var(--chat-border)] px-4 py-3 text-[11px] text-muted-foreground">
+        <div className="mt-auto hidden items-center justify-between border-t border-[var(--chat-border)] px-4 py-3 text-[11px] text-muted-foreground md:flex">
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Données en direct
           </span>
@@ -396,6 +328,15 @@ export default function Home() {
             <Link href="/settings" className="hover:text-foreground">Configurer</Link>
           </span>
         </div>
+
+        {/* Bouton flottant : nouvelle conversation — zone du pouce, mobile uniquement */}
+        <button
+          onClick={() => setNewMessageOpen(true)}
+          aria-label="Nouvelle conversation"
+          className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#25D366] text-white shadow-lg shadow-black/25 transition hover:bg-[#1ebe5b] active:scale-95 md:hidden"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
       </aside>
 
       {/* ── Fil de discussion (composer complet : médias, vocal, interactifs…) ── */}
@@ -459,6 +400,7 @@ export default function Home() {
           </div>
         )}
       </aside>
+      </div>
 
       <NewMessageDialog
         open={newMessageOpen}
@@ -471,6 +413,9 @@ export default function Home() {
           void refresh();
         }}
       />
+
+      {/* Barre d'onglets mobile — masquée pendant une conversation plein écran */}
+      <BottomNav hidden={currentView === 'chat'} />
     </main>
   );
 }

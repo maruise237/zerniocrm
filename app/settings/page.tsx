@@ -19,6 +19,7 @@ import {
   Sun,
   Webhook,
 } from 'lucide-react';
+import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import {
   TIMEZONE_OPTIONS,
   detectTimezone,
@@ -99,8 +100,11 @@ export default function SettingsPage() {
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6 sm:py-8">
+        <div className="mx-auto max-w-2xl px-4 py-5 pb-28 sm:px-6 sm:py-8 lg:pb-8">
         <header className="flex items-center gap-2"><Link href="/" aria-label="Retour à la boîte de réception" className="touch-target flex items-center justify-center rounded-xl text-muted-foreground transition hover:bg-[var(--chat-hover)] hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-white"><MessageCircle className="h-5 w-5" /></div><div className="flex-1"><h1 className="text-base font-semibold tracking-tight">Paramètres</h1><p className="text-xs text-muted-foreground">WhatsApp CRM · par Kamtech</p></div><button onClick={toggleTheme} aria-label={dark ? 'Activer le thème clair' : 'Activer le thème sombre'} className="touch-target flex items-center justify-center rounded-xl text-muted-foreground transition hover:bg-[var(--chat-hover)] hover:text-foreground">{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</button></header>
+        <div className="hidden lg:mt-4 lg:block lg:border-b lg:border-[var(--chat-border)] lg:pb-3">
+          <DesktopNav className="flex flex-wrap" />
+        </div>
 
         <section className="mt-8"><div className="mb-4"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">Canal unique</p><h2 className="mt-1 text-2xl font-bold tracking-tight">Connecter votre compte WhatsApp</h2><p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">Utilisez votre propre clé API pour isoler les messages et les conversations de votre espace WhatsApp.</p></div>
           <div className="space-y-4 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4 shadow-sm sm:p-6">
@@ -163,6 +167,7 @@ export default function SettingsPage() {
         <footer className="mt-8 flex flex-col items-center justify-center gap-1 pb-5 text-xs text-muted-foreground"><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Propulsé par <span className="font-medium text-foreground">Kamtech</span> · WhatsApp CRM</span><span>Connexion sécurisée par Neon Auth</span></footer>
       </div>
       </div>
+          <BottomNav />
     </main>
   );
 }

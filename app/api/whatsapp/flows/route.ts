@@ -1,11 +1,12 @@
-import { hasApiKey, missingKeyResponse, proxy } from '@/lib/server/zernio';
+import { proxy } from '@/lib/server/zernio';
+import { requirePermission } from '@/lib/server/workspace';
 
 export async function GET(req: Request) {
-  if (!hasApiKey()) return missingKeyResponse();
   return proxy({ req, path: '/v1/whatsapp/flows', query: ['accountId'] });
 }
 
 export async function POST(req: Request) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('flows.manage');
+  if (!gate.ok) return gate.response;
   return proxy({ req, path: '/v1/whatsapp/flows', method: 'POST', jsonBody: true });
 }

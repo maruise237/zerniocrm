@@ -1,4 +1,5 @@
-import { hasApiKey, missingKeyResponse, proxy } from '@/lib/server/zernio';
+import { proxy } from '@/lib/server/zernio';
+import { requirePermission } from '@/lib/server/workspace';
 
 type Ctx = { params: Promise<{ conversationId: string; messageId: string }> };
 
@@ -8,11 +9,13 @@ async function messagePath(ctx: Ctx): Promise<string> {
 }
 
 export async function PATCH(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('messages.send');
+  if (!gate.ok) return gate.response;
   return proxy({ req, path: await messagePath(ctx), method: 'PATCH', jsonBody: true });
 }
 
 export async function DELETE(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('messages.send');
+  if (!gate.ok) return gate.response;
   return proxy({ req, path: await messagePath(ctx), method: 'DELETE', query: ['accountId'] });
 }

@@ -1,8 +1,8 @@
-import { hasApiKey, missingKeyResponse, proxy } from '@/lib/server/zernio';
+import { proxy } from '@/lib/server/zernio';
+import { requirePermission } from '@/lib/server/workspace';
 
 /** Zernio contacts (channels) — used to target campaigns and build audiences. */
 export async function GET(req: Request) {
-  if (!hasApiKey()) return missingKeyResponse();
   return proxy({
     req,
     path: '/v1/contacts',
@@ -11,6 +11,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('contacts.manage');
+  if (!gate.ok) return gate.response;
   return proxy({ req, path: '/v1/contacts', method: 'POST', jsonBody: true });
 }

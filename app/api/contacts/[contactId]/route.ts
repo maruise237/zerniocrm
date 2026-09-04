@@ -1,9 +1,9 @@
-import { hasApiKey, missingKeyResponse, proxy } from '@/lib/server/zernio';
+import { proxy } from '@/lib/server/zernio';
+import { requirePermission } from '@/lib/server/workspace';
 
 type Ctx = { params: Promise<{ contactId: string }> };
 
 export async function GET(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
   const { contactId } = await ctx.params;
   return proxy({
     req,
@@ -12,7 +12,8 @@ export async function GET(req: Request, ctx: Ctx) {
 }
 
 export async function PATCH(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('contacts.manage');
+  if (!gate.ok) return gate.response;
   const { contactId } = await ctx.params;
   return proxy({
     req,
@@ -23,7 +24,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
 }
 
 export async function DELETE(req: Request, ctx: Ctx) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const gate = await requirePermission('contacts.manage');
+  if (!gate.ok) return gate.response;
   const { contactId } = await ctx.params;
   return proxy({
     req,

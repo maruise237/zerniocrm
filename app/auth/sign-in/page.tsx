@@ -15,7 +15,12 @@ export default function SignInPage() {
     event.preventDefault(); setLoading(true); setError('');
     const result = await authClient.signIn.email({ email, password });
     if (result.error) setError(result.error.message || 'Impossible de vous connecter.');
-    else window.location.href = '/';
+    else {
+      // Retour à la page d'origine (ex. acceptation d'une invitation) si fournie.
+      const next = new URLSearchParams(window.location.search).get('next');
+      const target = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
+      window.location.href = target;
+    }
     setLoading(false);
   }
 

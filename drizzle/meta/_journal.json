@@ -5,57 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1775388343968,
-      "tag": "0000_soft_rocket_racer",
+      "when": 1788512279861,
+      "tag": "0000_whatsapp_crm",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1775400000000,
-      "tag": "0001_add_scheduled_day",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1775410000000,
-      "tag": "0002_channel_connections_created_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1775420000000,
-      "tag": "0003_add_scheduled_date",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1775430000000,
-      "tag": "0004_notification_prefs",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1775440000000,
-      "tag": "0005_best_streak",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1775450000000,
-      "tag": "0006_timezone",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1775460000000,
-      "tag": "0007_script_description_hashtags",
+      "when": 1788515275843,
+      "tag": "0001_polite_tempest",
       "breakpoints": true
     }
   ]

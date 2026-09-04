@@ -1,11 +1,11 @@
 {
-  "id": "6412570f-36f2-4052-9019-442cb2585b3e",
+  "id": "f1c0b846-d27d-4c8b-92d2-80c2188f7cfe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.channel_connections": {
-      "name": "channel_connections",
+    "public.whatsapp_messages": {
+      "name": "whatsapp_messages",
       "schema": "",
       "columns": {
         "id": {
@@ -21,105 +21,48 @@
           "primaryKey": false,
           "notNull": true
         },
-        "channel": {
-          "name": "channel",
+        "conversation_id": {
+          "name": "conversation_id",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "direction": {
+          "name": "direction",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_number": {
+          "name": "from_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to_number": {
+          "name": "to_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "status": {
           "name": "status",
-          "type": "text",
+          "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true,
-          "default": "'disconnected'"
+          "default": "'SENT'"
         },
-        "config": {
-          "name": "config",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "channel_connections_user_id_profiles_id_fk": {
-          "name": "channel_connections_user_id_profiles_id_fk",
-          "tableFrom": "channel_connections",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.profiles": {
-      "name": "profiles",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "full_name": {
-          "name": "full_name",
-          "type": "text",
+        "external_event_id": {
+          "name": "external_event_id",
+          "type": "varchar(180)",
           "primaryKey": false,
           "notNull": false
-        },
-        "telegram_chat_id": {
-          "name": "telegram_chat_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "niches": {
-          "name": "niches",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'"
-        },
-        "channels": {
-          "name": "channels",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'"
-        },
-        "languages": {
-          "name": "languages",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'"
-        },
-        "target_frequency": {
-          "name": "target_frequency",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 3
         },
         "created_at": {
           "name": "created_at",
@@ -129,7 +72,53 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_whatsapp_messages_user_id": {
+          "name": "idx_whatsapp_messages_user_id",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_whatsapp_messages_conversation_id": {
+          "name": "idx_whatsapp_messages_conversation_id",
+          "columns": [
+            {
+              "expression": "conversation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "whatsapp_messages_external_event_unique": {
+          "name": "whatsapp_messages_external_event_unique",
+          "columns": [
+            {
+              "expression": "external_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -137,8 +126,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.publications": {
-      "name": "publications",
+    "public.zernio_config": {
+      "name": "zernio_config",
       "schema": "",
       "columns": {
         "id": {
@@ -148,130 +137,27 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "topic_id": {
-          "name": "topic_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
         "user_id": {
           "name": "user_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "published_at": {
-          "name": "published_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "channel": {
-          "name": "channel",
+        "zernio_api_key": {
+          "name": "zernio_api_key",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "publications_topic_id_topics_id_fk": {
-          "name": "publications_topic_id_topics_id_fk",
-          "tableFrom": "publications",
-          "tableTo": "topics",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "publications_user_id_profiles_id_fk": {
-          "name": "publications_user_id_profiles_id_fk",
-          "tableFrom": "publications",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.scripts": {
-      "name": "scripts",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "topic_id": {
-          "name": "topic_id",
-          "type": "uuid",
+        "webhook_token": {
+          "name": "webhook_token",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "intro": {
-          "name": "intro",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "points": {
-          "name": "points",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "outro": {
-          "name": "outro",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cta": {
-          "name": "cta",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "duration_estimate": {
-          "name": "duration_estimate",
-          "type": "integer",
+        "whatsapp_id": {
+          "name": "whatsapp_id",
+          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false
         },
@@ -283,144 +169,39 @@
           "default": "now()"
         }
       },
-      "indexes": {},
-      "foreignKeys": {
-        "scripts_topic_id_topics_id_fk": {
-          "name": "scripts_topic_id_topics_id_fk",
-          "tableFrom": "scripts",
-          "tableTo": "topics",
-          "columnsFrom": [
-            "topic_id"
+      "indexes": {
+        "zernio_config_user_unique": {
+          "name": "zernio_config_user_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         },
-        "scripts_user_id_profiles_id_fk": {
-          "name": "scripts_user_id_profiles_id_fk",
-          "tableFrom": "scripts",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
+        "zernio_config_token_unique": {
+          "name": "zernio_config_token_unique",
+          "columns": [
+            {
+              "expression": "webhook_token",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.topics": {
-      "name": "topics",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hook": {
-          "name": "hook",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "angle": {
-          "name": "angle",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "niche": {
-          "name": "niche",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "channel": {
-          "name": "channel",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "language": {
-          "name": "language",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "format": {
-          "name": "format",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'idea'"
-        },
-        "selected": {
-          "name": "selected",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "week_number": {
-          "name": "week_number",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "topics_user_id_profiles_id_fk": {
-          "name": "topics_user_id_profiles_id_fk",
-          "tableFrom": "topics",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

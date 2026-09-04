@@ -1,11 +1,16 @@
 import { fetchMessageAccounts, readSettings } from '@/lib/server/settings';
-import { hasApiKey, missingKeyResponse } from '@/lib/server/zernio';
+import { resolveUserKey } from '@/lib/server/zernio';
 
 export async function GET(req: Request) {
-  if (!hasApiKey()) return missingKeyResponse();
+  const resolved = await resolveUserKey();
+  if (!resolved.ok) return resolved.response;
 
   const refresh = new URL(req.url).searchParams.get('refresh') === 'true';
-  const result = await fetchMessageAccounts({ forceRefresh: refresh });
+  const result = await fetchMessageAccounts({
+    userId: resolved.userId,
+    apiKey: resolved.apiKey,
+    forceRefresh: refresh,
+  });
   if (result instanceof Response) return result;
 
   const { selectedAccountIds } = readSettings({
