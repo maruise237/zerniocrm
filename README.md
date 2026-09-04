@@ -32,6 +32,15 @@ Le CRM supporte les **collaborateurs** (`/team`) : le propriétaire d'un espace 
 - **Résolution workspace** (`lib/server/workspace.ts`) : `resolveWorkspace()` rattache chaque utilisateur à son espace (config propre → propriétaire, sinon membership active), avec cache 60 s. Les collaborateurs agissent avec la **clé du propriétaire** et le journal/statistiques est rattaché au workspace (`resolveUserKey().workspaceOwnerId`). Les routes d'écriture (conversations, broadcasts, contacts, templates, flows, appels, blocages, médias, settings) sont gardées par `requirePermission()` — **fail-closed** : base injoignable → 503, jamais de permissions ouvertes.
 - **Gestion courante** : renvoyer une invitation remplace l'ancien lien (révocation automatique), changement de rôle/statut (suspendre/réactiver), retrait immédiat (caches invalidés), lecture de l'équipe accessible à tous les membres (transparence du rôle).
 
+## Automatisations (Workflows Zernio)
+
+La page `/flows` (« Automatisations ») repose intégralement sur l'**API Workflows de Zernio** (`/v1/workflows`) : le CRM n'exécute rien lui-même, il assemble un graphe de nœuds standard et le confie à Zernio, qui le fait tourner 24 h/24 sur WhatsApp.
+
+- **Modèles sans code** (`lib/flows/templates.ts`, contracte node/edge Zernio vérifiée) : *Agent client 24h/24* (nœud AI modèle intégré Zernio — sans clé BYOK — avec **mémoire multi-tours** `{{history}}`, échappatoire humaine en français et transfert à l'équipe), *Réponse par mot-clé* (déclencheurs `PRIX`, `CATALOGUE`… une seule fois par contact), *Accueil + alerte équipe* (message de bienvenue puis `handoff`).
+- **Création guidée** : assistant en 2 étapes (champs en langage clair → récapitulatif explicite + choix du compte), `POST /api/workflows` construit le graphe côté serveur, crée le brouillon chez Zernio puis l'active ; en cas d'échec d'activation, le brouillon est conservé et l'erreur est expliquée.
+- **Gestion** : activer / mettre en pause / dupliquer / supprimer (routes `/api/workflows/[id]/…`, autorisation `flows.manage` sur toute écriture). Modifier un graphe actif est impossible chez Zernio (pause → PATCH → activation) — le modèle reste le mode d'édition.
+- **Robustesse réseau** : chaque appel Zernio porte un timeout (`ZERNIO_TIMEOUT_MS`, 30 s par défaut) et renvoie un 504 français explicite au lieu de laisser la requête pendre (`ERR_HTTP2_PING_FAILED`). Les erreurs 503 de base distinguent désormais *tables non créées* (`db_schema_missing` → lancer `npm run db:push`) d'une base *injoignable* (`db_unreachable`). Une session expirée redirige proprement vers `/auth/sign-in?next=…` au lieu de laisser la page en échec 401.
+
 
 ## Installation
 

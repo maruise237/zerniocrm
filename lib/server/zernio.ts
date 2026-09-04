@@ -116,11 +116,37 @@ export function zernioBase(): string {
   return BASE;
 }
 
+/** Délai maximal d'attente de Zernio (l'appelant peut surcharger via ZERNIO_TIMEOUT_MS). */
+const ZERNIO_TIMEOUT_MS = Number(process.env.ZERNIO_TIMEOUT_MS || 30_000);
+
+/**
+ * Zernio injoignable ou trop lent : réponse 504 propre (JSON français) au lieu
+ * d'un fetch qui pend jusqu'à ERR_HTTP2_PING_FAILED côté navigateur.
+ */
+function upstreamUnavailable(err: unknown): Response {
+  const name = err instanceof Error ? err.name : '';
+  const timedOut = name === 'TimeoutError' || name === 'AbortError';
+  return Response.json(
+    {
+      error: timedOut
+        ? 'Zernio met trop de temps à répondre. Réessayez dans un instant.'
+        : 'Zernio est injoignable depuis le serveur. Vérifiez la connexion réseau puis réessayez.',
+      code: timedOut ? 'upstream_timeout' : 'upstream_unreachable',
+    },
+    { status: 504 },
+  );
+}
+
 export function zernioFetch(path: string, init?: RequestInit, apiKeyOverride?: string): Promise<Response> {
   const send = (apiKey: string) => {
     const headers = new Headers(init?.headers);
     headers.set('Authorization', `Bearer ${apiKey}`);
-    return fetch(`${BASE}${path}`, { ...init, headers, cache: 'no-store' });
+    return fetch(`${BASE}${path}`, {
+      ...init,
+      headers,
+      cache: 'no-store',
+      signal: init?.signal ?? AbortSignal.timeout(ZERNIO_TIMEOUT_MS),
+    }).catch(upstreamUnavailable);
   };
   if (apiKeyOverride) return send(apiKeyOverride);
   // Self-resolving call: fetch the per-user key (or return the 401/409

@@ -172,7 +172,7 @@ export async function POST(request: Request) {
       inviterRole: workspace.isOwner ? OWNER_ROLE : workspace.role,
       inviteUrl,
     });
-  } catch {
-    return databaseUnavailableResponse();
+  } catch (err) {
+    return databaseUnavailableResponse(err);
   }
 }

@@ -33,7 +33,7 @@ const PRIMARY_LINKS: NavLink[] = [
 
 const SECONDARY_LINKS = [
   { href: '/templates', label: 'Modèles WhatsApp', short: 'Modèles', icon: LayoutTemplate, desc: 'Messages types approuvés par Meta' },
-  { href: '/flows', label: 'Formulaires (Flows)', short: 'Flows', icon: Workflow, desc: 'Formulaires interactifs dans WhatsApp' },
+  { href: '/flows', label: 'Automatisations', short: 'Auto.', icon: Workflow, desc: 'Agents qui répondent à vos contacts 24h/24' },
   { href: '/team', label: 'Équipe', short: 'Équipe', icon: UsersRound, desc: 'Inviter des collaborateurs, rôles et accès' },
   { href: '/settings', label: 'Paramètres', short: 'Paramètres', icon: Settings, desc: 'Clé API, webhook, thème' },
 ] as const;

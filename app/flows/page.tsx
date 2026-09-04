@@ -2,46 +2,85 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
-  Code2,
-  ExternalLink,
-  Eye,
+  Bot,
+  CircleAlert,
+  Copy,
+  Handshake,
   Loader2,
-  Plus,
+  Pause,
+  Play,
   RefreshCw,
-  Rocket,
-  Search,
+  Sparkles,
   Trash2,
-  Workflow,
-  XCircle,
+  Zap,
 } from 'lucide-react';
-import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
+import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { apiFetch, ApiError } from '@/lib/api-client';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useAccounts } from '@/hooks/useAccounts';
+import {
+  useWorkflows,
+  useWorkflowMutations,
+  workflowError,
+  type ZernioWorkflowLite,
+} from '@/hooks/useWorkflows';
+import {
+  WORKFLOW_TEMPLATES,
+  getWorkflowTemplate,
+  templateSummary,
+  type TemplateFieldValues,
+  type WorkflowTemplate,
+} from '@/lib/flows/templates';
+import type { Account, Profile } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { FLOW_STATUS_META, flowCategoryLabel } from '@/lib/whatsapp/flow-meta';
-import type { ZernioFlow } from '@/lib/types';
-import { FlowCreateDialog } from './create-dialog';
-import { FlowJsonDialog } from './json-dialog';
 
-interface FlowsResponse {
-  flows?: ZernioFlow[];
+function Card({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn(
+        'rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-panel)] p-4 sm:p-5',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const meta = FLOW_STATUS_META[status] ?? {
-    label: status,
+const STATUS_META: Record<string, { label: string; badge: string; dot: string }> = {
+  active: {
+    label: 'Actif',
+    badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    dot: 'bg-emerald-500',
+  },
+  draft: {
+    label: 'Brouillon',
+    badge: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+    dot: 'bg-slate-400',
+  },
+  paused: {
+    label: 'En pause',
+    badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    dot: 'bg-amber-500',
+  },
+};
+
+function StatusBadge({ status }: { status?: string }) {
+  const meta = STATUS_META[status ?? ''] ?? {
+    label: status || 'Inconnu',
     badge: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
     dot: 'bg-slate-400',
   };
@@ -58,403 +97,509 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function FlowDetailDialog({ flow, onClose }: { flow: ZernioFlow | null; onClose: () => void }) {
-  const errors = flow?.validation_errors ?? [];
+const TEMPLATE_ICONS = {
+  'support-agent': { Icon: Bot, color: 'bg-[#25D366] text-white' },
+  'keyword-reply': { Icon: Zap, color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  'welcome-handoff': { Icon: Handshake, color: 'bg-sky-500/15 text-sky-600 dark:text-sky-400' },
+} as const;
+
+// ── Assistant de création (2 étapes, aucun code) ────────────────────────────
+
+function WorkflowWizard({
+  template,
+  accounts,
+  profiles,
+  open,
+  onOpenChange,
+}: {
+  template: WorkflowTemplate | null;
+  accounts: Account[];
+  profiles: Profile[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [values, setValues] = useState<TemplateFieldValues>({});
+  const [accountId, setAccountId] = useState('');
+  const { create } = useWorkflowMutations();
+
+  const whatsappAccounts = useMemo(
+    () => accounts.filter((a) => (a.platform ?? 'whatsapp') === 'whatsapp'),
+    [accounts],
+  );
+  const effectiveAccountId =
+    accountId || whatsappAccounts[0]?._id || accounts[0]?._id || '';
+  const profileId = profiles[0]?._id ?? '';
+
+  function reset() {
+    setStep(1);
+    setValues({});
+    setAccountId('');
+    create.reset();
+  }
+
+  function close(next: boolean) {
+    onOpenChange(next);
+    if (!next) reset();
+  }
+
+  function setField(name: string, value: string) {
+    setValues((prev) => ({ ...prev, [name]: value }));
+  }
+
+  const missingRequired = (template?.fields ?? [])
+    .filter((f) => f.required && !(values[f.name] ?? '').trim())
+    .map((f) => f.label);
+
+  async function submit() {
+    if (!template) return;
+    try {
+      const result = await create.mutateAsync({
+        templateId: template.id,
+        accountId: effectiveAccountId,
+        profileId,
+        activate: true,
+        fields: values,
+      });
+      if (result.activated) {
+        toast.success('Automatisation créée et activée. Elle répond désormais à vos contacts.');
+      } else if (result.activationError) {
+        toast.warning(result.activationError);
+      } else {
+        toast.success('Automatisation créée en brouillon. Activez-la depuis la liste.');
+      }
+      close(false);
+    } catch (err) {
+      toast.error(workflowError(err, 'Création impossible. Réessayez dans un instant.'));
+    }
+  }
+
+  const summary = template ? templateSummary(template.id, values) : [];
+
   return (
-    <Dialog open={!!flow} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+    <Dialog
+      open={!!template && open}
+      onOpenChange={(next) => {
+        if (create.isPending) return;
+        close(next);
+      }}
+    >
+      <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="truncate text-sm">{flow?.name}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            {template && <Sparkles className="h-4 w-4 text-[#128C7E]" />}
+            {template ? `Configurer : ${template.name}` : ''}
+          </DialogTitle>
+          <DialogDescription>
+            {step === 1
+              ? 'Répondez en quelques phrases — l’agent s’appuiera sur vos réponses.'
+              : 'Vérifiez, choisissez le compte, et c’est parti.'}
+          </DialogDescription>
         </DialogHeader>
-        {flow && (
+
+        {template && step === 1 && (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={flow.status} />
-              {(flow.categories ?? []).map((c) => (
-                <Badge key={c} variant="outline" className="text-[11px]">
-                  {flowCategoryLabel(c)}
-                </Badge>
-              ))}
-            </div>
-            <dl className="space-y-1.5 text-xs">
-              {flow.version != null && (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Version</dt>
-                  <dd className="font-mono">{flow.version}</dd>
+            {template.fields.map((field) => {
+              const id = `wf-${template.id}-${field.name}`;
+              const common = {
+                id,
+                value: values[field.name] ?? '',
+                onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+                  setField(field.name, e.target.value),
+                placeholder: field.placeholder,
+                maxLength: field.maxLength,
+              };
+              return (
+                <div key={field.name}>
+                  <Label htmlFor={id} className="text-[13px]">
+                    {field.label}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </Label>
+                  {field.type === 'textarea' ? (
+                    <Textarea {...common} rows={3} className="mt-1.5 min-h-[72px] text-[15px]" />
+                  ) : (
+                    <Input {...common} className="mt-1.5 h-11 text-[15px]" />
+                  )}
+                  {field.help && <p className="mt-1 text-xs text-muted-foreground">{field.help}</p>}
                 </div>
-              )}
-              {flow.json_version && (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Version du JSON</dt>
-                  <dd className="font-mono">{flow.json_version}</dd>
-                </div>
-              )}
-              {flow.endpoint_uri && (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Endpoint</dt>
-                  <dd className="max-w-56 truncate font-mono text-[11px]">{flow.endpoint_uri}</dd>
-                </div>
-              )}
-            </dl>
-            {errors.length > 0 && (
-              <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5">
-                <p className="text-xs font-medium text-red-600 dark:text-red-400">
-                  {errors.length} erreur(s) de validation
-                </p>
-                <ul className="mt-1.5 space-y-1 text-[11px] text-muted-foreground">
-                  {errors.slice(0, 6).map((e, i) => (
-                    <li key={i}>
-                      {e.message || e.error_type || e.error || 'Erreur'}
-                      {e.line_start != null ? ` (ligne ${e.line_start})` : ''}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {flow.preview?.preview_url ? (
-              <a
-                href={flow.preview.preview_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-[var(--chat-input)] px-4 py-2.5 text-sm font-medium transition hover:bg-[var(--chat-hover)]"
-              >
-                <ExternalLink className="size-4" /> Ouvrir l’aperçu Meta
-              </a>
-            ) : null}
+              );
+            })}
           </div>
         )}
+
+        {template && step === 2 && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-[var(--chat-border)] bg-[var(--chat-canvas)] p-3.5">
+              <p className="text-sm font-medium">Ce que fera votre automatisation :</p>
+              <ul className="mt-2 space-y-1.5">
+                {summary.map((line) => (
+                  <li key={line} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <Label htmlFor="wf-account" className="text-[13px]">
+                Compte WhatsApp concerné
+              </Label>
+              {whatsappAccounts.length === 0 && accounts.length === 0 ? (
+                <p className="mt-1.5 text-sm text-amber-600 dark:text-amber-400">
+                  Aucun compte WhatsApp connecté. Connectez-en un dans Paramètres avant de créer une
+                  automatisation.
+                </p>
+              ) : (
+                <select
+                  id="wf-account"
+                  value={effectiveAccountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  className="mt-1.5 h-11 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-[15px] outline-none focus:border-[#25D366]/60"
+                >
+                  {(whatsappAccounts.length > 0 ? whatsappAccounts : accounts).map((a) => (
+                    <option key={a._id} value={a._id}>
+                      {a.displayName || a.username || a._id}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Elle sera activée dès sa création. Vous pourrez la mettre en pause à tout moment — rien
+              n’est envoyé sans que Zernio ne l’exécute pour vous.
+            </p>
+
+            {create.isError && (
+              <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+                {workflowError(create.error, 'Création impossible.')}
+              </p>
+            )}
+          </div>
+        )}
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          {step === 1 ? (
+            <>
+              <Button type="button" variant="outline" onClick={() => close(false)} className="min-h-[44px]">
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={missingRequired.length > 0}
+                className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
+              >
+                Continuer
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                disabled={create.isPending}
+                className="min-h-[44px]"
+              >
+                Retour
+              </Button>
+              <Button
+                type="button"
+                onClick={submit}
+                disabled={create.isPending || (!effectiveAccountId || !profileId)}
+                className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
+              >
+                {create.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Création…
+                  </>
+                ) : (
+                  'Créer et activer'
+                )}
+              </Button>
+            </>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-export default function FlowsPage() {
-  const { accounts, isLoading: accountsLoading } = useAccounts();
-  const whatsappAccounts = useMemo(
-    () => accounts.filter((a) => a.platform === 'whatsapp'),
-    [accounts],
-  );
-  const [accountId, setAccountId] = useState('');
-  const effectiveAccountId = accountId || whatsappAccounts[0]?._id || '';
-  const queryClient = useQueryClient();
+// ── Carte d'une automatisation existante ────────────────────────────────────
 
-  const [search, setSearch] = useState('');
-  const [createOpen, setCreateOpen] = useState(false);
-  const [detail, setDetail] = useState<ZernioFlow | null>(null);
-  const [jsonFlow, setJsonFlow] = useState<ZernioFlow | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-
-  const query = useQuery({
-    queryKey: ['whatsapp-flows', effectiveAccountId],
-    enabled: !!effectiveAccountId,
-    refetchInterval: 30_000,
-    queryFn: () =>
-      apiFetch<FlowsResponse>(`/api/whatsapp/flows?accountId=${encodeURIComponent(effectiveAccountId)}`),
-  });
-
-  const flows = query.data?.flows ?? [];
-  const visible = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const list = q
-      ? flows.filter(
-          (f) => f.name.toLowerCase().includes(q) || (f.categories ?? []).some((c) => c.toLowerCase().includes(q)),
-        )
-      : flows;
-    return [...list].sort((a, b) => a.name.localeCompare(b.name));
-  }, [flows, search]);
-
-  const refresh = () => void query.refetch();
-
-  async function act(flow: ZernioFlow, action: 'publish' | 'deprecate', confirmText?: string) {
-    if (confirmText && !window.confirm(confirmText)) return;
-    setBusy(`${flow.id}:${action}`);
-    try {
-      await apiFetch(`/api/whatsapp/flows/${encodeURIComponent(flow.id)}/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId: effectiveAccountId }),
-      });
-      toast.success(action === 'publish' ? 'Flow publié — il peut être envoyé.' : 'Flow déprécié.');
-      refresh();
-    } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
-      toast.error(action === 'publish' ? `Publication refusée.${detail}` : `Dépréciation refusée.${detail}`);
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function remove(flow: ZernioFlow) {
-    if (!window.confirm(`Supprimer définitivement le brouillon « ${flow.name} » ?`)) return;
-    setBusy(`${flow.id}:delete`);
-    try {
-      await apiFetch(
-        `/api/whatsapp/flows/${encodeURIComponent(flow.id)}?accountId=${encodeURIComponent(effectiveAccountId)}`,
-        { method: 'DELETE' },
-      );
-      toast.success('Flow supprimé');
-      refresh();
-    } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
-      toast.error(`Suppression refusée.${detail}`);
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  const refreshDetail = () => {
-    refresh();
-    void queryClient.invalidateQueries({ queryKey: ['whatsapp-flows'] });
-  };
+function WorkflowCard({
+  workflow,
+  onDelete,
+  deleting,
+  onTransition,
+  transitioning,
+}: {
+  workflow: ZernioWorkflowLite;
+  onDelete: () => void;
+  deleting: boolean;
+  onTransition: (action: 'activate' | 'pause' | 'duplicate') => void;
+  transitioning: boolean;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const isActive = workflow.status === 'active';
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto max-w-3xl px-4 py-5 pb-28 sm:px-6 sm:py-8 lg:pb-8">
-          <header className="flex items-center gap-2">
-            <Link
-              href="/"
-              aria-label="Retour à la boîte de réception"
-              className="touch-target flex items-center justify-center rounded-xl text-muted-foreground transition hover:bg-[var(--chat-hover)] hover:text-foreground"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-white">
-              <Workflow className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-base font-semibold tracking-tight">Flows WhatsApp</h1>
-              <p className="text-xs text-muted-foreground">
-                {flows.length} flow{flows.length > 1 ? 's' : ''} · formulaires interactifs
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={refresh}
-              disabled={query.isFetching}
-              aria-label="Actualiser"
-              className="text-muted-foreground"
-            >
-              <RefreshCw className={cn('size-4', query.isFetching && 'animate-spin')} />
-            </Button>
-            <Button onClick={() => setCreateOpen(true)} disabled={!effectiveAccountId}>
-              <Plus className="size-4" />
-                <span className="hidden sm:inline">Nouveau flow</span>
-            </Button>
-          </header>
-        <div className="hidden lg:mt-4 lg:block lg:border-b lg:border-[var(--chat-border)] lg:pb-3">
-          <DesktopNav className="flex flex-wrap" />
-        </div>
-
-          <section className="mt-5 flex flex-col gap-2 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4 shadow-sm sm:flex-row sm:items-center">
-            <label className="flex flex-1 items-center gap-2 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 py-2">
-              <Search className="size-4 shrink-0 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher un flow…"
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-              />
-            </label>
-            <select
-              value={effectiveAccountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              aria-label="Compte WhatsApp"
-              className="h-10 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-sm outline-none"
-            >
-              {whatsappAccounts.map((a) => (
-                <option key={a._id} value={a._id}>
-                  {a.displayName || a.username || a._id}
-                </option>
-              ))}
-            </select>
-          </section>
-
-          <section className="mt-4 space-y-2.5">
-            {(query.isLoading || accountsLoading) && (
-              <div className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-10 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> Chargement des flows…
-              </div>
-            )}
-            {query.error && (
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm text-red-600 dark:text-red-400">
-                Impossible de charger les flows. Vérifiez la configuration du compte.
-              </div>
-            )}
-            {!query.isLoading && !query.error && visible.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-[var(--chat-border)] bg-[var(--chat-surface)] p-10 text-center">
-                <Workflow className="mx-auto size-8 text-muted-foreground/50" />
-                <p className="mt-3 text-sm font-medium">Aucun flow</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Créez un flow (formulaire, réservation, sondage…), ajoutez sa définition JSON puis
-                  publiez-le pour l’envoyer dans les conversations.
-                </p>
-                <Button size="sm" className="mt-4" onClick={() => setCreateOpen(true)} disabled={!effectiveAccountId}>
-                  <Plus className="size-4" />
-                <span className="hidden sm:inline">Nouveau flow</span>
-                </Button>
-              </div>
-            )}
-            {!query.isLoading &&
-              !query.error &&
-              visible.map((flow) => {
-                const errors = flow.validation_errors ?? [];
-                return (
-                  <div
-                    key={flow.id}
-                    className="flex items-center gap-3 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-3.5 shadow-sm"
-                  >
-                    <div
-                      className={cn(
-                        'flex size-9 shrink-0 items-center justify-center rounded-xl',
-                        flow.status === 'PUBLISHED'
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : flow.status === 'DRAFT'
-                            ? 'bg-slate-500/10 text-slate-500'
-                            : 'bg-red-500/10 text-red-500',
-                      )}
-                    >
-                      {flow.status === 'PUBLISHED' ? (
-                        <Rocket className="size-4.5" />
-                      ) : flow.status === 'DRAFT' ? (
-                        <Code2 className="size-4.5" />
-                      ) : (
-                        <XCircle className="size-4.5" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-semibold">{flow.name}</p>
-                        {flow.version != null && flow.version > 1 && (
-                          <Badge variant="outline" className="shrink-0 font-mono text-[10px]">
-                            v{flow.version}
-                          </Badge>
-                        )}
-                        {errors.length > 0 && (
-                          <span
-                            className="shrink-0 text-[10px] font-medium text-red-500"
-                            title={errors[0]?.message ?? 'Erreurs de validation'}
-                          >
-                            {errors.length} erreur{errors.length > 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        {(flow.categories ?? []).slice(0, 3).map((c) => (
-                          <span
-                            key={c}
-                            className="rounded-full bg-slate-500/10 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-                          >
-                            {flowCategoryLabel(c)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <StatusBadge status={flow.status} />
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Voir ${flow.name}`}
-                        onClick={() => setDetail(flow)}
-                        className="size-8 text-muted-foreground"
-                      >
-                        <Eye className="size-4" />
-                      </Button>
-                      {flow.status === 'DRAFT' && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Éditer le JSON"
-                            title="Éditer le JSON du flow"
-                            onClick={() => setJsonFlow(flow)}
-                            className="size-8 text-muted-foreground"
-                          >
-                            <Code2 className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Publier"
-                            title="Publier le flow"
-                            disabled={busy === `${flow.id}:publish` || errors.length > 0}
-                            onClick={() =>
-                              void act(
-                                flow,
-                                'publish',
-                                `Publier « ${flow.name} » ?\nCette action est irréversible : le flow et son JSON deviendront immuables.`,
-                              )
-                            }
-                            className="size-8 text-emerald-500 hover:text-emerald-400"
-                          >
-                            <Rocket className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Supprimer"
-                            onClick={() => void remove(flow)}
-                            className="size-8 text-muted-foreground hover:text-red-500"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </>
-                      )}
-                      {flow.status === 'PUBLISHED' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Déprécier"
-                          title="Déprécier le flow"
-                          disabled={busy === `${flow.id}:deprecate`}
-                          onClick={() =>
-                            void act(
-                              flow,
-                              'deprecate',
-                              `Déprécier « ${flow.name} » ?\nIl ne pourra plus être envoyé ni ouvert.`,
-                            )
-                          }
-                          className="size-8 text-muted-foreground hover:text-red-500"
-                        >
-                          <XCircle className="size-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-          </section>
-
-          <p className="mt-6 rounded-xl bg-[var(--chat-surface)] px-4 py-3 text-[11px] leading-relaxed text-muted-foreground">
-            💡 Un flow <span className="font-medium">publié</span> devient envoyable dans une conversation
-            (menu 📎 → Message interactif → Flow). Pour modifier un flow publié, créez-en un nouveau en le
-            clonant.
-          </p>
+    <Card className="p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-sm font-semibold">{workflow.name}</h3>
+            <StatusBadge status={workflow.status} />
+          </div>
+          {workflow.description && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{workflow.description}</p>
+          )}
         </div>
       </div>
 
-      <FlowCreateDialog
-        accountId={effectiveAccountId}
-        existing={flows}
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={(flow) => {
-          setCreateOpen(false);
-          refresh();
-          setJsonFlow(flow);
-        }}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {confirmDelete ? (
+          <>
+            <span className="text-sm text-muted-foreground">Supprimer définitivement ?</span>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={onDelete}
+              disabled={deleting}
+              className="min-h-[44px]"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Oui, supprimer'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setConfirmDelete(false)}
+              disabled={deleting}
+              className="min-h-[44px]"
+            >
+              Annuler
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              size="sm"
+              onClick={() => onTransition(isActive ? 'pause' : 'activate')}
+              disabled={transitioning}
+              className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
+            >
+              {transitioning ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isActive ? (
+                <>
+                  <Pause className="h-4 w-4" /> Mettre en pause
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" /> Activer
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onTransition('duplicate')}
+              disabled={transitioning}
+              className="min-h-[44px]"
+            >
+              <Copy className="h-4 w-4" /> Dupliquer
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setConfirmDelete(true)}
+              disabled={transitioning}
+              className="min-h-[44px] text-red-600 hover:text-red-600 dark:text-red-400"
+            >
+              <Trash2 className="h-4 w-4" /> Supprimer
+            </Button>
+          </>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+// ── Page ────────────────────────────────────────────────────────────────────
+
+export default function FlowsPage() {
+  const { workflows, isLoading, error, refetch } = useWorkflows();
+  const { accounts, profiles } = useAccounts();
+  const { transition, remove } = useWorkflowMutations();
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardTemplate, setWizardTemplate] = useState<WorkflowTemplate | null>(null);
+
+  function openWizard(template: WorkflowTemplate) {
+    setWizardTemplate(template);
+    setWizardOpen(true);
+  }
+
+  async function handleTransition(id: string, action: 'activate' | 'pause' | 'duplicate') {
+    try {
+      await transition.mutateAsync({ id, action });
+      if (action === 'duplicate') toast.success('Copie créée en brouillon.');
+      else if (action === 'activate') toast.success('Automatisation activée.');
+      else toast.success('Automatisation mise en pause.');
+    } catch (err) {
+      toast.error(workflowError(err, 'Action impossible. Réessayez dans un instant.'));
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await remove.mutateAsync(id);
+      toast.success('Automatisation supprimée.');
+    } catch (err) {
+      toast.error(workflowError(err, 'Suppression impossible. Réessayez dans un instant.'));
+    }
+  }
+
+  return (
+    <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-2xl px-4 py-5 pb-28 sm:px-6 sm:py-8 lg:pb-8">
+          <Link
+            href="/"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> Retour aux messages
+          </Link>
+
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366] text-white">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Automatisations</h1>
+              <p className="text-sm text-muted-foreground">
+                Des agents qui répondent à vos contacts sur WhatsApp, 24 h/24 — sans code.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 hidden lg:mt-6 lg:block lg:border-b lg:border-[var(--chat-border)] lg:pb-3">
+            <DesktopNav className="flex flex-wrap" />
+          </div>
+
+          {isLoading && (
+            <div className="mt-10 flex justify-center" role="status" aria-label="Chargement">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {error && !isLoading && (
+            <Card className="mt-6">
+              <div className="flex items-start gap-3">
+                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+                <div>
+                  <p className="text-sm font-medium">Impossible de charger vos automatisations</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{error.message}</p>
+                  <button
+                    onClick={() => refetch()}
+                    className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[var(--chat-border)] px-3 text-sm hover:bg-[var(--chat-hover)]"
+                  >
+                    <RefreshCw className="h-4 w-4" /> Réessayer
+                  </button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* ── Modèles : créer en 2 minutes (toujours accessible, même
+                 quand la liste ne charge pas : la création est indépendante) ── */}
+          <section className="mt-6">
+                <h2 className="text-base font-semibold">Démarrer en 2 minutes</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Choisissez un modèle, répondez à quelques questions, Zernio s’occupe du reste.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  {WORKFLOW_TEMPLATES.map((template) => {
+                    const { Icon, color } = TEMPLATE_ICONS[template.id];
+                    return (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => openWizard(template)}
+                        className="flex h-full flex-col rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-panel)] p-4 text-left transition-colors hover:border-[#25D366]/50"
+                      >
+                        <span
+                          className={cn(
+                            'flex h-10 w-10 items-center justify-center rounded-xl',
+                            color,
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="mt-3 text-sm font-semibold">{template.name}</span>
+                        <span className="mt-1 flex-1 text-[13px] leading-snug text-muted-foreground">
+                          {template.tagline}
+                        </span>
+                        <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#128C7E]">
+                          <Sparkles className="h-3.5 w-3.5" /> Configurer
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+          </section>
+
+          {!error && (
+            <>
+              {/* ── Liste des automatisations ─────────────────────────── */}
+              <section className="mt-8">
+                <h2 className="text-base font-semibold">
+                  Vos automatisations
+                  {workflows.length > 0 && (
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      ({workflows.length})
+                    </span>
+                  )}
+                </h2>
+                {workflows.length === 0 ? (
+                  <Card className="mt-3">
+                    <p className="text-sm text-muted-foreground">
+                      Aucune automatisation pour l’instant. Choisissez un modèle ci-dessus — deux
+                      minutes suffisent, et vous pouvez tout mettre en pause à tout moment.
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {workflows.map((workflow) => (
+                      <WorkflowCard
+                        key={workflow.id}
+                        workflow={workflow}
+                        onDelete={() => handleDelete(workflow.id)}
+                        deleting={remove.isPending && remove.variables === workflow.id}
+                        onTransition={(action) => handleTransition(workflow.id, action)}
+                        transitioning={
+                          transition.isPending &&
+                          transition.variables?.id === workflow.id
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+        </div>
+      </div>
+
+      <WorkflowWizard
+        template={wizardTemplate}
+        accounts={accounts}
+        profiles={profiles}
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
       />
-      <FlowJsonDialog
-        flow={jsonFlow}
-        accountId={effectiveAccountId}
-        open={!!jsonFlow}
-        onOpenChange={(open) => !open && setJsonFlow(null)}
-        onSaved={refreshDetail}
-      />
-      <FlowDetailDialog flow={detail} onClose={() => setDetail(null)} />
-          <BottomNav />
+      <BottomNav />
     </main>
   );
 }

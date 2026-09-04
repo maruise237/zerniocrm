@@ -33,6 +33,29 @@ export interface WorkspaceInfo {
 
 const workspaceCache = new Map<string, { workspace: WorkspaceInfo; expiresAt: number }>();
 
+/** Cause précise d'indisponibilité de la base, pour un diagnostic actionnable. */
+export type DbUnavailableReason = 'schema_missing' | 'unreachable';
+
+export class DbUnavailableError extends Error {
+  constructor(public reason: DbUnavailableReason) {
+    super('database_unavailable');
+    this.name = 'DbUnavailableError';
+  }
+}
+
+/**
+ * Classe l'erreur Drizzle/postgres : tables absentes (migrations non appliquées)
+ * vs base injoignable (URL fausse, réseau, projet en pause…).
+ */
+function classifyDbError(err: unknown): DbUnavailableError {
+  const code = (err as { code?: string } | null)?.code;
+  const message = err instanceof Error ? err.message : String(err);
+  if (code === '42P01' || /does not exist/i.test(message)) {
+    return new DbUnavailableError('schema_missing');
+  }
+  return new DbUnavailableError('unreachable');
+}
+
 export function invalidateWorkspaceCache(userId?: string): void {
   if (userId) workspaceCache.delete(userId);
   else workspaceCache.clear();
@@ -65,11 +88,11 @@ export async function resolveWorkspace(userId: string): Promise<WorkspaceInfo> {
         .from(schema.zernioConfig)
         .where(eq(schema.zernioConfig.userId, userId))
         .limit(1);
-    } catch {
+    } catch (err) {
       // Fail-closed : la base est injoignable, on ne peut PAS vérifier les
       // droits. Lever l'erreur laisse les routes renvoyer un 503 clair —
       // retomber en auto-workspace donnerait toutes les permissions à tous.
-      throw new Error('database_unavailable');
+      throw classifyDbError(err);
     }
 
     if (config) {
@@ -85,8 +108,8 @@ export async function resolveWorkspace(userId: string): Promise<WorkspaceInfo> {
           .from(schema.teamMembers)
           .where(and(eq(schema.teamMembers.memberUserId, userId), eq(schema.teamMembers.status, 'active')))
           .limit(1);
-      } catch {
-        throw new Error('database_unavailable');
+      } catch (err) {
+        throw classifyDbError(err);
       }
 
       if (membership) {
@@ -126,15 +149,22 @@ export function hasWorkspacePermission(workspace: WorkspaceInfo, permission: str
   return hasPermission(workspace.permissions, permission);
 }
 
-/** Réponse 503 standard quand la base de données est injoignable. */
-export function databaseUnavailableResponse(): Response {
-  return Response.json(
-    {
-      error: 'La base de données est momentanément indisponible. Réessayez dans un instant.',
-      code: 'database_unavailable',
-    },
-    { status: 503 },
-  );
+/**
+ * Réponse 503 quand la base est indisponible, avec un message qui distingue
+ * « tables non créées » (migrations à appliquer) de « base injoignable ».
+ */
+export function databaseUnavailableResponse(err?: unknown): Response {
+  const reason =
+    err instanceof DbUnavailableError
+      ? err.reason
+      : err
+        ? classifyDbError(err).reason
+        : 'unreachable';
+  const message =
+    reason === 'schema_missing'
+      ? "La base de données est connectée, mais ses tables n'existent pas encore. Un technicien doit appliquer les migrations (commande « npm run db:push » — voir README, section Déploiement)."
+      : 'La base de données est momentanément indisponible. Réessayez dans un instant — si le problème persiste, vérifiez la configuration DATABASE_URL.';
+  return Response.json({ error: message, code: `db_${reason}` }, { status: 503 });
 }
 
 export type PermissionGate =
@@ -160,8 +190,8 @@ export async function requirePermission(permission: string): Promise<PermissionG
   let workspace: WorkspaceInfo;
   try {
     workspace = await resolveWorkspace(userId);
-  } catch {
-    return { ok: false, response: databaseUnavailableResponse() };
+  } catch (err) {
+    return { ok: false, response: databaseUnavailableResponse(err) };
   }
   if (!hasPermission(workspace.permissions, permission)) {
     return {

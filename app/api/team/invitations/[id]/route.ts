@@ -43,7 +43,7 @@ export async function DELETE(_request: Request, ctx: { params: Promise<{ id: str
       );
     }
     return Response.json({ ok: true });
-  } catch {
-    return databaseUnavailableResponse();
+  } catch (err) {
+    return databaseUnavailableResponse(err);
   }
 }

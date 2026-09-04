@@ -56,6 +56,22 @@ function parseRetryAfter(res: Response): number | undefined {
   return undefined;
 }
 
+/**
+ * Session expirée ou absente sur une API protégée : au lieu de laisser la page
+ * dans un état cassé (erreurs 401 en boucle dans la console), on renvoie
+ * l'utilisateur vers la connexion, avec retour automatique après login.
+ * Les pages /auth (dont l'invitation publique) gèrent elles-mêmes ce cas.
+ */
+let redirectingToSignIn = false;
+
+function redirectIfSignedOut(): void {
+  if (typeof window === 'undefined' || redirectingToSignIn) return;
+  const { pathname, search } = window.location;
+  if (pathname.startsWith('/auth')) return;
+  redirectingToSignIn = true;
+  window.location.href = `/auth/sign-in?next=${encodeURIComponent(`${pathname}${search}`)}`;
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { cache: 'no-store', ...init });
   if (!res.ok) {
@@ -66,6 +82,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     };
     const retryAfter = parseRetryAfter(res);
     if (res.status === 429) notifyRateLimited(retryAfter ?? 30);
+    if (res.status === 401) redirectIfSignedOut();
     throw new ApiError({
       message: body.error || res.statusText || 'Request failed',
       status: res.status,

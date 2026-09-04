@@ -52,9 +52,9 @@ export async function POST(request: Request) {
       .from(schema.teamInvitations)
       .where(eq(schema.teamInvitations.tokenHash, hashInviteToken(token)))
       .limit(1);
-  } catch {
+  } catch (err) {
     // Base injoignable : impossible de distinguer un lien invalide d'une panne.
-    return databaseUnavailableResponse();
+    return databaseUnavailableResponse(err);
   }
 
   const invalid = (error: string, status: 'invalid' | 'revoked' | 'expired' | 'accepted') =>
@@ -123,8 +123,8 @@ export async function POST(request: Request) {
           isNull(schema.teamInvitations.acceptedAt),
         ),
       );
-  } catch {
-    return databaseUnavailableResponse();
+  } catch (err) {
+    return databaseUnavailableResponse(err);
   }
 
   // Droits appliqués immédiatement : caches de workspace et de clé effacés.

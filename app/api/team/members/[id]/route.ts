@@ -95,8 +95,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     invalidateUserKeyCache(member.memberUserId);
 
     return Response.json({ ok: true, member: updated });
-  } catch {
-    return databaseUnavailableResponse();
+  } catch (err) {
+    return databaseUnavailableResponse(err);
   }
 }
 
@@ -133,7 +133,7 @@ export async function DELETE(_request: Request, ctx: { params: Promise<{ id: str
     invalidateUserKeyCache(member.memberUserId);
 
     return Response.json({ ok: true });
-  } catch {
-    return databaseUnavailableResponse();
+  } catch (err) {
+    return databaseUnavailableResponse(err);
   }
 }

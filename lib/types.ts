@@ -241,3 +241,19 @@ export interface ZernioContact {
   createdAt?: string;
 }
 
+
+/** Automatisation Zernio (« Workflow ») — agent conversationnel exécuté par Zernio. */
+export interface ZernioWorkflow {
+  id: string;
+  name: string;
+  description?: string;
+  status?: string;
+  platform?: string;
+  accountId?: string;
+  profileId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  /** Compteurs d'exécution renvoyés par Zernio, quand présents. */
+  runStats?: { started?: number; completed?: number; exited?: number };
+  [k: string]: unknown;
+}

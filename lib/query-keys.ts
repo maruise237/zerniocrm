@@ -13,4 +13,5 @@ export const queryKeys = {
   contacts: (accountId: string) => ['contacts', accountId] as const,
   settings: ['settings'] as const,
   team: ['team'] as const,
+  workflows: ['workflows'] as const,
 };
