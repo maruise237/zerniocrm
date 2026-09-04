@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, BarChart3, Inbox, MessageCircle, Send, TrendingUp, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart3, Inbox, MessageCircle, Send, TrendingUp, Users } from 'lucide-react';
 import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import Link from 'next/link';
 import { formatPhonePretty, formatRelativeTime } from '@/lib/format';
@@ -73,7 +73,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-lg font-semibold">Statistiques</h1>
           <p className="text-xs text-muted-foreground">
-            Activité WhatsApp journalisée localement — 30 derniers jours
+            Activité WhatsApp de votre espace — 30 derniers jours
           </p>
         </div>
       </header>
@@ -85,6 +85,34 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">
           Mode local actif : connectez une base Neon (DATABASE_URL) pour que les messages
           entrants et sortants soient journalisés et alimentent ces statistiques.
+        </div>
+      )}
+
+      {!isLoading && !isError && data?.mode === 'db' && total30 === 0 && (
+        <div className="rounded-xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <BarChart3 className="h-4 w-4 text-emerald-500" /> D’où viennent ces chiffres ?
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Cette page compte les messages réellement passés par votre compte Zernio et
+            enregistrés dans le journal de votre espace. Trois sources l’alimentent
+            automatiquement, sans aucune saisie de votre part :
+          </p>
+          <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+            <li className="flex gap-2"><MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> Chaque conversation ouverte dans la boîte de réception (messages consultés)</li>
+            <li className="flex gap-2"><Send className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" /> Chaque réponse envoyée depuis le CRM ou une campagne</li>
+            <li className="flex gap-2"><Inbox className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> Chaque message reçu en temps réel (webhook Zernio configuré dans Paramètres)</li>
+          </ul>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Le journal est vide pour l’instant : ouvrez la boîte de réception et échangez
+            avec vos contacts — les graphiques se remplissent aussitôt.
+          </p>
+          <Link
+            href="/"
+            className="touch-target mt-4 inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-[#062c16] transition hover:bg-[#1fba59]"
+          >
+            Ouvrir la boîte de réception <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       )}
 
@@ -168,7 +196,7 @@ export default function DashboardPage() {
           <p className="py-6 text-center text-sm text-muted-foreground">
             {isLoading
               ? 'Chargement…'
-              : 'Aucun message journalisé pour le moment. Les conversations entrantes (webhook) et sortantes apparaîtront ici.'}
+              : 'Aucun message journalisé pour le moment — consultez des conversations ou attendez des réponses, elles apparaîtront ici.'}
           </p>
         ) : (
           <ul className="divide-y divide-[var(--chat-border)]">

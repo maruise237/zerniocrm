@@ -29,8 +29,13 @@ function assertValidGraph(wf: NonNullable<ReturnType<typeof buildWorkflowGraph>>
 }
 
 describe('workflow templates', () => {
-  it('expose trois modèles avec des champs décrits', () => {
-    expect(WORKFLOW_TEMPLATES).toHaveLength(3);
+  it('expose quatre modèles avec des champs décrits', () => {
+    expect(WORKFLOW_TEMPLATES.map((t) => t.id)).toEqual([
+      'support-agent',
+      'keyword-reply',
+      'welcome-handoff',
+      'lead-qualifier',
+    ]);
     for (const template of WORKFLOW_TEMPLATES) {
       expect(template.name.length).toBeGreaterThan(0);
       expect(template.tagline.length).toBeGreaterThan(0);

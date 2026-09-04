@@ -25,7 +25,7 @@ export interface WorkflowTemplateField {
 }
 
 export interface WorkflowTemplate {
-  id: 'support-agent' | 'keyword-reply' | 'welcome-handoff';
+  id: 'support-agent' | 'keyword-reply' | 'welcome-handoff' | 'lead-qualifier';
   name: string;
   tagline: string;
   detail: string;
@@ -137,6 +137,45 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
         label: 'Étiquette du contact (optionnel)',
         type: 'text',
         placeholder: 'Ex. : nouveau-contact',
+        maxLength: 60,
+      },
+    ],
+  },
+  {
+    id: 'lead-qualifier',
+    name: 'Qualification de contact',
+    tagline: 'Pose vos 3 questions au nouveau contact, résume son besoin et alerte votre équipe.',
+    detail:
+      'Chaque nouveau contact reçoit vos questions une par une, à son rythme. Ses réponses sont résumées automatiquement, enregistrées sur sa fiche, et votre équipe est alertée avec le récapitulatif — prête à conclure.',
+    fields: [
+      {
+        name: 'question1',
+        label: 'Question 1',
+        type: 'text',
+        placeholder: 'Ex. : Qu’aimeriez-vous acheter aujourd’hui ?',
+        required: true,
+        maxLength: 300,
+      },
+      {
+        name: 'question2',
+        label: 'Question 2',
+        type: 'text',
+        placeholder: 'Ex. : Quel est votre budget ?',
+        required: true,
+        maxLength: 300,
+      },
+      {
+        name: 'question3',
+        label: 'Question 3 (optionnel)',
+        type: 'text',
+        placeholder: 'Ex. : Sous quel nom / quartier vous livrer ?',
+        maxLength: 300,
+      },
+      {
+        name: 'tag',
+        label: 'Étiquette du contact (optionnel)',
+        type: 'text',
+        placeholder: 'Ex. : lead-qualifié',
         maxLength: 60,
       },
     ],
@@ -388,6 +427,109 @@ function buildWelcomeHandoff(f: TemplateFieldValues): BuiltWorkflow {
   };
 }
 
+/**
+ * Qualification de contact : questions envoyées une par une (le contact répond
+ * à son rythme — wait_for_reply « reply » enchaîne, « timeout » termine poliment),
+ * puis résumé par l’IA (modèle intégré Zernio), enregistrement persistant sur
+ * la fiche du contact (set_field) et alerte équipe avec le récapitulatif.
+ */
+function buildLeadQualifier(f: TemplateFieldValues): BuiltWorkflow {
+  const q3 = f.question3?.trim();
+  const nodes: BuiltNode[] = [
+    {
+      id: 'trigger',
+      type: 'trigger',
+      config: { triggerType: 'inbound_message', matchType: 'any', onlyFirstMessage: true },
+    },
+    { id: 'ask1', type: 'send_message', config: { messageType: 'text', text: f.question1 } },
+    { id: 'wait1', type: 'wait_for_reply', config: { timeoutMinutes: 2880, saveAs: 'rep1' } },
+    { id: 'ask2', type: 'send_message', config: { messageType: 'text', text: f.question2 } },
+    { id: 'wait2', type: 'wait_for_reply', config: { timeoutMinutes: 2880, saveAs: 'rep2' } },
+  ];
+  if (q3) {
+    nodes.push(
+      { id: 'ask3', type: 'send_message', config: { messageType: 'text', text: q3 } },
+      { id: 'wait3', type: 'wait_for_reply', config: { timeoutMinutes: 2880, saveAs: 'rep3' } },
+    );
+  }
+  nodes.push(
+    {
+      id: 'summarize',
+      type: 'ai',
+      config: {
+        // Sans « provider » : modèle intégré de Zernio, aucune clé à configurer.
+        systemPrompt: [
+          'Tu prépares le travail d’une équipe commerciale sur WhatsApp.',
+          'À partir des questions posées et des réponses du contact, rédige un résumé clair en 2 à 3 phrases :',
+          '- ce que le contact veut (besoin principal),',
+          '- son budget ou contrainte si elle est mentionnée,',
+          '- une recommandation de la prochaine action pour l’équipe.',
+          'Utilise uniquement les réponses fournies — n’invente rien. Réponds en français simple.',
+        ].join('\n'),
+        userPromptTemplate: [
+          'Question 1 : ' + f.question1,
+          'Réponse 1 : {{rep1}}',
+          '',
+          'Question 2 : ' + f.question2,
+          'Réponse 2 : {{rep2}}',
+          ...(q3 ? ['', 'Question 3 : ' + q3, 'Réponse 3 : {{rep3}}'] : []),
+          '',
+          'Premier message du contact : {{lastMessage}}',
+          '',
+          'Écris le résumé.',
+        ].join('\n'),
+        outputType: 'text',
+        saveAs: 'recap',
+      },
+    },
+    { id: 'savefield', type: 'set_field', config: { field: 'besoin', value: '{{recap}}' } },
+    { id: 'done', type: 'end', config: {} },
+    {
+      id: 'handoff',
+      type: 'handoff',
+      config: { note: 'Contact qualifié — résumé : {{recap}}' },
+    },
+  );
+  if (f.tag) nodes.splice(nodes.length - 1, 0, { id: 'tag', type: 'add_tag', config: { tag: f.tag } });
+
+  const edges: BuiltEdge[] = [
+    { id: 'e1', source: 'trigger', target: 'ask1' },
+    { id: 'e2', source: 'ask1', target: 'wait1' },
+    { id: 'e3', source: 'wait1', target: 'ask2', sourceHandle: 'reply' },
+    { id: 'e4', source: 'wait1', target: 'done', sourceHandle: 'timeout' },
+    { id: 'e5', source: 'ask2', target: 'wait2' },
+  ];
+  let n = 6;
+  if (q3) {
+    edges.push(
+      { id: `e${n++}`, source: 'wait2', target: 'ask3', sourceHandle: 'reply' },
+      { id: `e${n++}`, source: 'wait2', target: 'done', sourceHandle: 'timeout' },
+      { id: `e${n++}`, source: 'ask3', target: 'wait3' },
+      { id: `e${n++}`, source: 'wait3', target: 'summarize', sourceHandle: 'reply' },
+      { id: `e${n++}`, source: 'wait3', target: 'done', sourceHandle: 'timeout' },
+    );
+  } else {
+    edges.push(
+      { id: `e${n++}`, source: 'wait2', target: 'summarize', sourceHandle: 'reply' },
+      { id: `e${n++}`, source: 'wait2', target: 'done', sourceHandle: 'timeout' },
+    );
+  }
+  edges.push(
+    { id: `e${n++}`, source: 'summarize', target: 'savefield', sourceHandle: 'success' },
+    { id: `e${n++}`, source: 'summarize', target: 'handoff', sourceHandle: 'error' },
+    { id: `e${n++}`, source: 'savefield', target: 'handoff' },
+  );
+  return {
+    name: 'Qualification de contact',
+    description:
+      'Pose vos questions une par une aux nouveaux contacts, résume leurs besoins, l’enregistre sur leur fiche et alerte votre équipe.',
+    platform: 'whatsapp',
+    nodes,
+    edges,
+    entryNodeId: 'trigger',
+  };
+}
+
 /** Construit le graphe Zernio complet d’un modèle. `templateId` inconnu → null. */
 export function buildWorkflowGraph(
   templateId: string,
@@ -400,6 +542,8 @@ export function buildWorkflowGraph(
       return buildKeywordReply(values);
     case 'welcome-handoff':
       return buildWelcomeHandoff(values);
+    case 'lead-qualifier':
+      return buildLeadQualifier(values);
     default:
       return null;
   }
@@ -427,6 +571,14 @@ export function templateSummary(templateId: string, values: TemplateFieldValues)
       return [
         'Chaque personne qui vous écrit pour la première fois reçoit votre message de bienvenue.',
         'La conversation est aussitôt signalée à votre équipe dans la boîte de réception.',
+        values.tag ? `Le contact est étiqueté « ${values.tag} ».` : 'Aucune étiquette ajoutée au contact.',
+      ];
+    case 'lead-qualifier':
+      return [
+        'Chaque nouveau contact reçoit vos questions une par une, à son rythme.',
+        'Ses réponses sont résumées automatiquement (modèle intégré Zernio, sans clé à configurer).',
+        'Le résumé est enregistré sur la fiche du contact (champ « besoin »).',
+        'Votre équipe est alertée avec le récapitulatif pour conclure.',
         values.tag ? `Le contact est étiqueté « ${values.tag} ».` : 'Aucune étiquette ajoutée au contact.',
       ];
     default:

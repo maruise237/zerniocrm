@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiFetch, toApiError, type ApiError } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 import type { Account, Profile } from '@/lib/types';
@@ -45,21 +45,4 @@ export function useAccounts(): {
       void query.refetch();
     },
   };
-}
-
-export function useSaveSettings() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (selectedAccountIds: string[]) =>
-      apiFetch<{ selectedAccountIds: string[] }>('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selectedAccountIds }),
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
-      // Prefix match: every conversations head query, regardless of filters.
-      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    },
-  });
 }

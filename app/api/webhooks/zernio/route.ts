@@ -24,7 +24,14 @@ export async function POST(request: Request) {
     if (!config) return new Response('Non autorisé', { status: 401 });
     const payload = await request.json() as Record<string, unknown>;
     if (payload.event !== 'message.received') return Response.json({ ok: true, ignored: true });
-    const eventId = stringValue(payload.id) || null;
+    // Déduplication unifiée : l'identifiant du MESSAGE Zernio prime s'il
+    // existe, ainsi webhook et synchro à la lecture comptent le même message
+    // une seule fois (même espace « zmsg:<id> »).
+    const message = (payload.message && typeof payload.message === 'object' ? payload.message : payload.data) as Record<string, unknown> | undefined;
+    const messageId = stringValue(message?.id);
+    // Espace de déduplication unifié : « zmsg:<id message> » partagé avec la
+    // synchro à la lecture ; à défaut, l'id d'événement brut du webhook.
+    const eventId = messageId ? `zmsg:${messageId}`.slice(0, 180) : stringValue(payload.id) || null;
     if (eventId) {
       const [duplicate] = await db.select({ id: schema.whatsappMessages.id }).from(schema.whatsappMessages).where(eq(schema.whatsappMessages.externalEventId, eventId)).limit(1);
       if (duplicate) return Response.json({ ok: true, duplicate: true });

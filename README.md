@@ -16,7 +16,7 @@ WhatsApp CRM est une inbox client mobile-first dédiée exclusivement à WhatsAp
 | Neon Postgres | Tables `public.zernio_config`, `public.whatsapp_messages`, `public.team_invitations`, `public.team_members` — index et déduplication des événements. |
 | Neon Auth | SDK Managed Better Auth, handler `/api/auth/[...path]`, middleware et formulaires français `/auth/sign-in` et `/auth/sign-up`. |
 | Webhook | `POST /api/webhooks/zernio?token=...`, validation `message.received`, déduplication par `payload.id` et insertion isolée par utilisateur. |
-| Envoi | `POST /api/messages` et routes proxy : clé Zernio résolue depuis la session utilisateur (cache 60 s), journalisation Neon. |
+| Envoi | Routes proxy (`/api/conversations/[id]/messages`…) : clé Zernio résolue depuis la session utilisateur (cache 60 s), journalisation Neon. |
 
 ## Architecture de la clé API
 
@@ -109,7 +109,7 @@ npm run typecheck
 npm run build
 ```
 
-Le build produit les routes `/`, `/dashboard`, `/settings`, `/auth/sign-in`, `/auth/sign-up`, `/api/settings`, `/api/messages`, `/api/stats`, `/api/webhooks/zernio` et le handler Neon Auth. Les appels réels nécessitent toutefois les variables Neon et Zernio d’une instance de déploiement.
+Le build produit les routes `/`, `/dashboard`, `/settings`, `/auth/sign-in`, `/auth/sign-up`, `/api/settings`, `/api/stats`, `/api/webhooks/zernio` et le handler Neon Auth. Les appels réels nécessitent toutefois les variables Neon et Zernio d’une instance de déploiement.
 
 ## Structure utile
 
@@ -121,7 +121,6 @@ app/auth/sign-in/page.tsx            Connexion française
 app/auth/sign-up/page.tsx            Création de compte française
 app/api/auth/[...path]/route.ts      Handler Neon Auth
 app/api/settings/route.ts             Configuration par utilisateur
-app/api/messages/route.ts             Envoi WhatsApp sortant
 app/api/webhooks/zernio/route.ts     Réception WhatsApp entrante
 lib/db/schema.ts                      Schéma Drizzle/Neon
 lib/auth/server.ts                    Instance Managed Better Auth

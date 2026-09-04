@@ -28,6 +28,23 @@ export interface CreateWorkflowResponse {
   activationError: string | null;
 }
 
+/** Détail complet renvoyé par Zernio (graphe inclus). */
+export interface WorkflowDetail {
+  workflow?: ZernioWorkflow & { nodes?: { id: string; type: string; config: Record<string, unknown> }[]; edges?: unknown[] };
+  status?: string;
+  nodes?: { id: string; type: string; config: Record<string, unknown> }[];
+  edges?: unknown[];
+  [k: string]: unknown;
+}
+
+export interface UpdateWorkflowPayload {
+  id: string;
+  name?: string;
+  description?: string;
+  aiSystemPrompt?: string;
+  sendMessageText?: string;
+}
+
 export function useWorkflows() {
   const query = useQuery({
     queryKey: queryKeys.workflows,
@@ -40,6 +57,21 @@ export function useWorkflows() {
     isFetching: query.isFetching,
     error: toApiError(query.error),
     refetch: () => query.refetch(),
+  };
+}
+
+/** Détail d'une automatisation (graphe) — chargé à l'ouverture de l'éditeur. */
+export function useWorkflowDetail(id: string | null) {
+  const query = useQuery({
+    queryKey: ['workflows', 'detail', id],
+    enabled: !!id,
+    staleTime: 10_000,
+    queryFn: () => apiFetch<WorkflowDetail>(`/api/workflows/${encodeURIComponent(id as string)}`),
+  });
+  return {
+    detail: query.data ?? null,
+    isLoading: query.isLoading,
+    error: toApiError(query.error),
   };
 }
 
@@ -74,10 +106,21 @@ export function useWorkflowMutations() {
     onSuccess: invalidate,
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, ...patch }: UpdateWorkflowPayload) =>
+      apiFetch<unknown>(`/api/workflows/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: invalidate,
+  });
+
   return {
     create,
     transition,
     remove,
+    update,
   };
 }
 

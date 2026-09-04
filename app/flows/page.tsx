@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Bot,
   CircleAlert,
+  ClipboardList,
   Copy,
   Handshake,
   Loader2,
@@ -101,6 +102,7 @@ const TEMPLATE_ICONS = {
   'support-agent': { Icon: Bot, color: 'bg-[#25D366] text-white' },
   'keyword-reply': { Icon: Zap, color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
   'welcome-handoff': { Icon: Handshake, color: 'bg-sky-500/15 text-sky-600 dark:text-sky-400' },
+  'lead-qualifier': { Icon: ClipboardList, color: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
 } as const;
 
 // ── Assistant de création (2 étapes, aucun code) ────────────────────────────

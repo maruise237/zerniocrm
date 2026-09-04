@@ -47,6 +47,7 @@
     "@types/react-dom": "^19.1.6",
     "autoprefixer": "^10.5.4",
     "drizzle-kit": "^0.31.10",
+    "embedded-postgres": "^18.4.0-beta.17",
     "eslint": "^9.28.0",
     "eslint-config-next": "16.3.4",
     "postcss": "^8.5.26",
@@ -54,5 +55,12 @@
     "tailwindcss-animate": "1.0.7",
     "typescript": "^5.8.3",
     "vitest": "^3.2.3"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.2": true,
+    "unrs-resolver@1.12.2": true
   }
 }
