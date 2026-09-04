@@ -37,11 +37,13 @@ import {
   useBroadcastActions,
   useBroadcastDetail,
   useBroadcastRecipients,
+  useBroadcastSends,
 } from '@/hooks/useBroadcasts';
 import { cn } from '@/lib/utils';
 import { parseContactFile } from '@/lib/contacts/import-parser';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import { templateVariableCount } from '@/lib/campaigns/template-check';
+import { cumulativeStats, directSendStats, dominantFailure } from '@/lib/campaigns/stats';
 import {
   campaignVarsToList,
   duplicateBroadcast,
@@ -63,7 +65,16 @@ import {
   RECIPIENT_STATUS_LABELS,
   formatTemplateLanguage,
 } from '@/lib/whatsapp/template-meta';
-import type { ZernioBroadcast, ZernioBroadcastRecipient, ZernioContact } from '@/lib/types';
+import type {
+  CampaignSendRow,
+  ZernioBroadcast,
+  ZernioBroadcastRecipient,
+  ZernioContact,
+} from '@/lib/types';
+
+function digits(value: string): string {
+  return value.replace(/\D/g, '');
+}
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -477,9 +488,51 @@ function ScheduleDialog({
   );
 }
 
+/** Statut de suivi d'un destinataire : Zernio (broadcast) ou envoi direct. */
+interface TrackedRow {
+  status: string; // clé minuscule : pending | sent | delivered | read | failed
+  note?: string | null;
+}
+
+/**
+ * Fusionne les statuts Zernio (moteur broadcast) avec ceux des envois directs
+ * (campaign_sends — statuts rafraîchis depuis l'inbox Zernio). Pour un même
+ * numéro, le statut le plus avancé gagne ; les envois directs sont la source
+ * quand Zernio n'a jamais tenté l'envoi (statut resté « pending »).
+ */
+const STATUS_RANK: Record<string, number> = { pending: 0, sent: 1, delivered: 2, read: 3 };
+
+function mergeTrackingStatus(
+  native: ZernioBroadcastRecipient | undefined,
+  direct: CampaignSendRow | undefined,
+): TrackedRow {
+  const nativeStatus = (native?.status ?? 'pending').toLowerCase();
+  if (!direct) return { status: nativeStatus, note: native?.error ?? native?.errorExplanation ?? null };
+  const directStatus = direct.status.toLowerCase();
+  if (directStatus === 'failed') return { status: 'failed', note: 'Envoi direct en échec (voir inbox Zernio).' };
+  const rankDirect = STATUS_RANK[directStatus] ?? 1;
+  const rankNative = STATUS_RANK[nativeStatus] ?? 0;
+  if (nativeStatus === 'failed') return { status: 'failed', note: native?.error ?? native?.errorExplanation ?? null };
+  return rankDirect >= rankNative
+    ? { status: directStatus }
+    : { status: nativeStatus, note: native?.error ?? native?.errorExplanation ?? null };
+}
+
 function RecipientList({ broadcastId }: { broadcastId: string }) {
   const { recipients, summary, isLoading, refresh } = useBroadcastRecipients(broadcastId);
+  const { sends } = useBroadcastSends(broadcastId);
   const visible = recipients.slice(0, 100);
+  const directByPhone = new Map(sends.map((s) => [digits(s.phone), s]));
+  // Puces de statut : statuts fusionnés (Zernio + envois directs) sur TOUS les
+  // destinataires ; envois directs seuls si Zernio n'a aucune ligne.
+  const chips =
+    recipients.length === 0 && sends.length > 0
+      ? directSendStats(sends)
+      : cumulativeStats(
+          recipients.map((r) => ({
+            status: mergeTrackingStatus(r, directByPhone.get(digits(r.platformIdentifier ?? ''))).status,
+          })),
+        );
 
   if (isLoading) {
     return (
@@ -494,44 +547,67 @@ function RecipientList({ broadcastId }: { broadcastId: string }) {
       {summary && (
         <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
           <span className="rounded-full bg-[var(--chat-input)] px-2.5 py-1 text-muted-foreground">
-            {summary.total} au total
+            {chips.total} au total
           </span>
           {(['pending', 'sent', 'delivered', 'read', 'failed'] as const).map((key) =>
-            summary[key] > 0 ? (
+            chips[key] > 0 ? (
               <span
                 key={key}
                 className={cn('rounded-full px-2.5 py-1 font-medium', RECIPIENT_STATUS_BADGE[key])}
               >
-                {RECIPIENT_STATUS_LABELS[key]} : {summary[key]}
+                {RECIPIENT_STATUS_LABELS[key]} : {chips[key]}
               </span>
             ) : null,
           )}
         </div>
       )}
       {visible.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[var(--chat-border)] p-6 text-center text-xs text-muted-foreground">
-          Aucun destinataire pour l’instant.
-        </p>
+        sends.length > 0 ? (
+          <ul className="divide-y divide-[var(--chat-border)] overflow-hidden rounded-xl border border-[var(--chat-border)]">
+            {sends.slice(0, 100).map((s) => {
+              const status = s.status.toLowerCase();
+              return (
+                <li key={s.id} className="flex items-center gap-3 px-3.5 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-mono text-[10px] text-muted-foreground">+{digits(s.phone)}</p>
+                    {s.preview && <p className="truncate text-[11px]">{s.preview}</p>}
+                  </div>
+                  <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', RECIPIENT_STATUS_BADGE[status as keyof typeof RECIPIENT_STATUS_BADGE] ?? RECIPIENT_STATUS_BADGE.pending)}>
+                    {RECIPIENT_STATUS_LABELS[status as keyof typeof RECIPIENT_STATUS_LABELS] ?? status}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="rounded-xl border border-dashed border-[var(--chat-border)] p-6 text-center text-xs text-muted-foreground">
+            Aucun destinataire pour l’instant.
+          </p>
+        )
       ) : (
         <ul className="divide-y divide-[var(--chat-border)] overflow-hidden rounded-xl border border-[var(--chat-border)]">
-          {visible.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 px-3.5 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium">{r.contactName || r.displayIdentifier || 'Contact'}</p>
-                <p className="truncate font-mono text-[10px] text-muted-foreground">
-                  {r.platformIdentifier || r.contactId}
-                </p>
-              </div>
-              {r.status === 'failed' && (r.errorExplanation || r.error) && (
-                <span className="hidden max-w-44 truncate text-[10px] text-red-500/80 sm:block" title={r.errorExplanation || r.error || ''}>
-                  {r.errorExplanation || r.error}
+          {visible.map((r) => {
+            const direct = directByPhone.get(digits(r.platformIdentifier ?? ''));
+            const merged = mergeTrackingStatus(r, direct);
+            return (
+              <li key={r.id} className="flex items-center gap-3 px-3.5 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium">{r.contactName || r.displayIdentifier || 'Contact'}</p>
+                  <p className="truncate font-mono text-[10px] text-muted-foreground">
+                    {r.platformIdentifier || r.contactId}
+                  </p>
+                </div>
+                {merged.status === 'failed' && merged.note && (
+                  <span className="hidden max-w-44 truncate text-[10px] text-red-500/80 sm:block" title={merged.note}>
+                    {merged.note}
+                  </span>
+                )}
+                <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', RECIPIENT_STATUS_BADGE[merged.status as keyof typeof RECIPIENT_STATUS_BADGE] ?? RECIPIENT_STATUS_BADGE.pending)}>
+                  {RECIPIENT_STATUS_LABELS[merged.status as keyof typeof RECIPIENT_STATUS_LABELS] ?? merged.status}
                 </span>
-              )}
-              <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', RECIPIENT_STATUS_BADGE[r.status])}>
-                {RECIPIENT_STATUS_LABELS[r.status]}
-              </span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
       {recipients.length > 100 && (
@@ -730,6 +806,8 @@ export function CampaignDetail({
 }) {
   const { broadcast, isLoading, error, refresh } = useBroadcastDetail(broadcastId);
   const actions = useBroadcastActions();
+  const { recipients } = useBroadcastRecipients(broadcastId);
+  const { sends, stats: sendStats } = useBroadcastSends(broadcastId);
   const [adding, setAdding] = useState(false);
   const [scheduling, setScheduling] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -763,15 +841,44 @@ export function CampaignDetail({
   const hasVars = !!varsCfg && Object.keys(varsCfg.variableMapping).length > 0;
   const directResult = loadDirectResult(broadcast.id);
   const isDirectDone = broadcast.status === 'draft' && wasDirectSent(broadcast.id);
-  const badgeLabel = isDirectDone ? 'Envoyé (direct)' : meta?.label ?? broadcast.status;
-  const badgeClass = isDirectDone
+  // Une campagne « draft » chez Zernio mais dont les envois directs sont
+  // suivis (campaign_sends) a bien été envoyée : badge honnête.
+  const effectiveDirectDone = isDirectDone || sends.length > 0;
+  const badgeLabel = effectiveDirectDone ? 'Envoyée (direct)' : meta?.label ?? broadcast.status;
+  const badgeClass = effectiveDirectDone
     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
     : (meta?.badge ?? 'bg-slate-500/10 text-slate-600 dark:text-slate-300');
-  const badgeDot = isDirectDone ? 'bg-emerald-500' : (meta?.dot ?? 'bg-slate-400');
-  const statSent = isDirectDone && directResult ? directResult.sent : (broadcast.sentCount ?? 0);
-  const statFailed = isDirectDone && directResult ? directResult.failed : (broadcast.failedCount ?? 0);
-  const statDelivered = isDirectDone ? 0 : (broadcast.deliveredCount ?? 0);
-  const statRead = isDirectDone ? 0 : (broadcast.readCount ?? 0);
+  const badgeDot = effectiveDirectDone ? 'bg-emerald-500' : (meta?.dot ?? 'bg-slate-400');
+  // ── Statistiques de suivi ────────────────────────────────────────────────
+  // 1. Envois directs enregistrés (campaign_sends) → statuts réels Zernio.
+  // 2. Sinon, destinataires natifs Zernio → totaux cumulatifs (les compteurs
+  //    agrégés sentCount/deliveredCount de l'objet broadcast sous-comptent).
+  // 3. Repli : compteurs de l'objet broadcast (liste > 200 destinataires).
+  const hasDirectTracking = sends.length > 0;
+  const nativeComplete = recipients.length > 0 && recipients.length >= (broadcast.recipientCount ?? 0);
+  const native = cumulativeStats(recipients);
+  const statSent = hasDirectTracking
+    ? (sendStats?.sent ?? 0)
+    : nativeComplete
+      ? native.sent
+      : (broadcast.sentCount ?? 0);
+  const statFailed = hasDirectTracking
+    ? (sendStats?.failed ?? 0)
+    : nativeComplete
+      ? native.failed
+      : (broadcast.failedCount ?? 0);
+  const statDelivered = hasDirectTracking
+    ? (sendStats?.delivered ?? 0)
+    : nativeComplete
+      ? native.delivered
+      : (broadcast.deliveredCount ?? 0);
+  const statRead = hasDirectTracking
+    ? (sendStats?.read ?? 0)
+    : nativeComplete
+      ? native.read
+      : (broadcast.readCount ?? 0);
+  // Raison d'échec dominante (champs officiels error/errorCode Zernio).
+  const failureReason = dominantFailure(recipients);
 
   function run(fn: () => Promise<unknown>, success: string) {
     fn()
@@ -1087,8 +1194,15 @@ export function CampaignDetail({
             {isDirectDone && directResult && (
               <p className="mt-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                 ✓ Envoyé en direct le {formatDate(directResult.at)} — {directResult.sent} envoyé(s)
-                {directResult.failed > 0 ? `, ${directResult.failed} échec(s)` : ''} · Zernio ne suit pas
-                les statuts de cet envoi.
+                {directResult.failed > 0 ? `, ${directResult.failed} échec(s)` : ''}
+                {hasDirectTracking
+                  ? ' · Statuts réels suivis ci-dessous (envoyé / livré / lu), rafraîchis depuis l’inbox Zernio.'
+                  : ' · Les statuts détaillés apparaîtront d’ici quelques instants.'}
+              </p>
+            )}
+            {broadcast.status === 'failed' && failureReason && (
+              <p className="mt-2 rounded-lg bg-red-500/5 px-3 py-2 text-[11px] leading-relaxed text-red-600 dark:text-red-400">
+                Échec signalé par Zernio : {failureReason}.
               </p>
             )}
           </div>
@@ -1109,7 +1223,8 @@ export function CampaignDetail({
           <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
             ℹ️ Campagne personnalisée : Zernio n’enregistre pas les variables d’une campagne (vérifié avec
             « Inspecter ») — l’envoi se fait donc directement, destinataire par destinataire, avec les
-            vraies valeurs (même mécanisme que l’envoi d’un modèle dans une conversation).
+            vraies valeurs (même mécanisme que l’envoi d’un modèle dans une conversation). Chaque envoi
+            est ensuite suivi individuellement (envoyé / livré / lu / échec) via l’inbox Zernio.
           </p>
         )}
 

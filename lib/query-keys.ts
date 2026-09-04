@@ -10,6 +10,8 @@ export const queryKeys = {
   broadcasts: ['broadcasts'] as const,
   broadcast: (id: string) => ['broadcast', id] as const,
   broadcastRecipients: (id: string) => ['broadcast-recipients', id] as const,
+  broadcastSends: (id: string) => ['broadcast-sends', id] as const,
+  campaignSendsAggregates: (ids: string) => ['campaign-sends-aggregates', ids] as const,
   contacts: (accountId: string) => ['contacts', accountId] as const,
   settings: ['settings'] as const,
   team: ['team'] as const,

@@ -223,6 +223,29 @@ export interface ZernioBroadcastRecipient {
   readAt?: string | null;
 }
 
+/** Envoi direct personnalisé enregistré (table campaign_sends). */
+export interface CampaignSendRow {
+  id: string;
+  broadcastId: string;
+  phone: string;
+  accountId?: string | null;
+  conversationId?: string | null;
+  messageId?: string | null;
+  preview?: string | null;
+  status: string; // SENT | DELIVERED | READ | FAILED
+  sentAt: string;
+  statusAt: string;
+}
+
+export interface CampaignSendStats {
+  total: number;
+  sent: number;
+  delivered: number;
+  read: number;
+  failed: number;
+  pending: number;
+}
+
 export interface ZernioContact {
   id: string;
   name?: string;

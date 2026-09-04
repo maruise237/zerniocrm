@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   CalendarClock,
@@ -32,6 +33,7 @@ import {
 import { useAccounts } from '@/hooks/useAccounts';
 import { useBroadcasts } from '@/hooks/useBroadcasts';
 import { apiFetch, ApiError } from '@/lib/api-client';
+import { queryKeys } from '@/lib/query-keys';
 import {
   duplicateBroadcast,
   hideCampaign,
@@ -42,6 +44,7 @@ import {
 } from '@/lib/campaigns/personalization';
 import { sendPersonalizedCampaign } from '@/lib/campaigns/direct-send';
 import { templateVariableCount } from '@/lib/campaigns/template-check';
+import type { CampaignSendStats } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatInTimezone, getTimezoneSetting } from '@/lib/timezone';
 import { BROADCAST_STATUS_META, formatTemplateLanguage } from '@/lib/whatsapp/template-meta';
@@ -56,6 +59,7 @@ function formatListDate(value?: string | null): string {
 
 function CampaignRow({
   broadcast,
+  aggregate,
   onSelect,
   onDuplicate,
   onRelaunch,
@@ -63,6 +67,7 @@ function CampaignRow({
   busy,
 }: {
   broadcast: ZernioBroadcast;
+  aggregate?: CampaignSendStats | null;
   onSelect: () => void;
   onDuplicate: () => void;
   onRelaunch: () => void;
@@ -70,7 +75,9 @@ function CampaignRow({
   busy: boolean;
 }) {
   const meta = BROADCAST_STATUS_META[broadcast.status] ?? BROADCAST_STATUS_META.draft;
-  const directDone = broadcast.status === 'draft' && wasDirectSent(broadcast.id);
+  // Campagne « draft » chez Zernio mais réellement envoyée en direct :
+  // tracking présent (aggregate) ou envoi direct marqué localement.
+  const directDone = broadcast.status === 'draft' && (wasDirectSent(broadcast.id) || !!aggregate);
   const directResult = directDone ? loadDirectResult(broadcast.id) : null;
   const canRelaunch =
     ['completed', 'failed', 'cancelled'].includes(broadcast.status) || directDone;
@@ -138,18 +145,31 @@ function CampaignRow({
           </span>
           <span className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Users className="size-3" /> {broadcast.recipientCount ?? 0}
-            {directResult && <span className="font-medium text-emerald-600 dark:text-emerald-400">· {directResult.sent} envoyés (direct)</span>}
-            {directResult && directResult.failed > 0 && (
+            {/* Suivi réel des envois directs (statuts Zernio par destinataire) */}
+            {aggregate && (
+              <>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">· {aggregate.sent} envoyés</span>
+                {aggregate.read > 0 && <span className="font-medium text-emerald-600 dark:text-emerald-400">· {aggregate.read} lus</span>}
+                {aggregate.delivered > aggregate.read && (
+                  <span className="text-indigo-500">· {aggregate.delivered} livrés</span>
+                )}
+                {aggregate.failed > 0 && <span className="text-red-500">· {aggregate.failed} échecs</span>}
+              </>
+            )}
+            {!aggregate && directResult && (
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">· {directResult.sent} envoyés (direct)</span>
+            )}
+            {!aggregate && directResult && directResult.failed > 0 && (
               <span className="text-red-500">· {directResult.failed} échecs</span>
             )}
-            {!directResult && (broadcast.sentCount ?? 0) > 0 && (
+            {!aggregate && !directResult && (broadcast.sentCount ?? 0) > 0 && (
               <span className="text-sky-500">· {broadcast.sentCount} envoyés</span>
             )}
             {(broadcast.deliveredCount ?? 0) > 0 && (
               <span className="text-indigo-500">· {broadcast.deliveredCount} livrés</span>
             )}
             {(broadcast.readCount ?? 0) > 0 && <span className="text-emerald-500">· {broadcast.readCount} lus</span>}
-            {!directResult && (broadcast.failedCount ?? 0) > 0 && (
+            {!aggregate && !directResult && (broadcast.failedCount ?? 0) > 0 && (
               <span className="text-red-500">· {broadcast.failedCount} échecs</span>
             )}
           </span>
@@ -230,6 +250,22 @@ export default function CampaignsPage() {
   const selectedBroadcast = selectedId
     ? broadcasts.find((b) => b.id === selectedId) ?? null
     : null;
+
+  // Agrégats de suivi réel (campagnes envoyées en direct personnalisé) pour
+  // les campagnes affichées — une seule requête pour toute la liste.
+  const listIds = useMemo(() => sorted.map((b) => b.id), [sorted]);
+  const idsKey = listIds.join(',');
+  const { data: aggregatesData } = useQuery({
+    queryKey: queryKeys.campaignSendsAggregates(idsKey),
+    enabled: idsKey.length > 0,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    queryFn: () =>
+      apiFetch<{ aggregates?: Record<string, CampaignSendStats> }>(
+        `/api/campaign-sends?ids=${encodeURIComponent(idsKey)}`,
+      ),
+  });
+  const aggregates = aggregatesData?.aggregates ?? null;
 
   async function duplicateRow(broadcast: ZernioBroadcast) {
     if (busyId) return;
@@ -426,6 +462,7 @@ export default function CampaignsPage() {
                 <CampaignRow
                   key={broadcast.id}
                   broadcast={broadcast}
+                  aggregate={aggregates?.[broadcast.id] ?? null}
                   onSelect={() => setSelectedId(broadcast.id)}
                   onDuplicate={() => void duplicateRow(broadcast)}
                   onRelaunch={() => void relaunchRow(broadcast)}

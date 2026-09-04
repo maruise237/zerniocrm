@@ -3,7 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, toApiError, type ApiError } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
-import type { ZernioBroadcast, ZernioBroadcastRecipient } from '@/lib/types';
+import type {
+  CampaignSendRow,
+  CampaignSendStats,
+  ZernioBroadcast,
+  ZernioBroadcastRecipient,
+} from '@/lib/types';
 
 interface BroadcastsResponse {
   broadcasts?: ZernioBroadcast[];
@@ -61,6 +66,35 @@ export function useBroadcastRecipients(id: string | null) {
   return {
     recipients: query.data?.recipients ?? [],
     summary: query.data?.summary,
+    isLoading: query.isLoading,
+    error: toApiError(query.error),
+    refresh: () => void query.refetch(),
+  };
+}
+
+interface BroadcastSendsResponse {
+  sends?: CampaignSendRow[];
+  stats?: CampaignSendStats;
+}
+
+/**
+ * Suivi réel des envois directs personnalisés (table campaign_sends).
+ * Le serveur rafraîchit les statuts depuis l'inbox Zernio (deliveryStatus)
+ * au plus toutes les 30 s — ?refresh=1 force une tentative immédiate.
+ */
+export function useBroadcastSends(id: string | null) {
+  const query = useQuery({
+    queryKey: queryKeys.broadcastSends(id ?? 'none'),
+    enabled: !!id,
+    refetchInterval: 8_000,
+    queryFn: () =>
+      apiFetch<BroadcastSendsResponse>(
+        `/api/broadcasts/${encodeURIComponent(id!)}/sends?refresh=1`,
+      ),
+  });
+  return {
+    sends: query.data?.sends ?? [],
+    stats: query.data?.stats ?? null,
     isLoading: query.isLoading,
     error: toApiError(query.error),
     refresh: () => void query.refetch(),

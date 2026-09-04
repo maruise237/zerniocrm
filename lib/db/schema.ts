@@ -67,5 +67,30 @@ export const teamMembers = pgTable('team_members', {
 export type TeamInvitation = typeof teamInvitations.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
 
+// ── Campagnes : envois directs personnalisés ──────────────────────────────
+// L'envoi personnalisé (variables {{1}}, {{2}}…) part destinataire par
+// destinataire via l'ouverture de conversation Zernio — hors moteur
+// broadcast, qui ne suit donc pas ces messages. Cette table relie chaque
+// envoi direct à sa campagne ; les statuts réels (SENT → DELIVERED → READ /
+// FAILED) sont rafraîchis depuis l'inbox Zernio (deliveryStatus) par
+// /api/broadcasts/[id]/sends. Une ligne par (campagne, destinataire).
+export const campaignSends = pgTable('campaign_sends', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull(),
+  broadcastId: varchar('broadcast_id', { length: 64 }).notNull(),
+  phone: varchar('phone', { length: 50 }).notNull(),
+  accountId: varchar('account_id', { length: 64 }),
+  conversationId: varchar('conversation_id', { length: 160 }),
+  messageId: varchar('message_id', { length: 200 }),
+  preview: text('preview'),
+  status: varchar('status', { length: 20 }).default('SENT').notNull(),
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+  statusAt: timestamp('status_at').defaultNow().notNull(),
+}, (table) => ({
+  broadcastPhoneUnique: uniqueIndex('campaign_sends_broadcast_phone_unique').on(table.broadcastId, table.phone),
+  broadcastIdx: index('idx_campaign_sends_broadcast').on(table.userId, table.broadcastId),
+}));
+
 export type ZernioConfig = typeof zernioConfig.$inferSelect;
 export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
+export type CampaignSend = typeof campaignSends.$inferSelect;

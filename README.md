@@ -10,9 +10,9 @@ WhatsApp CRM est une inbox client mobile-first dédiée exclusivement à WhatsAp
 | Mobile | Navigation par état `list | chat | settings`, cibles tactiles de 44 px, champs à 16 px, clavier préservé et défilement tactile. |
 | Canal | WhatsApp uniquement dans l’expérience cible ; aucun sélecteur omnicanal dans l’interface principale. |
 | Zernio | Clé API **par utilisateur** (saisie dans `/settings`), URL webhook individuelle et bouton de copie avec confirmation temporaire. |
-| Campagnes | Broadcasts avec templates Meta, mapping de variables, envoi direct personnalisé, planification. |
+| Campagnes | Broadcasts avec templates Meta, mapping de variables, envoi direct personnalisé, planification. Suivi de livraison réel : statuts par destinataire (envoyé/livré/lu/échec), raisons d'échec officielles Zernio (`error`/`errorCode`), totaux cumulatifs recalculés et tracking des envois directs via `campaign_sends` + inbox Zernio. |
 | Contacts | CRUD, tags, notes, import CSV/Excel avec détection de colonnes FR/EN. |
-| Neon Postgres | Tables `public.zernio_config`, `public.whatsapp_messages`, `public.team_invitations`, `public.team_members` — index et déduplication des événements. |
+| Neon Postgres | Tables `public.zernio_config`, `public.whatsapp_messages`, `public.team_invitations`, `public.team_members`, `public.campaign_sends` — index et déduplication des événements. |
 | Neon Auth | SDK Managed Better Auth, handler `/api/auth/[...path]`, middleware et formulaires français `/auth/sign-in` et `/auth/sign-up`. |
 | Webhook | `POST /api/webhooks/zernio?token=...`, validation `message.received`, déduplication par `payload.id` et insertion isolée par utilisateur. |
 | Envoi | Routes proxy (`/api/conversations/[id]/messages`…) : clé Zernio résolue depuis la session utilisateur (cache 60 s), journalisation Neon. |
