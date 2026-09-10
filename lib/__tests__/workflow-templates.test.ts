@@ -149,4 +149,10 @@ describe('workflow templates', () => {
       for (const line of lines) expect(line.length).toBeGreaterThan(0);
     }
   });
+
+  it('annonce le modèle intégré de Zernio dans le récapitulatif de l’agent client', () => {
+    const lines = templateSummary('support-agent', {}).join(' ');
+    expect(lines).toContain('modèle intégré de Zernio');
+    expect(lines).toContain('aucune clé');
+  });
 });

@@ -45,6 +45,26 @@ export interface UpdateWorkflowPayload {
   sendMessageText?: string;
 }
 
+/** Une exécution réelle chez Zernio (contrat OpenAPI /executions). */
+export interface WorkflowExecution {
+  id?: string;
+  /** running | waiting | completed | exited | failed */
+  status?: string;
+  stepCount?: number;
+  lastError?: string | null;
+  resumeAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  completedAt?: string | null;
+  [k: string]: unknown;
+}
+
+export interface WorkflowExecutionsResponse {
+  executions?: WorkflowExecution[];
+  pagination?: { total?: number; [k: string]: unknown };
+  [k: string]: unknown;
+}
+
 export function useWorkflows() {
   const query = useQuery({
     queryKey: queryKeys.workflows,
@@ -70,6 +90,25 @@ export function useWorkflowDetail(id: string | null) {
   });
   return {
     detail: query.data ?? null,
+    isLoading: query.isLoading,
+    error: toApiError(query.error),
+  };
+}
+
+/** Exécutions réelles d'une automatisation (chargées à la demande). */
+export function useWorkflowExecutions(id: string | null) {
+  const query = useQuery({
+    queryKey: ['workflows', 'executions', id],
+    enabled: !!id,
+    staleTime: 30_000,
+    queryFn: () =>
+      apiFetch<WorkflowExecutionsResponse>(
+        `/api/workflows/${encodeURIComponent(id as string)}/executions?limit=5`,
+      ),
+  });
+  return {
+    executions: query.data?.executions ?? [],
+    total: query.data?.pagination?.total ?? null,
     isLoading: query.isLoading,
     error: toApiError(query.error),
   };

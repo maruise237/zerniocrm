@@ -5,16 +5,21 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   Bot,
+  ChevronDown,
   CircleAlert,
+  CircleCheck,
   ClipboardList,
   Copy,
   Handshake,
+  History,
+  Info,
   Loader2,
   Pause,
   Play,
   RefreshCw,
   Sparkles,
   Trash2,
+  Unplug,
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,11 +37,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useWhatsappStatus } from '@/hooks/useWhatsappStatus';
 import {
   useWorkflows,
   useWorkflowMutations,
+  useWorkflowExecutions,
   workflowError,
   type ZernioWorkflowLite,
+  type WorkflowExecution,
 } from '@/hooks/useWorkflows';
 import {
   WORKFLOW_TEMPLATES,
@@ -329,6 +337,219 @@ function WorkflowWizard({
   );
 }
 
+// ── État réel du canal WhatsApp (y compris déconnecté — jamais filtré) ──────
+
+function formatFrDate(iso: string, style: 'long' | 'short' = 'short'): string {
+  return new Date(iso).toLocaleString('fr-FR', { dateStyle: style, timeStyle: 'short' });
+}
+
+function WhatsappStatusBanner() {
+  const { status, isLoading, error, refetch } = useWhatsappStatus();
+
+  if (isLoading) return null;
+
+  if (error && !status) {
+    return (
+      <Card className="mt-6">
+        <div className="flex items-start gap-3">
+          <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+          <div>
+            <p className="text-sm font-medium">Impossible de vérifier l’état de WhatsApp</p>
+            <p className="mt-1 text-sm text-muted-foreground">{error.message}</p>
+            <button
+              onClick={() => refetch()}
+              className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[var(--chat-border)] px-3 text-sm hover:bg-[var(--chat-hover)]"
+            >
+              <RefreshCw className="h-4 w-4" /> Réessayer
+            </button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!status || !status.found) {
+    return (
+      <Card className="mt-6 border-amber-500/40 bg-amber-500/5">
+        <div className="flex items-start gap-3">
+          <Unplug className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div>
+            <p className="text-sm font-medium">Aucun numéro WhatsApp n’est connecté à Zernio</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Sans numéro connecté, aucun message ne peut arriver et vos automatisations resteront
+              silencieuses, même si elles sont actives. Connectez un numéro dans la page Paramètres
+              ou chez Zernio, puis revenez ici — l’état se met à jour tout seul.
+            </p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (status.connected) {
+    return (
+      <Card className="mt-6 border-emerald-500/30 bg-emerald-500/5">
+        <div className="flex items-start gap-3">
+          <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <div>
+            <p className="text-sm font-medium">
+              WhatsApp connecté
+              {status.displayName ? ` — ${status.displayName}` : ''}
+              {status.phone ? ` (${status.phone})` : ''}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Les messages entrants déclenchent vos automatisations : c’est l’état attendu, rien à
+              faire. En cas de doute, ouvrez les exécutions d’une automatisation ci-dessous.
+            </p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const when = status.disconnectedAt ? formatFrDate(status.disconnectedAt, 'long') : null;
+  return (
+    <Card className="mt-6 border-red-500/40 bg-red-500/5">
+      <div className="flex items-start gap-3">
+        <Unplug className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+        <div>
+          <p className="text-sm font-medium">
+            WhatsApp est déconnecté
+            {status.displayName ? ` — ${status.displayName}` : ''}
+            {status.phone ? ` (${status.phone})` : ''}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {when && <>Déconnecté le {when}. </>}
+            {status.humanReason && <>{status.humanReason.charAt(0).toUpperCase() + status.humanReason.slice(1)}. </>}
+            Tant que le numéro n’est pas reconnecté, <span className="font-medium text-foreground">aucun message ne peut arriver : vos automatisations ne se déclencheront pas, même actives</span>. Reconnectez le numéro chez Zernio, puis revenez sur cette page.
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ── Transparence : quel modèle IA fait tourner l’agent client ? ─────────────
+
+function AgentAiInfoCard() {
+  return (
+    <Card>
+      <div className="flex items-start gap-3">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#128C7E]" />
+        <div className="min-w-0">
+          <p className="text-sm font-medium">L’IA de l’agent client : ce qu’il faut savoir</p>
+          <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span>
+                L’agent utilise le <span className="font-medium text-foreground">modèle intégré de Zernio</span> : aucun
+                modèle à choisir, aucune clé IA à fournir — Zernio le fait tourner pour vous, 24 h/24.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span>
+                À chaque message reçu, il reçoit l’historique de la conversation et vos informations
+                (offre, horaires, liens, FAQ), puis répond dans la langue du client.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span>Il n’invente rien : s’il ne sait pas, il annonce qu’il va vérifier avec votre équipe.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span>
+                Si un client demande une vraie personne — ou si l’IA échoue — la conversation est
+                transférée à votre équipe dans la boîte de réception.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span>
+                Pour vérifier qu’il fonctionne réellement : ouvrez « Exécutions » sur une
+                automatisation ci-dessous — chaque passage est tracé par Zernio (succès, transfert à
+                un humain, erreur avec sa raison exacte).
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ── Exécutions réelles d’une automatisation (chargées à la demande) ─────────
+
+const EXEC_STATUS_META: Record<string, { label: string; cls: string }> = {
+  completed: { label: 'Terminée', cls: 'text-emerald-600 dark:text-emerald-400' },
+  failed: { label: 'Erreur', cls: 'text-red-600 dark:text-red-400' },
+  exited: { label: 'Passée à un humain', cls: 'text-sky-600 dark:text-sky-400' },
+  running: { label: 'En cours', cls: 'text-amber-600 dark:text-amber-400' },
+  waiting: { label: 'Attend une réponse', cls: 'text-slate-500 dark:text-slate-400' },
+};
+
+function execStatusMeta(status?: string): { label: string; cls: string } {
+  const known = status ? EXEC_STATUS_META[status] : undefined;
+  return known ?? { label: status || 'Inconnu', cls: 'text-muted-foreground' };
+}
+
+function WorkflowExecutionsList({ workflowId }: { workflowId: string }) {
+  const { executions, total, isLoading, error } = useWorkflowExecutions(workflowId);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-3" role="status" aria-label="Chargement">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (error) {
+    return <p className="text-sm text-red-600 dark:text-red-400">{error.message}</p>;
+  }
+  if (executions.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Aucune exécution pour l’instant. La première apparaît dès qu’un message déclenche
+        l’automatisation — si WhatsApp est connecté et l’automatisation active.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {typeof total === 'number' && total > executions.length && (
+        <p className="text-xs text-muted-foreground">
+          {executions.length} exécutions récentes sur {total} au total.
+        </p>
+      )}
+      {executions.map((exec, i) => (
+        <ExecutionRow key={exec.id ?? i} exec={exec} />
+      ))}
+    </div>
+  );
+}
+
+function ExecutionRow({ exec }: { exec: WorkflowExecution }) {
+  const meta = execStatusMeta(exec.status);
+  const when = exec.completedAt ?? exec.updatedAt ?? exec.createdAt;
+  return (
+    <div className="rounded-lg border border-[var(--chat-border)] bg-[var(--chat-panel)] px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className={cn('font-medium', meta.cls)}>{meta.label}</span>
+        {when && <span className="text-xs text-muted-foreground">{formatFrDate(when)}</span>}
+        {typeof exec.stepCount === 'number' && exec.stepCount > 0 && (
+          <span className="text-xs text-muted-foreground">· {exec.stepCount} étape{exec.stepCount > 1 ? 's' : ''}</span>
+        )}
+      </div>
+      {exec.lastError && (
+        <p className="mt-1 break-words text-xs text-red-600 dark:text-red-400">
+          Raison : {exec.lastError}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── Carte d'une automatisation existante ────────────────────────────────────
 
 function WorkflowCard({
@@ -345,6 +566,7 @@ function WorkflowCard({
   transitioning: boolean;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showRuns, setShowRuns] = useState(false);
   const isActive = workflow.status === 'active';
 
   return (
@@ -415,6 +637,16 @@ function WorkflowCard({
             </Button>
             <Button
               size="sm"
+              variant="outline"
+              onClick={() => setShowRuns((v) => !v)}
+              aria-expanded={showRuns}
+              className="min-h-[44px]"
+            >
+              <History className="h-4 w-4" /> Exécutions
+              <ChevronDown className={cn('h-4 w-4 transition-transform', showRuns && 'rotate-180')} />
+            </Button>
+            <Button
+              size="sm"
               variant="ghost"
               onClick={() => setConfirmDelete(true)}
               disabled={transitioning}
@@ -425,6 +657,15 @@ function WorkflowCard({
           </>
         )}
       </div>
+
+      {showRuns && (
+        <div className="mt-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-canvas)] p-3">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Exécutions réelles (tracées par Zernio)
+          </p>
+          <WorkflowExecutionsList workflowId={workflow.id} />
+        </div>
+      )}
     </Card>
   );
 }
@@ -490,6 +731,10 @@ export default function FlowsPage() {
             <DesktopNav className="flex flex-wrap" />
           </div>
 
+          {/* État réel du canal : sans ça, une automatisation active mais un canal
+              mort reste un mystère pour l'utilisateur. */}
+          <WhatsappStatusBanner />
+
           {isLoading && (
             <div className="mt-10 flex justify-center" role="status" aria-label="Chargement">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -551,6 +796,11 @@ export default function FlowsPage() {
                   })}
                 </div>
           </section>
+
+          {/* Transparence totale sur l'IA : quel modèle, quelles règles, comment vérifier. */}
+          <div className="mt-6">
+            <AgentAiInfoCard />
+          </div>
 
           {!error && (
             <>

@@ -559,6 +559,7 @@ export function templateSummary(templateId: string, values: TemplateFieldValues)
     case 'support-agent':
       return [
         'Il répond automatiquement à chaque message reçu sur WhatsApp, 24 h/24.',
+        'Son IA utilise le modèle intégré de Zernio : aucun modèle à choisir, aucune clé à fournir.',
         'Il se souvient de la conversation pour ne jamais se répéter ni se représenter.',
         'Il s’appuie uniquement sur vos informations : offre, horaires, liens, FAQ.',
         'Il passe la main à un humain si on le lui demande — ou en cas d’erreur.',
