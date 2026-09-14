@@ -181,6 +181,55 @@ export function extractPlaceholders(text: string): number[] {
   return [...found].sort((a, b) => a - b);
 }
 
+/**
+ * Règles Meta 2025 vérifiées AVANT l'envoi (erreurs constatées en production) :
+ *  - une variable ne peut pas être au tout début ni à la toute fin du corps ;
+ *    un simple signe de ponctuation après la dernière variable ne compte pas
+ *    comme du texte (« … le {{2}}. » est refusé, « … le {{2}} merci. » passe) ;
+ *  - trop de variables pour un message court est refusé par la revue Meta.
+ * Renvoie un message FR expliquant la correction, ou null si le corps passe.
+ */
+export function validateTemplateBodyRules(bodyText: string): string | null {
+  const text = bodyText.trim();
+  if (!text) return null;
+  const matches = [...text.matchAll(/\{\{\s*(\d+)\s*\}\}/g)];
+  if (matches.length === 0) return null;
+  const first = matches[0];
+  const last = matches[matches.length - 1];
+  const hasWordChar = (s: string) => /[\p{L}\p{N}]/u.test(s);
+  if (!hasWordChar(text.slice(0, first.index ?? 0))) {
+    return 'Meta refuse une variable au tout début du message. Ajoutez un mot avant {{'
+      + first[1] + '}} (ex. « Bonjour {{1}}… »).';
+  }
+  if (!hasWordChar(text.slice((last.index ?? 0) + last[0].length))) {
+    return 'Meta refuse une variable à la toute fin du message. Ajoutez un mot après {{'
+      + last[1] + '}} — un simple point ne suffit pas (ex. « … votre rendez-vous du {{2}} à très vite. »).';
+  }
+  return null;
+}
+
+/**
+ * Traduit en français les erreurs de création renvoyées par Meta/Zernio.
+ * Les messages inconnus sont renvoyés tels quels (jamais de message inventé).
+ */
+export function translateTemplateError(raw: string): string {
+  // Apostrophes typographiques (’) normalisées : Meta mélange les deux.
+  const lower = (raw || '').replace(/['’`]/g, "'").toLowerCase();
+  if (lower.includes('invalid discriminator value')) {
+    return "Format de composant refusé par l'API (types attendus en minuscules : header, body, footer, buttons). Mettez à jour l'application ou contactez le support.";
+  }
+  if (lower.includes("can't be at the start or end") || lower.includes('cannot be at the start or end')) {
+    return 'Meta : les variables ne peuvent pas être au début ni à la fin du message. Ajoutez un mot avant la première variable et après la dernière (un point seul ne suffit pas).';
+  }
+  if (lower.includes('too many variables for its length')) {
+    return 'Meta : trop de variables pour un message aussi court. Réduisez le nombre de variables ou allongez le texte.';
+  }
+  if (lower.includes('variable') && lower.includes('example')) {
+    return 'Meta : chaque variable {{1}}, {{2}}… doit avoir une valeur d’exemple réaliste.';
+  }
+  return raw;
+}
+
 export function templateStatusLabel(status: string): string {
   return TEMPLATE_STATUS_META[status]?.label ?? status;
 }

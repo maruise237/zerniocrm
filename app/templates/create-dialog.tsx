@@ -16,7 +16,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
-import { TEMPLATE_LANGUAGES, extractPlaceholders } from '@/lib/whatsapp/template-meta';
+import {
+  TEMPLATE_LANGUAGES,
+  extractPlaceholders,
+  validateTemplateBodyRules,
+} from '@/lib/whatsapp/template-meta';
 import type { ZernioTemplateComponent, ZernioTemplateComponentButton } from '@/lib/types';
 
 const NAME_RE = /^[a-z][a-z0-9_]*$/;
@@ -155,48 +159,53 @@ export function TemplateCreateDialog({
     }
   }
 
+  /**
+   * Composants au format attendu par l'API : types en MINUSCULES
+   * (header, body, footer, buttons — l'API refuse "BODY", cause de l'erreur
+   * « Invalid discriminator value » constatée en production).
+   */
   function buildComponents(): ZernioTemplateComponent[] {
     const components: ZernioTemplateComponent[] = [];
     if (headerType === 'text' && headerText.trim()) {
-      components.push({ type: 'HEADER', format: 'TEXT', text: headerText.trim() });
+      components.push({ type: 'header', format: 'text', text: headerText.trim() });
     }
     if (headerMediaKind && headerMediaUrl.trim()) {
       components.push({
-        type: 'HEADER',
-        format: headerMediaKind.toUpperCase(),
+        type: 'header',
+        format: headerMediaKind,
         example: { header_handle: [headerMediaUrl.trim()] },
       });
     }
-    const bodyComponent: ZernioTemplateComponent = { type: 'BODY', text: bodyText.trim() };
+    const bodyComponent: ZernioTemplateComponent = { type: 'body', text: bodyText.trim() };
     if (bodyPlaceholders.length > 0) {
       bodyComponent.example = {
         body_text: [bodyPlaceholders.map((n) => (examples[n] ?? '').trim())],
       };
     }
     components.push(bodyComponent);
-    if (footerText.trim()) components.push({ type: 'FOOTER', text: footerText.trim() });
+    if (footerText.trim()) components.push({ type: 'footer', text: footerText.trim() });
     if (buttons.length > 0) {
       const clean: ZernioTemplateComponentButton[] = buttons
         .filter((b) => b.text.trim())
         .map((b) => {
           if (b.type === 'URL') {
             return {
-              type: 'URL',
+              type: 'url',
               text: b.text.trim().slice(0, 25),
               url: b.url.trim(),
               ...(b.sample.trim() ? { example: [b.sample.trim()] } : {}),
-            } as ZernioTemplateComponentButton;
+            };
           }
           if (b.type === 'PHONE_NUMBER') {
             return {
-              type: 'PHONE_NUMBER',
+              type: 'phone_number',
               text: b.text.trim().slice(0, 25),
               phone_number: b.phone.trim(),
-            } as ZernioTemplateComponentButton;
+            };
           }
-          return { type: 'QUICK_REPLY', text: b.text.trim().slice(0, MAX_QUICK_REPLY) };
+          return { type: 'quick_reply', text: b.text.trim().slice(0, MAX_QUICK_REPLY) };
         });
-      components.push({ type: 'BUTTONS', buttons: clean });
+      components.push({ type: 'buttons', buttons: clean });
     }
     return components;
   }
@@ -225,6 +234,11 @@ export function TemplateCreateDialog({
     }
     if (headerMediaKind && !headerMediaUrl.trim()) {
       setErrors('Ajoutez le média d’en-tête (fichier importé ou URL).');
+      return;
+    }
+    const bodyRuleError = validateTemplateBodyRules(bodyText);
+    if (bodyRuleError) {
+      setErrors(bodyRuleError);
       return;
     }
     setErrors(null);
@@ -418,6 +432,10 @@ export function TemplateCreateDialog({
             <p className="text-[11px] text-muted-foreground">
               Variables : <span className="font-mono">{"{{1}}"}, {"{{2}}"}</span>… numérotées dans l’ordre.
               {bodyText.length}/{MAX_BODY}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Règle Meta : aucune variable au tout début ni à la toute fin — ajoutez un mot avant la
+              première et après la dernière (ex. « Bonjour {'{{1}}'}… rendez-vous le {'{{2}}'} à très vite. »).
             </p>
           </div>
 

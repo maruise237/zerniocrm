@@ -32,6 +32,7 @@ import {
   TEMPLATE_CATEGORY_LABELS,
   TEMPLATE_STATUS_META,
   formatTemplateLanguage,
+  translateTemplateError,
 } from '@/lib/whatsapp/template-meta';
 import type {
   ZernioAccountEvent,
@@ -62,7 +63,8 @@ function StatusBadge({ status }: { status: string }) {
 
 function componentSummary(components?: ZernioTemplateComponent[]): string {
   if (!components?.length) return 'Aucun composant';
-  const body = components.find((c) => c.type === 'BODY');
+  // Casse insensible : les anciens modèles renvoient "BODY", les nouveaux "body".
+  const body = components.find((c) => (c.type || '').toUpperCase() === 'BODY');
   if (body?.text) return body.text;
   return `${components.length} composant(s)`;
 }
@@ -70,20 +72,21 @@ function componentSummary(components?: ZernioTemplateComponent[]): string {
 /** Renders one template component the way WhatsApp shows it (body first). */
 function ComponentPreview({ template }: { template: ZernioTemplate }) {
   const components = template.components ?? [];
-  const header = components.find((c) => c.type === 'HEADER');
-  const body = components.find((c) => c.type === 'BODY');
-  const footer = components.find((c) => c.type === 'FOOTER');
-  const buttons = components.find((c) => c.type === 'BUTTONS');
+  const findComp = (t: string) => components.find((c) => (c.type || '').toUpperCase() === t);
+  const header = findComp('HEADER');
+  const body = findComp('BODY');
+  const footer = findComp('FOOTER');
+  const buttons = findComp('BUTTONS');
 
   return (
     <div className="rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)]/60 p-4">
       <div className="rounded-lg bg-[var(--chat-surface)] p-3 shadow-sm">
-        {header?.format === 'TEXT' && header.text && (
+        {header?.format?.toUpperCase() === 'TEXT' && header.text && (
           <p className="mb-1.5 truncate text-[11px] font-medium text-muted-foreground">{header.text}</p>
         )}
-        {header?.format && header.format !== 'TEXT' && (
+        {header?.format && header.format.toUpperCase() !== 'TEXT' && (
           <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
-            🖼 En-tête {HEADER_FORMAT_LABELS[header.format] ?? header.format.toLowerCase()}
+            🖼 En-tête {HEADER_FORMAT_LABELS[header.format.toUpperCase()] ?? header.format.toLowerCase()}
           </p>
         )}
         {body?.text ? (
@@ -495,10 +498,10 @@ export default function TemplatesPage() {
                   : 'Modèle créé — en attente de la revue Meta',
               );
             } catch (err) {
-              const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+              const raw = err instanceof ApiError && err.message ? err.message : '';
+              const detail = raw ? ` — ${translateTemplateError(raw)}` : '';
               toast.error(
-                "Le modèle n'a pas pu être créé. Vérifiez les champs (exemples de variables et média d'en-tête requis par Meta)." +
-                  detail,
+                "Le modèle n'a pas pu être créé." + detail,
               );
             }
           }}
