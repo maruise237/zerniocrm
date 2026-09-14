@@ -132,7 +132,7 @@ export function LocationContactDrawer({
 
   return (
     <Dialog open={mode !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{tab === 'location' ? 'Envoyer la localisation' : 'Envoyer le contact'}</DialogTitle>
           <DialogDescription>

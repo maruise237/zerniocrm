@@ -218,7 +218,7 @@ function AddRecipientsDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Ajouter des destinataires</DialogTitle>
           <DialogDescription>
@@ -452,7 +452,7 @@ function ScheduleDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Programmer l’envoi</DialogTitle>
           <DialogDescription>

@@ -456,7 +456,7 @@ export function Composer({
     const neverIncoming = !messages.some((m) => m.direction === 'incoming');
     return (
       <footer className="flex-none border-t border-[var(--chat-border)] bg-[var(--chat-surface)] p-3">
-        <div className="space-y-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-warning-bg)] p-3">
+        <div className="flex max-h-[68dvh] flex-col gap-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-warning-bg)] p-3">
           {neverIncoming ? (
             <p className="text-xs text-[var(--chat-warning-fg)]">
               Ce contact ne vous a jamais écrit&nbsp;: WhatsApp impose de démarrer la conversation
@@ -469,8 +469,11 @@ export function Composer({
               n&apos;accepte plus que les modèles approuvés, choisissez-en un pour le recontacter.
             </p>
           )}
-          <TemplateFields composer={template} />
-          <div className="flex justify-end">
+          {/* Zone défilante : les champs de variables ne repoussent plus le bouton hors écran. */}
+          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
+            <TemplateFields composer={template} />
+          </div>
+          <div className="flex justify-end border-t border-[var(--chat-border)] pt-2">
             <Button
               size="sm"
               onClick={() => void sendTemplate()}

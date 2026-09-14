@@ -392,7 +392,7 @@ export function ThreadPane({
 
       {/* Telegram message edit */}
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Modifier le message</DialogTitle>
           </DialogHeader>

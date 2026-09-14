@@ -382,7 +382,7 @@ export function CallDialpadDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {state === 'in_call'

@@ -164,7 +164,7 @@ export function NewMessageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex max-h-[85dvh] flex-col gap-4 overflow-hidden sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Nouveau message</DialogTitle>
           <DialogDescription>Démarrer une nouvelle conversation</DialogDescription>
@@ -175,7 +175,10 @@ export function NewMessageDialog({
             Aucun de vos comptes connectés ne permet de démarrer une conversation. WhatsApp, X, Bluesky et Reddit le permettent.
           </p>
         ) : (
-          <div className="space-y-3">
+          /* Zone défilante : modèles à nombreuses variables restent utilisables,
+             le pied (bouton Envoyer) reste visible. */
+          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
+            <div className="space-y-3">
             <div className="space-y-1">
               <Label className="text-xs">From</Label>
               <DropdownMenu>
@@ -242,11 +245,13 @@ export function NewMessageDialog({
               </div>
             )}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            </div>
           </div>
         )}
 
-        <DialogFooter>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
+        <DialogFooter className="border-t border-[var(--chat-border)] pt-3">
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>
             Annuler
           </Button>
