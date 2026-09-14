@@ -16,10 +16,14 @@ demandé, pas un clone déguisé : elle réduit la formation des utilisateurs.
 ## Palette
 
 - Neutres oklch (fond, surface, bulles, bordures) : base de tout.
-- **Vert WhatsApp #25D366** : marque uniquement (logo, tuiles, CTA principaux),
-  texte sombre `#062c16` dessus. Jamais pour du texte courant sur blanc.
+- **Vert WhatsApp `--wa` `#25d366`** : marque uniquement (logo, tuiles, CTA principaux),
+  texte `--wa-ink` `#062c16` dessus (7,67:1 AA). Jamais pour du texte courant sur
+  blanc. Les littéraux vivent uniquement dans `globals.css` (`--wa`, `--wa-hover`,
+  `--wa-ink`, `--wa-deep`) ; les classes utilisent `bg-[var(--wa)]` etc.
+  Les couleurs de marques tierces (platform-icon, verified-badge) restent littérales.
 - **green-700 `#15803d`** : `--primary`/`--ring` clair (AA 5,0:1), accents de
-  texte emerald-700 en clair / emerald-400 en sombre.
+  texte emerald-700 en clair / emerald-400 en sombre. Teal actif `--wa-deep` :
+  `#0f7a6d` en clair (5,22:1), `#25d366` en sombre (8,8:1).
 - Sémantiques : rouge (échec), ambre (attente), sky (information),
   indigo (livré). Chaque couleur de texte a une variante `dark:` vérifiée AA.
 - Bleu des doubles coches `--chat-check` : convention WhatsApp conservée.

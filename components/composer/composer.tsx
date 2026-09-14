@@ -497,7 +497,8 @@ export function Composer({
       )}
 
       {replyingTo && !recordingVoice && (
-        <div className="flex items-center gap-2 rounded-lg border-l-2 border-primary bg-muted/60 px-3 py-1.5">
+        <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
+          <span aria-hidden="true" className="w-[3px] shrink-0 self-stretch rounded-full bg-primary" />
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium">
               Réponse à{' '}

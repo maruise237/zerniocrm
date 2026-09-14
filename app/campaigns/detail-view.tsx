@@ -1255,7 +1255,7 @@ export function CampaignDetail({
                       disabled={
                         (hasVars ? directBusy : actions.sendNow.isPending) || !broadcast.recipientCount
                       }
-                      className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
+                      className="bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
                     >
                       {(hasVars ? directBusy : actions.sendNow.isPending) ? (
                         <Loader2 className="size-3.5 animate-spin" />
@@ -1319,7 +1319,7 @@ export function CampaignDetail({
                   size="sm"
                   onClick={() => void relaunch()}
                   disabled={duplicating || !broadcast.recipientCount}
-                  className="bg-[#25D366] text-[#062c16] hover:bg-[#1fba59]"
+                  className="bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
                 >
                   <RotateCcw className="size-3.5" /> Relancer
                 </Button>

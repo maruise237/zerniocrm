@@ -250,6 +250,17 @@ export function ThreadPane({
     [selected, refreshHead],
   );
 
+  // Identité stable : permet à memo(MessageBubble) de court-circuiter les re-renders.
+  const bubbleHandlers = useMemo(
+    () => ({
+      onReact: handleReact,
+      onReply: handleReply,
+      onEdit: handleEdit,
+      onDelete: handleDelete,
+    }),
+    [handleReact, handleReply, handleEdit, handleDelete],
+  );
+
   if (!selected || !conversation) {
     return (
       <main
@@ -352,12 +363,7 @@ export function ThreadPane({
         highlightedMessageId={highlightedMessageId}
         onHighlight={highlightMessage}
         registerApi={registerListApi}
-        bubbleHandlers={{
-          onReact: handleReact,
-          onReply: handleReply,
-          onEdit: handleEdit,
-          onDelete: handleDelete,
-        }}
+        bubbleHandlers={bubbleHandlers}
       />
       {/* Keyed by thread so drafts/sending state never bleed across threads. */}
       <Composer

@@ -42,7 +42,7 @@ import {
 } from '@/hooks/useTeam';
 
 const ROLE_BADGE: Record<string, string> = {
-  owner: 'bg-[#25D366]/15 text-[#128C7E]',
+  owner: 'bg-[var(--wa)]/15 text-[var(--wa-deep)]',
   admin: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
   manager: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
   agent: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
@@ -192,7 +192,7 @@ export default function TeamPage() {
           </Link>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366] text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--wa)] text-[var(--wa-ink)]">
               <UsersRound className="h-5 w-5" />
             </div>
             <div>
@@ -245,7 +245,7 @@ export default function TeamPage() {
             <>
               <Card className="mt-6">
                 <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#128C7E]" />
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[var(--wa-deep)]" />
                   <div>
                     <p className="text-sm font-semibold">
                       Vous êtes {roleLabel(data.self.role)} de cet espace
@@ -266,7 +266,7 @@ export default function TeamPage() {
               {/* Formulaire d'invitation */}
               <Card className="mt-6">
                 <h2 className="flex items-center gap-2 text-base font-semibold">
-                  <UserPlus className="h-5 w-5 text-[#128C7E]" />
+                  <UserPlus className="h-5 w-5 text-[var(--wa-deep)]" />
                   Inviter un collaborateur
                 </h2>
                 <form onSubmit={submitInvite} className="mt-4 space-y-5">
@@ -282,7 +282,7 @@ export default function TeamPage() {
                       placeholder="prenom@exemple.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3.5 text-base outline-none focus:border-[#25D366]/60"
+                      className="h-12 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3.5 text-base outline-none focus:border-[var(--wa)]/60"
                     />
                     <p className="mt-2 text-xs text-muted-foreground">
                       Un lien magique personnel sera généré pour cette adresse.
@@ -304,14 +304,14 @@ export default function TeamPage() {
                             className={cn(
                               'flex min-h-[44px] items-start gap-3 rounded-xl border p-3 text-left transition',
                               selected
-                                ? 'border-[#25D366] bg-[#25D366]/10'
+                                ? 'border-[var(--wa)] bg-[var(--wa)]/10'
                                 : 'border-[var(--chat-border)] hover:bg-[var(--chat-hover)]',
                             )}
                           >
                             <span
                               className={cn(
                                 'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2',
-                                selected ? 'border-[#25D366] bg-[#25D366] text-white' : 'border-muted-foreground/40',
+                                selected ? 'border-[var(--wa)] bg-[var(--wa)] text-[var(--wa-ink)]' : 'border-muted-foreground/40',
                               )}
                             >
                               {selected && <Check className="h-3 w-3" />}
@@ -338,7 +338,7 @@ export default function TeamPage() {
                           className={cn(
                             'min-h-[40px] rounded-lg px-1 text-xs font-medium transition sm:text-sm',
                             expiresInDays === opt.days
-                              ? 'bg-[#25D366] text-[#062c16]'
+                              ? 'bg-[var(--wa)] text-[var(--wa-ink)]'
                               : 'text-muted-foreground hover:bg-[var(--chat-hover)]',
                           )}
                         >
@@ -377,7 +377,7 @@ export default function TeamPage() {
                               type="checkbox"
                               checked={permissions.includes(perm)}
                               onChange={() => togglePermission(perm)}
-                              className="h-4 w-4 shrink-0 accent-[#25D366]"
+                              className="h-4 w-4 shrink-0 accent-[var(--wa)]"
                             />
                             {PERMISSION_LABELS[perm]}
                           </label>
@@ -389,7 +389,7 @@ export default function TeamPage() {
                   <button
                     type="submit"
                     disabled={inviteMutation.isPending || !email.trim()}
-                    className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] font-semibold text-[#062c16] hover:bg-[#1fba59] disabled:opacity-50"
+                    className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--wa)] font-semibold text-[var(--wa-ink)] hover:bg-[var(--wa-hover)] disabled:opacity-50"
                   >
                     {inviteMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -401,8 +401,8 @@ export default function TeamPage() {
                 </form>
 
                 {created && (
-                  <div className="mt-4 rounded-xl border border-[#25D366]/40 bg-[#25D366]/5 p-4">
-                    <p className="text-sm font-semibold text-[#128C7E]">
+                  <div className="mt-4 rounded-xl border border-[var(--wa)]/40 bg-[var(--wa)]/5 p-4">
+                    <p className="text-sm font-semibold text-[var(--wa-deep)]">
                       Lien créé pour {created.invitation.email} ({created.invitation.roleLabel})
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -419,7 +419,7 @@ export default function TeamPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => copyLink(created.inviteUrl)}
-                          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 text-sm font-medium text-[#062c16] hover:bg-[#1fba59] sm:flex-none"
+                          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--wa)] px-3 text-sm font-medium text-[var(--wa-ink)] hover:bg-[var(--wa-hover)] sm:flex-none"
                         >
                           <Copy className="h-4 w-4" /> Copier
                         </button>
@@ -511,7 +511,7 @@ export default function TeamPage() {
                               value={member.role}
                               onChange={(e) => changeRole(member, e.target.value)}
                               disabled={updateMutation.isPending}
-                              className="h-11 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2.5 text-sm outline-none focus:border-[#25D366]/60"
+                              className="h-11 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2.5 text-sm outline-none focus:border-[var(--wa)]/60"
                             >
                               {TEAM_ROLES.map((r) => (
                                 <option key={r} value={r}>

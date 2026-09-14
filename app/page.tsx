@@ -158,7 +158,7 @@ export default function Home() {
       {/* Barre de navigation desktop (au-dessus des colonnes) */}
       <div className="hidden shrink-0 items-center gap-2 border-b border-[var(--chat-border)] bg-[var(--chat-surface)] px-4 py-2 lg:flex">
         <div className="flex items-center gap-2.5 pr-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366] text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--wa)] text-[var(--wa-ink)]">
             <MessageCircle className="h-4 w-4" />
           </div>
           <p className="text-sm font-semibold tracking-tight">WhatsApp CRM</p>
@@ -166,7 +166,7 @@ export default function Home() {
         <DesktopNav className="flex flex-1" />
         <button
           onClick={() => setNewMessageOpen(true)}
-          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1ebe5b]"
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--wa)] px-3 py-2 text-sm font-medium text-[var(--wa-ink)] transition hover:bg-[var(--wa-hover)]"
         >
           <Users className="h-4 w-4" /> Nouvelle conversation
         </button>
@@ -182,7 +182,7 @@ export default function Home() {
       >
         <header className="relative flex items-center justify-between border-b border-[var(--chat-border)] px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-white lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--wa)] text-[var(--wa-ink)] lg:hidden">
               <MessageCircle className="h-5 w-5" />
             </div>
             <div>
@@ -308,7 +308,7 @@ export default function Home() {
                       {conversation.lastMessage || 'Aucun message'}
                     </span>
                     {conversation.unreadCount ? (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#25D366] px-1.5 text-[10px] font-bold text-white">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--wa)] px-1.5 text-[10px] font-bold text-[var(--wa-ink)]">
                         {conversation.unreadCount}
                       </span>
                     ) : null}
@@ -341,7 +341,7 @@ export default function Home() {
         <button
           onClick={() => setNewMessageOpen(true)}
           aria-label="Nouvelle conversation"
-          className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#25D366] text-white shadow-lg shadow-black/25 transition hover:bg-[#1ebe5b] active:scale-95 md:hidden"
+          className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--wa)] text-[var(--wa-ink)] shadow-lg shadow-black/25 transition hover:bg-[var(--wa-hover)] active:scale-95 md:hidden"
         >
           <Plus className="h-6 w-6" />
         </button>

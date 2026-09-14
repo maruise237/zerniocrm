@@ -391,7 +391,7 @@ export default function CampaignsPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--wa)] text-[var(--wa-ink)]">
             <Megaphone className="h-5 w-5" />
           </div>
           <div className="flex-1">

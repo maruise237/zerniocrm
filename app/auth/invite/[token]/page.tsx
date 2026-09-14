@@ -118,7 +118,7 @@ export default function InviteAcceptPage() {
     <main className="flex min-h-dvh items-center justify-center bg-[var(--chat-canvas)] px-4 py-10">
       <div className="w-full max-w-md rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366] text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--wa)] text-[var(--wa-ink)]">
             <MessageCircle className="h-5 w-5" />
           </div>
           <div>
@@ -147,7 +147,7 @@ export default function InviteAcceptPage() {
             </div>
             <Link
               href="/"
-              className="mt-6 flex min-h-[48px] items-center justify-center rounded-xl bg-[#25D366] font-semibold text-[#062c16] hover:bg-[#1fba59]"
+              className="mt-6 flex min-h-[48px] items-center justify-center rounded-xl bg-[var(--wa)] font-semibold text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
             >
               Aller à l'application
             </Link>
@@ -171,9 +171,9 @@ export default function InviteAcceptPage() {
             </div>
 
             {accepted ? (
-              <div className="mt-6 flex items-start gap-3 rounded-xl bg-[#25D366]/10 p-4" role="status">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#128C7E]" />
-                <p className="text-sm font-medium text-[#128C7E]">
+              <div className="mt-6 flex items-start gap-3 rounded-xl bg-[var(--wa)]/10 p-4" role="status">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--wa-deep)]" />
+                <p className="text-sm font-medium text-[var(--wa-deep)]">
                   Invitation acceptée ! Vous arrivez dans l'application…
                 </p>
               </div>
@@ -209,7 +209,7 @@ export default function InviteAcceptPage() {
                     <button
                       onClick={accept}
                       disabled={accepting}
-                      className="mt-6 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] font-semibold text-[#062c16] hover:bg-[#1fba59] disabled:opacity-50"
+                      className="mt-6 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--wa)] font-semibold text-[var(--wa-ink)] hover:bg-[var(--wa-hover)] disabled:opacity-50"
                     >
                       {accepting && <Loader2 className="h-4 w-4 animate-spin" />}
                       Accepter l'invitation
@@ -223,7 +223,7 @@ export default function InviteAcceptPage() {
                     </p>
                     <Link
                       href={`/auth/sign-up?next=${encodeURIComponent(safeNext)}`}
-                      className="flex min-h-[48px] items-center justify-center rounded-xl bg-[#25D366] font-semibold text-[#062c16] hover:bg-[#1fba59]"
+                      className="flex min-h-[48px] items-center justify-center rounded-xl bg-[var(--wa)] font-semibold text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
                     >
                       Créer mon compte
                     </Link>

@@ -54,7 +54,7 @@ export function DesktopNav({ className }: { className?: string }) {
           className={cn(
             'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition',
             isActive(pathname, href, exact)
-              ? 'bg-[#25D366]/12 font-medium text-[#128C7E]'
+              ? 'bg-[var(--wa)]/12 font-medium text-[var(--wa-deep)]'
               : 'text-muted-foreground hover:bg-[var(--chat-hover)] hover:text-foreground',
           )}
         >
@@ -70,7 +70,7 @@ export function DesktopNav({ className }: { className?: string }) {
           className={cn(
             'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition',
             isActive(pathname, href)
-              ? 'bg-[#25D366]/12 font-medium text-[#128C7E]'
+              ? 'bg-[var(--wa)]/12 font-medium text-[var(--wa-deep)]'
               : 'text-muted-foreground hover:bg-[var(--chat-hover)] hover:text-foreground',
           )}
         >
@@ -140,14 +140,14 @@ export function BottomNav({ hidden = false }: { hidden?: boolean }) {
             aria-current={isActive(pathname, href) ? 'page' : undefined}
             className={cn(
               'flex items-center gap-3 rounded-xl px-3 py-3 transition',
-              isActive(pathname, href) ? 'bg-[#25D366]/10' : 'hover:bg-[var(--chat-hover)]',
+              isActive(pathname, href) ? 'bg-[var(--wa)]/10' : 'hover:bg-[var(--chat-hover)]',
             )}
           >
             <span
               className={cn(
                 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
                 isActive(pathname, href)
-                  ? 'bg-[#25D366] text-white'
+                  ? 'bg-[var(--wa)] text-[var(--wa-ink)]'
                   : 'bg-[var(--chat-hover)] text-muted-foreground',
               )}
             >
@@ -176,13 +176,13 @@ export function BottomNav({ hidden = false }: { hidden?: boolean }) {
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'flex min-h-[4rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 pt-1.5 pb-1 transition',
-                  active ? 'text-[#128C7E]' : 'text-muted-foreground',
+                  active ? 'text-[var(--wa-deep)]' : 'text-muted-foreground',
                 )}
               >
                 <span
                   className={cn(
                     'flex h-8 w-14 items-center justify-center rounded-full transition',
-                    active ? 'bg-[#25D366]/15' : '',
+                    active ? 'bg-[var(--wa)]/15' : '',
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -199,13 +199,13 @@ export function BottomNav({ hidden = false }: { hidden?: boolean }) {
             aria-haspopup="dialog"
             className={cn(
               'flex min-h-[4rem] flex-1 flex-col items-center justify-center gap-0.5 px-1 pt-1.5 pb-1 transition',
-              moreActive || moreOpen ? 'text-[#128C7E]' : 'text-muted-foreground',
+              moreActive || moreOpen ? 'text-[var(--wa-deep)]' : 'text-muted-foreground',
             )}
           >
             <span
               className={cn(
                 'flex h-8 w-14 items-center justify-center rounded-full transition',
-                moreActive || moreOpen ? 'bg-[#25D366]/15' : '',
+                moreActive || moreOpen ? 'bg-[var(--wa)]/15' : '',
               )}
             >
               <MoreHorizontal className="h-5 w-5" />

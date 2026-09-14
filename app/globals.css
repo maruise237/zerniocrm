@@ -51,6 +51,14 @@
   --input: oklch(0.922 0 0);
   --ring: #15803d;
 
+  /* Tokens de marque WhatsApp (audit impeccable 001, dérive P2) — les littéraux
+     verts vivent uniquement ici. Les couleurs de marques tierces (platform-icon,
+     verified-badge) restent littérales volontairement. */
+  --wa: #25d366; /* vert WhatsApp vif : accents et CTA de marque */
+  --wa-hover: #1fba59; /* survol des CTA verts (unifie #1fba59/#1ebe5b/#1fb857) */
+  --wa-ink: #062c16; /* texte/icônes sur vert vif (7,67:1 AA) */
+  --wa-deep: #0f7a6d; /* teal actif thème clair (5,22:1 sur blanc) */
+
   /* Chat surface tokens (WhatsApp-style inbox palette) */
   --chat-canvas: oklch(0.975 0.005 80);
   --chat-surface: oklch(1 0 0);
@@ -85,6 +93,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: #4ade80;
+  --wa-deep: #25d366; /* le teal actif s'éclaircit en thème sombre (8,8:1) */
 
   /* Chat surface tokens (dark) */
   --chat-canvas: oklch(0.17 0.005 80);

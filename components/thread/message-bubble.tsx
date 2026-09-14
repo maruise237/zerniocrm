@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { MapPin, Pencil, Reply, SmilePlus, Trash2, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -124,7 +124,7 @@ function MessageActionButtons({
   );
 }
 
-export function MessageBubble({
+export const MessageBubble = memo(function MessageBubble({
   msg,
   conversation,
   messageById,
@@ -223,17 +223,20 @@ export function MessageBubble({
           <button
             type="button"
             onClick={() => onQuoteClick(quotedId)}
-            className="mb-1.5 block w-full rounded border-l-2 border-primary/60 bg-foreground/5 px-2 py-1 text-left text-xs"
+            className="mb-1.5 flex w-full gap-1.5 rounded bg-foreground/5 px-1.5 py-1 text-left text-xs"
           >
-            <span className="block truncate font-medium opacity-90">
-              {quoted
-                ? quoted.direction === 'outgoing'
-                  ? 'You'
-                  : conversation.participantName || quoted.senderName || 'Message'
-                : 'Message'}
-            </span>
-            <span className="block truncate opacity-70">
-              {quoted ? messagePreviewText(quoted) : "Message d'origine"}
+            <span aria-hidden="true" className="w-[3px] shrink-0 self-stretch rounded-full bg-primary/60" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-medium opacity-90">
+                {quoted
+                  ? quoted.direction === 'outgoing'
+                    ? 'You'
+                    : conversation.participantName || quoted.senderName || 'Message'
+                  : 'Message'}
+              </span>
+              <span className="block truncate opacity-70">
+                {quoted ? messagePreviewText(quoted) : "Message d'origine"}
+              </span>
             </span>
           </button>
         )}
@@ -326,4 +329,4 @@ export function MessageBubble({
       </div>
     </div>
   );
-}
+});

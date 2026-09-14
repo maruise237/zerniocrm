@@ -107,7 +107,7 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 const TEMPLATE_ICONS = {
-  'support-agent': { Icon: Bot, color: 'bg-[#25D366] text-white' },
+  'support-agent': { Icon: Bot, color: 'bg-[var(--wa)] text-[var(--wa-ink)]' },
   'keyword-reply': { Icon: Zap, color: 'bg-amber-500/15 text-amber-700 dark:text-amber-400' },
   'welcome-handoff': { Icon: Handshake, color: 'bg-sky-500/15 text-sky-700 dark:text-sky-400' },
   'lead-qualifier': { Icon: ClipboardList, color: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
@@ -196,7 +196,7 @@ function WorkflowWizard({
       <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            {template && <Sparkles className="h-4 w-4 text-[#128C7E]" />}
+            {template && <Sparkles className="h-4 w-4 text-[var(--wa-deep)]" />}
             {template ? `Configurer : ${template.name}` : ''}
           </DialogTitle>
           <DialogDescription>
@@ -243,7 +243,7 @@ function WorkflowWizard({
               <ul className="mt-2 space-y-1.5">
                 {summary.map((line) => (
                   <li key={line} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
                     {line}
                   </li>
                 ))}
@@ -264,7 +264,7 @@ function WorkflowWizard({
                   id="wf-account"
                   value={effectiveAccountId}
                   onChange={(e) => setAccountId(e.target.value)}
-                  className="mt-1.5 h-11 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-[15px] outline-none focus:border-[#25D366]/60"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-[15px] outline-none focus:border-[var(--wa)]/60"
                 >
                   {(whatsappAccounts.length > 0 ? whatsappAccounts : accounts).map((a) => (
                     <option key={a._id} value={a._id}>
@@ -298,7 +298,7 @@ function WorkflowWizard({
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={missingRequired.length > 0}
-                className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
+                className="min-h-[44px] bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
               >
                 Continuer
               </Button>
@@ -318,7 +318,7 @@ function WorkflowWizard({
                 type="button"
                 onClick={submit}
                 disabled={create.isPending || (!effectiveAccountId || !profileId)}
-                className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
+                className="min-h-[44px] bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
               >
                 {create.isPending ? (
                   <>
@@ -438,37 +438,37 @@ function AgentAiInfoCard() {
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#128C7E]" />
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-[var(--wa-deep)]" />
         <div className="min-w-0">
           <p className="text-sm font-medium">L’IA de l’agent client : ce qu’il faut savoir</p>
           <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
               <span>
                 L’agent utilise le <span className="font-medium text-foreground">modèle intégré de la plateforme</span> : aucun
                 modèle à choisir, aucune clé IA à fournir, il tourne pour vous, 24 h/24.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
               <span>
                 À chaque message reçu, il reçoit l’historique de la conversation et vos informations
                 (offre, horaires, liens, FAQ), puis répond dans la langue du client.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
               <span>Il n’invente rien : s’il ne sait pas, il annonce qu’il va vérifier avec votre équipe.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
               <span>
                 Si un client demande une vraie personne, ou si l’IA échoue, la conversation est
                 transférée à votre équipe dans la boîte de réception.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
               <span>
                 Pour vérifier qu’il fonctionne réellement : ouvrez « Exécutions » sur une
                 automatisation ci-dessous. Chaque passage est tracé (succès, transfert à
@@ -613,7 +613,7 @@ function WorkflowCard({
               size="sm"
               onClick={() => onTransition(isActive ? 'pause' : 'activate')}
               disabled={transitioning}
-              className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
+              className="min-h-[44px] bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
             >
               {transitioning ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -716,7 +716,7 @@ export default function FlowsPage() {
           </Link>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366] text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--wa)] text-[var(--wa-ink)]">
               <Bot className="h-5 w-5" />
             </div>
             <div>
@@ -774,7 +774,7 @@ export default function FlowsPage() {
                         key={template.id}
                         type="button"
                         onClick={() => openWizard(template)}
-                        className="flex h-full flex-col rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-panel)] p-4 text-left transition-colors hover:border-[#25D366]/50"
+                        className="flex h-full flex-col rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-panel)] p-4 text-left transition-colors hover:border-[var(--wa)]/50"
                       >
                         <span
                           className={cn(
@@ -788,7 +788,7 @@ export default function FlowsPage() {
                         <span className="mt-1 flex-1 text-[13px] leading-snug text-muted-foreground">
                           {template.tagline}
                         </span>
-                        <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#128C7E]">
+                        <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--wa-deep)]">
                           <Sparkles className="h-3.5 w-3.5" /> Configurer
                         </span>
                       </button>
