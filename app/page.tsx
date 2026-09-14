@@ -14,11 +14,13 @@ import {
   Users,
 } from 'lucide-react';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useContactTags } from '@/hooks/useContactTags';
 import { useConversations } from '@/hooks/useConversations';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Account, Conversation } from '@/lib/types';
+import { ContactTags } from '@/components/contact-tags';
 import { NewMessageDialog } from '@/components/new-message-dialog';
 import { BottomNav, DesktopNav } from '@/components/app-navigation';
 import {
@@ -65,6 +67,9 @@ export default function Home() {
   const [newMessageOpen, setNewMessageOpen] = useState(false);
 
   const { accounts, isLoading: accountsLoading, error: accountsError } = useAccounts();
+  // Étiquettes posées par l'agent IA (support-auto…) : la conversation ne les
+  // expose pas, on les retrouve via les contacts, par numéro.
+  const { tagsFor } = useContactTags();
   const conversationsState = useConversations({
     platform: 'whatsapp',
     accountId: '',
@@ -288,8 +293,11 @@ export default function Home() {
                 <Avatar conversation={conversation} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold">
-                      {conversation.participantName || conversation.participantUsername || 'Contact WhatsApp'}
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate text-sm font-semibold">
+                        {conversation.participantName || conversation.participantUsername || 'Contact WhatsApp'}
+                      </span>
+                      <ContactTags tags={tagsFor(conversation.participantId)} max={2} />
                     </span>
                     <span className="shrink-0 text-[11px] text-muted-foreground">
                       {formatTime(conversation.updatedTime)}
@@ -389,6 +397,11 @@ export default function Home() {
                 {activeConversation.participantName || activeConversation.participantUsername || 'Contact WhatsApp'}
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">{activeConversation.participantId || 'WhatsApp'}</p>
+              <ContactTags
+                tags={tagsFor(activeConversation.participantId)}
+                max={5}
+                className="mt-2 justify-center"
+              />
               <span className="mt-3 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-600">
                 Client WhatsApp
               </span>

@@ -182,35 +182,40 @@ export function extractPlaceholders(text: string): number[] {
 }
 
 /**
- * Règles Meta 2025 vérifiées AVANT l'envoi (erreurs constatées en production) :
- *  - une variable ne peut pas être au tout début ni à la toute fin du corps ;
- *    un simple signe de ponctuation après la dernière variable ne compte pas
- *    comme du texte (« … le {{2}}. » est refusé, « … le {{2}} merci. » passe) ;
- *  - trop de variables pour un message court est refusé par la revue Meta.
- * Renvoie un message FR expliquant la correction, ou null si le corps passe.
+ * Meta refuses a template whose body "starts or ends with a variable" — and it
+ * ignores punctuation when deciding that: « …à {{3}}. » is REFUSED (« Variables
+ * can't be at the start or end of the template »), « …à {{3}} en salle
+ * d'attente. » is accepted (verified against the production API, 2026-09).
+ * A variable therefore counts as "at the edge" unless real text — at least one
+ * letter or digit — precedes the first one / follows the last one.
  */
-export function validateTemplateBodyRules(bodyText: string): string | null {
-  const text = bodyText.trim();
-  if (!text) return null;
-  const matches = [...text.matchAll(/\{\{\s*(\d+)\s*\}\}/g)];
+export function variableAtEdge(text: string): 'start' | 'end' | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+
+  const varToken = /\{\{\s*\d+\s*\}\}/g;
+  const matches = [...trimmed.matchAll(varToken)];
   if (matches.length === 0) return null;
+
+  const hasWordChar = (value: string) => /[\p{L}\p{N}]/u.test(value);
+
   const first = matches[0];
+  if (!hasWordChar(trimmed.slice(0, first.index))) return 'start';
+
   const last = matches[matches.length - 1];
-  const hasWordChar = (s: string) => /[\p{L}\p{N}]/u.test(s);
-  if (!hasWordChar(text.slice(0, first.index ?? 0))) {
-    return 'Meta refuse une variable au tout début du message. Ajoutez un mot avant {{'
-      + first[1] + '}} (ex. « Bonjour {{1}}… »).';
-  }
-  if (!hasWordChar(text.slice((last.index ?? 0) + last[0].length))) {
-    return 'Meta refuse une variable à la toute fin du message. Ajoutez un mot après {{'
-      + last[1] + '}} — un simple point ne suffit pas (ex. « … votre rendez-vous du {{2}} à très vite. »).';
-  }
+  if (!hasWordChar(trimmed.slice(last.index + last[0].length))) return 'end';
+
   return null;
 }
 
+export function templateStatusLabel(status: string): string {
+  return TEMPLATE_STATUS_META[status]?.label ?? status;
+}
+
 /**
- * Traduit en français les erreurs de création renvoyées par Meta/Zernio.
- * Les messages inconnus sont renvoyés tels quels (jamais de message inventé).
+ * Traduit en français actionnable les erreurs réelles de création de modèle
+ * (messages Meta/Zernio constatés en production). Message inconnu → renvoyé
+ * tel quel, jamais inventé.
  */
 export function translateTemplateError(raw: string): string {
   // Apostrophes typographiques (’) normalisées : Meta mélange les deux.
@@ -228,10 +233,6 @@ export function translateTemplateError(raw: string): string {
     return 'Meta : chaque variable {{1}}, {{2}}… doit avoir une valeur d’exemple réaliste.';
   }
   return raw;
-}
-
-export function templateStatusLabel(status: string): string {
-  return TEMPLATE_STATUS_META[status]?.label ?? status;
 }
 
 export function formatTemplateLanguage(language?: string): string {

@@ -3,34 +3,60 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
-import type { ZernioContact } from '@/lib/types';
-import { buildTagIndex, tagsForParticipant } from '@/lib/contacts/tag-index';
+import { buildTagIndex, type TaggedContact } from '@/lib/contacts/tag-lookup';
 
 /**
- * Étiquettes du contact lié à une conversation ouverte.
- * La liste /v1/inbox/conversations ne porte pas les tags : on joint la liste
- * des contacts Zernio (platformIdentifier) au participant de la conversation.
- * Rafraîchi toutes les 2 min — une étiquette posée par l'agent apparaît
- * rapidement sans polluer le réseau.
+ * Étiquettes des contacts, indexées par numéro.
+ *
+ * L'API conversations n'expose pas de tags : pour afficher l'étiquette posée
+ * par l'agent IA (ex. « support-auto ») à côté du numéro dans la boîte de
+ * réception, on charge la liste des contacts (peu volumineuse) et on la
+ * retrouve par téléphone. Cache partagé entre la liste, l'en-tête du fil et
+ * le panneau contact — rafraîchi régulièrement pour suivre l'agent.
  */
-export function useContactTags(
-  accountId: string | null | undefined,
-  platform: string | undefined,
-  participantId: string | undefined | null,
-) {
+
+const PAGE_LIMIT = 100;
+const MAX_PAGES = 15; // garde-fou : 1500 contacts
+const REFETCH_MS = 60_000; // l'agent peut étiquetter à tout moment
+
+interface ContactsPage {
+  contacts?: TaggedContact[];
+  data?: TaggedContact[];
+}
+
+async function fetchAllContacts(): Promise<TaggedContact[]> {
+  const all: TaggedContact[] = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const body = await apiFetch<ContactsPage>(
+      `/api/contacts?limit=${PAGE_LIMIT}&skip=${page * PAGE_LIMIT}`,
+    );
+    const batch = body.contacts ?? body.data ?? [];
+    all.push(...batch);
+    if (batch.length < PAGE_LIMIT) break;
+  }
+  return all;
+}
+
+export function useContactTags() {
   const query = useQuery({
-    queryKey: ['contact-tags', accountId ?? 'none'],
-    enabled: !!accountId,
-    staleTime: 60_000,
-    refetchInterval: 120_000,
-    queryFn: () =>
-      apiFetch<{ contacts?: ZernioContact[] }>(
-        `/api/contacts?limit=500&accountId=${encodeURIComponent(accountId ?? '')}`,
-      ),
+    queryKey: ['contact-tags-index'],
+    queryFn: fetchAllContacts,
+    refetchInterval: REFETCH_MS,
+    staleTime: 45_000,
+    refetchOnWindowFocus: true,
   });
 
-  const index = useMemo(() => buildTagIndex(query.data?.contacts ?? []), [query.data]);
-  const tags = tagsForParticipant(index, platform, participantId);
+  const index = useMemo(() => buildTagIndex(query.data ?? []), [query.data]);
 
-  return { tags, isLoading: query.isLoading };
+  return {
+    /** Map numéro normalisé → étiquettes. */
+    index,
+    /** Étiquettes pour un participantId de conversation. */
+    tagsFor: (participantId: string | null | undefined) => {
+      const key = (participantId ?? '').replace(/\D+/g, '');
+      if (!key) return [];
+      return index.get(key) ?? index.get(key.slice(-9)) ?? [];
+    },
+    isLoading: query.isLoading,
+  };
 }
