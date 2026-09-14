@@ -13,6 +13,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Sparkles,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -37,6 +38,7 @@ import type {
   ZernioTemplate,
   ZernioTemplateComponent,
 } from '@/lib/types';
+import { META_TEMPLATE_AI_PROMPT } from '@/lib/templates/ai-prompt';
 import { TemplateCreateDialog } from './create-dialog';
 
 function StatusBadge({ status }: { status: string }) {
@@ -315,6 +317,23 @@ export default function TemplatesPage() {
                 </option>
               ))}
             </select>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(META_TEMPLATE_AI_PROMPT);
+                  toast.success(
+                    'Prompt copié ! Collez-le dans ChatGPT, Claude… : l’IA vous pose quelques questions puis rédige un modèle Meta prêt à coller ici.',
+                    { duration: 8000 },
+                  );
+                } catch {
+                  toast.error('Copie impossible — votre navigateur a refusé l’accès au presse-papiers.');
+                }
+              }}
+            >
+              <Sparkles className="size-4" />
+              <span className="hidden sm:inline">Créer avec l’IA</span>
+            </Button>
             <Button onClick={() => setCreateOpen(true)} disabled={!effectiveAccountId}>
               <Plus className="size-4" />
               <span className="hidden sm:inline">Nouveau modèle</span>

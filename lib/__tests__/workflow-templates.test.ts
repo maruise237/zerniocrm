@@ -72,6 +72,12 @@ describe('workflow templates', () => {
     // Nœud AI sans provider : chemin intégré Zernio (zéro configuration BYOK).
     expect(ai.config.provider).toBeUndefined();
 
+    // Le prompt système embarque les informations métier fournies.
+    const prompt = ai.config.systemPrompt as string;
+    expect(prompt).toContain('Atelier Test');
+    expect(prompt).toContain('Sacos en cuir');
+    expect(prompt).toContain('Vous livrez ? Oui, en 48 h.');
+
     // Boucle : wait_for_reply revient au routeur ; timeout mène à la fin.
     const waitReply = wf!.edges.find((e) => e.source === 'wait' && e.sourceHandle === 'reply');
     expect(waitReply?.target).toBe('route');
@@ -82,11 +88,16 @@ describe('workflow templates', () => {
     expect(wf!.edges.some((e) => e.source === 'route' && e.sourceHandle === 'wants_human' && e.target === 'human')).toBe(true);
     expect(wf!.edges.some((e) => e.source === 'agent' && e.sourceHandle === 'error' && e.target === 'human')).toBe(true);
 
-    // Le prompt système embarque les informations métier fournies.
-    const prompt = ai.config.systemPrompt as string;
-    expect(prompt).toContain('Atelier Test');
-    expect(prompt).toContain('Sacos en cuir');
-    expect(prompt).toContain('Vous livrez ? Oui, en 48 h.');
+    // Escalade intelligente : l'IA dispose de l'outil transfer_to_human et
+    // l'edge « tool:transfer_to_human » mène au handoff (sans erreur requise).
+    const tools = (ai.config.tools ?? []) as { name?: string }[];
+    expect(tools.some((t) => t.name === 'transfer_to_human')).toBe(true);
+    expect(wf!.edges.some((e) => e.source === 'agent' && e.sourceHandle === 'tool:transfer_to_human' && e.target === 'human')).toBe(true);
+    expect(prompt).toContain('transfer_to_human');
+
+    // Étiquette posée à l'arrivée du contact (visible sur sa fiche).
+    const tagNode = wf!.nodes.find((n) => n.type === 'add_tag')!;
+    expect((tagNode.config as { tag?: string }).tag).toBe('support-auto');
   });
 
   it('construit un graphe mot-clé qui se déclenche sur chaque message (pas seulement le premier)', () => {

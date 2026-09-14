@@ -252,6 +252,32 @@ function faqBlock(faq: string): string {
   return lines.map((l) => (l.startsWith('-') ? l : `- ${l}`)).join('\n');
 }
 
+/**
+ * Outil IA « transfert à un humain » : l'agent décide lui-même de passer la
+ * main — demande explicite du client, mécontentement, réclamation, ou
+ * question dont la réponse n'est pas dans ses informations. L'edge
+ * « tool:transfer_to_human » mène au nœud handoff (conversation signalée à
+ * l'équipe) — plus robuste que le seul mot-clé, qui reste en filet de sécurité.
+ */
+const TRANSFER_TOOL = {
+  name: 'transfer_to_human',
+  description:
+    'Transfère la conversation à un membre de l’équipe humaine. Appelle cet outil dès que : ' +
+    'le client demande une vraie personne ; il est en colère, se plaint ou menace ; il évoque un sujet ' +
+    'sensible (paiement, litige, remboursement, données personnelles, livraison qui a mal tourné) ; ' +
+    'ou il pose une question dont la réponse ne figure PAS dans tes informations et qui exige une décision de l’équipe.',
+  parameters: {
+    type: 'object',
+    properties: {
+      reason: {
+        type: 'string',
+        description: 'Raison courte du transfert, en français (ex. « demande un humain », « réclamation livraison »).',
+      },
+    },
+    required: ['reason'],
+  },
+};
+
 function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
   const nodes: BuiltNode[] = [
     {
@@ -307,7 +333,9 @@ function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
           '- Reste sur le service client ; ne t’éloigne pas du sujet.',
           '',
           '# TRANSFÈRE À UN HUMAIN QUAND',
-          '- On te demande une personne réelle, le client est en colère, ou c’est une réclamation ou un sujet sensible. Dis que tu connectes l’équipe et arrête d’essayer de résoudre toi-même.',
+          '- On te demande une personne réelle, le client est en colère, ou c’est une réclamation ou un sujet sensible.',
+          '- La question exige une décision ou une information que tu n’as pas (prix non listé, problème de paiement, commande bloquée…).',
+          '- Dans ce cas : appelle l’outil transfer_to_human avec la raison, écris UNE phrase courte au client (ex. « Je connecte tout de suite un membre de l’équipe »), et arrête d’essayer de résoudre toi-même.',
         ].join('\n'),
         userPromptTemplate: [
           'Conversation jusqu’ici (du plus ancien au plus récent ; vide au premier message) :',
@@ -320,6 +348,7 @@ function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
         ].join('\n'),
         outputType: 'text',
         saveAs: 'aiReply',
+        tools: [TRANSFER_TOOL],
       },
     },
     {
@@ -351,6 +380,7 @@ function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
     { id: 'e4', source: 'route', target: 'agent', sourceHandle: 'default' },
     { id: 'e5', source: 'agent', target: 'remember', sourceHandle: 'success' },
     { id: 'e6', source: 'agent', target: 'human', sourceHandle: 'error' },
+    { id: 'e11', source: 'agent', target: 'human', sourceHandle: 'tool:transfer_to_human' },
     { id: 'e7', source: 'remember', target: 'reply' },
     { id: 'e8', source: 'reply', target: 'wait' },
     { id: 'e9', source: 'wait', target: 'route', sourceHandle: 'reply' },
@@ -359,7 +389,7 @@ function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
   return {
     name: f.businessName ? `Agent client — ${f.businessName}` : 'Agent client 24h/24',
     description:
-      'Agent client 24 h/24 : répond aux questions, mémorise la conversation, transfère à un humain sur demande ou en cas d’erreur.',
+      'Agent client 24 h/24 : répond aux questions, mémorise la conversation, transfère à un humain sur demande, sur une question dépassant ses informations, ou en cas d’erreur.',
     platform: 'whatsapp',
     nodes,
     edges,
@@ -562,7 +592,8 @@ export function templateSummary(templateId: string, values: TemplateFieldValues)
         'Son IA utilise le modèle intégré de Zernio : aucun modèle à choisir, aucune clé à fournir.',
         'Il se souvient de la conversation pour ne jamais se répéter ni se représenter.',
         'Il s’appuie uniquement sur vos informations : offre, horaires, liens, FAQ.',
-        'Il passe la main à un humain si on le lui demande — ou en cas d’erreur.',
+        'Il passe la main à un humain quand il le faut : demande du client, question au-delà de ses informations, ou erreur.',
+        'Le contact est étiqueté « support-auto » dès son premier message pour le retrouver facilement.',
       ];
     case 'keyword-reply':
       return [
