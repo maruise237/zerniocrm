@@ -116,7 +116,7 @@ export function ThreadPane({
     return map;
   }, [messages]);
 
-  // --- In-thread search ---
+  // In-thread search
   // The message list registers its imperative bits (scroll-to-message with the
   // quote-click highlight, position-preserving load-older) so search reuses
   // those paths instead of duplicating them.

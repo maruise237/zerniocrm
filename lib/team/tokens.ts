@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-// ── Jetons de lien magique (SERVEUR uniquement) ───────────────────────────
+// Jetons de lien magique (SERVEUR uniquement)
 // Ce module importe node:crypto : ne l'importer JAMAIS depuis un composant
 // client. Les options/libellés partagés vivent dans lib/team/invite-share.ts.
 // Le jeton n'est JAMAIS stocké en clair : seule son empreinte SHA-256 vit en

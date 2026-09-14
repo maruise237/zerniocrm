@@ -30,7 +30,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />
-        Loading templates...
+        Chargement des modèles...
       </div>
     );
   }
@@ -50,10 +50,10 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
     }
     return (
       <div className="space-y-2 text-sm text-muted-foreground">
-        <p>Aucun modèle approuvé pour ce compte WhatsApp pour l instant.</p>
+        <p>Aucun modèle approuvé pour ce compte WhatsApp pour l’instant.</p>
         <p>
-          Créez un modèle dans WhatsApp Manager (ou depuis l onglet Modèles), attendez son
-          approbation par Meta, puis revenez ici — il apparaîtra automatiquement.
+          Créez un modèle dans WhatsApp Manager (ou depuis l’onglet Modèles), attendez son
+          approbation par Meta, puis revenez ici : il apparaîtra automatiquement.
         </p>
       </div>
     );
@@ -62,7 +62,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <Label className="text-xs">Template</Label>
+        <Label className="text-xs">Modèle</Label>
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Choisir un modèle"
@@ -79,7 +79,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
                 )}
               </span>
             ) : (
-              <span className="text-muted-foreground">Select an approved template...</span>
+              <span className="text-muted-foreground">Choisir un modèle approuvé...</span>
             )}
             <ChevronDown className="size-4 shrink-0 opacity-60" />
           </DropdownMenuTrigger>
@@ -103,7 +103,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
       {/* Live preview: the actual template body with variables substituted. */}
       {selected && (
         <div className="rounded-md border border-[var(--chat-border)] bg-[var(--chat-surface)] p-3">
-          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Message preview</p>
+          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Aperçu du message</p>
           <p className="text-sm whitespace-pre-wrap">{previewBody || '(modèle sans message)'}</p>
         </div>
       )}

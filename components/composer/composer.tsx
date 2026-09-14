@@ -460,13 +460,13 @@ export function Composer({
           {neverIncoming ? (
             <p className="text-xs text-[var(--chat-warning-fg)]">
               Ce contact ne vous a jamais écrit&nbsp;: WhatsApp impose de démarrer la conversation
-              par un modèle approuvé. Choisissez un modèle ci-dessous et envoyez — dès sa réponse,
+              par un modèle approuvé. Choisissez un modèle ci-dessous et envoyez : dès sa réponse,
               vous pourrez discuter librement.
             </p>
           ) : (
             <p className="text-xs text-[var(--chat-warning-fg)]">
               Plus de 24 h se sont écoulées depuis le dernier message de ce contact. WhatsApp
-              n&apos;accepte plus que les modèles approuvés — choisissez-en un pour le recontacter.
+              n&apos;accepte plus que les modèles approuvés, choisissez-en un pour le recontacter.
             </p>
           )}
           <TemplateFields composer={template} />

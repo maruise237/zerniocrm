@@ -8,7 +8,7 @@ import {
   permissionsForRole,
 } from '@/lib/team/roles';
 
-// ── Résolution du workspace ────────────────────────────────────────────────
+// Résolution du workspace
 // Chaque utilisateur appartient à l'un de ces cas :
 //  1. Propriétaire : une ligne `zernio_config` porte son userId → il pilote
 //     son propre espace (toutes les autorisations).
@@ -162,8 +162,8 @@ export function databaseUnavailableResponse(err?: unknown): Response {
         : 'unreachable';
   const message =
     reason === 'schema_missing'
-      ? "La base de données est connectée, mais ses tables n'existent pas encore. Un technicien doit appliquer les migrations (commande « npm run db:push » — voir README, section Déploiement)."
-      : 'La base de données est momentanément indisponible. Réessayez dans un instant — si le problème persiste, vérifiez la configuration DATABASE_URL.';
+      ? "La base de données est connectée, mais ses tables n'existent pas encore. Un technicien doit appliquer les migrations (commande « npm run db:push », voir README, section Déploiement)."
+      : 'La base de données est momentanément indisponible. Réessayez dans un instant ; si le problème persiste, vérifiez la configuration DATABASE_URL.';
   return Response.json({ error: message, code: `db_${reason}` }, { status: 503 });
 }
 

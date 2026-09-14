@@ -169,7 +169,7 @@ export async function sendPersonalizedCampaign(opts: {
             ...(ids.messageId ? { messageId: ids.messageId } : {}),
           });
         } catch (err) {
-          const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+          const detail = err instanceof ApiError && err.message ? ` : ${err.message}` : '';
           failures.push(
             `${recipient.contactName || recipient.platformIdentifier}: ${detail || 'erreur inconnue'}`.slice(0, 500),
           );

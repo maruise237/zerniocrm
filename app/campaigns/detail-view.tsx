@@ -77,7 +77,7 @@ function digits(value: string): string {
 }
 
 function formatDate(value?: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   return formatInTimezone(value, getTimezoneSetting());
 }
 
@@ -144,7 +144,7 @@ function AddRecipientsDialog({
       const found = [...new Set(result.rows.map((r) => r.phone).filter((p): p is string => !!p))];
       if (found.length === 0) {
         setFileError(
-          'Aucun numéro de téléphone détecté — ajoutez une colonne « téléphone » ou « numéro » dans le fichier.',
+          'Aucun numéro de téléphone détecté : ajoutez une colonne « téléphone » ou « numéro » dans le fichier.',
         );
         setFilePhones([]);
       } else {
@@ -204,7 +204,7 @@ function AddRecipientsDialog({
     }
     const tags = (broadcast.segmentFilters?.tags ?? []).filter(Boolean);
     if (tags.length === 0) {
-      toast.error('Cette campagne n’a pas de tags de segment — définissez-les à la création.');
+      toast.error('Cette campagne n’a pas de tags de segment : définissez-les à la création.');
       return;
     }
     try {
@@ -234,7 +234,7 @@ function AddRecipientsDialog({
               className={cn(
                 'rounded-lg border px-3 py-2 text-xs font-medium transition',
                 mode === 'phones'
-                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                   : 'border-[var(--chat-border)] text-muted-foreground',
               )}
             >
@@ -245,7 +245,7 @@ function AddRecipientsDialog({
               className={cn(
                 'rounded-lg border px-3 py-2 text-xs font-medium transition',
                 mode === 'contacts'
-                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                   : 'border-[var(--chat-border)] text-muted-foreground',
               )}
             >
@@ -256,7 +256,7 @@ function AddRecipientsDialog({
               className={cn(
                 'rounded-lg border px-3 py-2 text-xs font-medium transition',
                 mode === 'file'
-                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                   : 'border-[var(--chat-border)] text-muted-foreground',
               )}
             >
@@ -268,7 +268,7 @@ function AddRecipientsDialog({
               className={cn(
                 'rounded-lg border px-3 py-2 text-xs font-medium transition',
                 mode === 'segment'
-                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                   : 'border-[var(--chat-border)] text-muted-foreground disabled:opacity-50',
               )}
             >
@@ -312,7 +312,7 @@ function AddRecipientsDialog({
                   </span>
                 )}
               </button>
-              {fileError && <p className="text-[11px] text-red-500">{fileError}</p>}
+              {fileError && <p className="text-[11px] text-red-600 dark:text-red-400">{fileError}</p>}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -456,7 +456,7 @@ function ScheduleDialog({
         <DialogHeader>
           <DialogTitle>Programmer l’envoi</DialogTitle>
           <DialogDescription>
-            La campagne partira automatiquement à cette heure — interprétée dans votre fuseau actif :{' '}
+            La campagne partira automatiquement à cette heure, interprétée dans votre fuseau actif :{' '}
             <span className="font-medium text-foreground">{timeZone}</span>
           </DialogDescription>
         </DialogHeader>
@@ -598,7 +598,7 @@ function RecipientList({ broadcastId }: { broadcastId: string }) {
                   </p>
                 </div>
                 {merged.status === 'failed' && merged.note && (
-                  <span className="hidden max-w-44 truncate text-[10px] text-red-500/80 sm:block" title={merged.note}>
+                  <span className="hidden max-w-44 truncate text-[10px] text-red-600/80 dark:text-red-400/80 sm:block" title={merged.note}>
                     {merged.note}
                   </span>
                 )}
@@ -619,8 +619,7 @@ function RecipientList({ broadcastId }: { broadcastId: string }) {
   );
 }
 
-// ─── Modification d'une campagne (brouillon) ────────────────────────────────
-
+// Modification d'une campagne (brouillon)
 const FIELD_LABELS: Record<string, string> = {
   custom: 'Valeur fixe',
   name: 'Nom du contact',
@@ -689,7 +688,7 @@ function CampaignEditDialog({
       onSaved();
       onClose();
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`La modification a échoué.${detail}`);
     } finally {
       setSaving(false);
@@ -728,7 +727,7 @@ function CampaignEditDialog({
           </div>
           {varsCfg && rows.length > 0 && (
             <div className="space-y-2.5 rounded-xl border border-sky-500/20 bg-sky-500/5 p-3">
-              <p className="text-xs font-medium text-sky-600 dark:text-sky-400">Variables personnalisées</p>
+              <p className="text-xs font-medium text-sky-700 dark:text-sky-400">Variables personnalisées</p>
               {rows
                 .slice()
                 .sort((a, b) => a.pos - b.pos)
@@ -846,10 +845,10 @@ export function CampaignDetail({
   const effectiveDirectDone = isDirectDone || sends.length > 0;
   const badgeLabel = effectiveDirectDone ? 'Envoyée (direct)' : meta?.label ?? broadcast.status;
   const badgeClass = effectiveDirectDone
-    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
     : (meta?.badge ?? 'bg-slate-500/10 text-slate-600 dark:text-slate-300');
   const badgeDot = effectiveDirectDone ? 'bg-emerald-500' : (meta?.dot ?? 'bg-slate-400');
-  // ── Statistiques de suivi ────────────────────────────────────────────────
+  // Statistiques de suivi
   // 1. Envois directs enregistrés (campaign_sends) → statuts réels Zernio.
   // 2. Sinon, destinataires natifs Zernio → totaux cumulatifs (les compteurs
   //    agrégés sentCount/deliveredCount de l'objet broadcast sous-comptent).
@@ -888,7 +887,7 @@ export function CampaignDetail({
         refresh();
       })
       .catch((err: unknown) => {
-        const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+        const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
         toast.error(`L’action a échoué.${detail}`);
       });
   }
@@ -943,7 +942,7 @@ export function CampaignDetail({
       const allRecipients = await fetchBroadcastRecipients(t.id);
       const recipients = allRecipients.filter((r) => r.platformIdentifier);
       if (recipients.length === 0) {
-        toast.error('Aucun destinataire avec numéro — ajoutez-en d’abord.');
+        toast.error('Aucun destinataire avec numéro : ajoutez-en d’abord.');
         return;
       }
 
@@ -980,7 +979,7 @@ export function CampaignDetail({
               });
               sent += 1;
             } catch (err) {
-              const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+              const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
               failures.push(
                 `${recipient.contactName || recipient.platformIdentifier}: ${detail || 'erreur inconnue'}`.slice(0, 500),
               );
@@ -1001,7 +1000,7 @@ export function CampaignDetail({
       }
       refresh();
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`L’envoi direct a échoué.${detail}`);
     } finally {
       setDirectBusy(false);
@@ -1019,7 +1018,7 @@ export function CampaignDetail({
       setInspectJson(JSON.stringify(raw, null, 2));
       setInspectOpen(true);
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`Impossible de lire la campagne sur la plateforme.${detail}`);
     }
   }
@@ -1050,7 +1049,7 @@ export function CampaignDetail({
         return;
       }
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`Impossible de vérifier le modèle avant l’envoi.${detail}`);
       return;
     }
@@ -1096,7 +1095,7 @@ export function CampaignDetail({
       onChanged();
       onSelectBroadcast(copy.id);
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`La duplication a échoué.${detail}`);
     } finally {
       setDuplicating(false);
@@ -1134,7 +1133,7 @@ export function CampaignDetail({
       onChanged();
       onSelectBroadcast(copy.id);
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`La relance a échoué.${detail}`);
     } finally {
       setDuplicating(false);
@@ -1192,8 +1191,8 @@ export function CampaignDetail({
               {broadcast.completedAt && ` · terminée le ${formatDate(broadcast.completedAt)}`}
             </p>
             {isDirectDone && directResult && (
-              <p className="mt-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                ✓ Envoyé en direct le {formatDate(directResult.at)} — {directResult.sent} envoyé(s)
+              <p className="mt-2 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                Envoyé en direct le {formatDate(directResult.at)}, {directResult.sent} envoyé(s)
                 {directResult.failed > 0 ? `, ${directResult.failed} échec(s)` : ''}
                 {hasDirectTracking
                   ? ' · Statuts réels suivis ci-dessous (envoyé / livré / lu), rafraîchis automatiquement.'
@@ -1220,9 +1219,9 @@ export function CampaignDetail({
         </div>
 
         {hasVars && isDraft && (
-          <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
-            ℹ️ Campagne personnalisée : la plateforme n’enregistre pas les variables d’une campagne (vérifié avec
-            « Inspecter ») — l’envoi se fait donc directement, destinataire par destinataire, avec les
+          <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-700 dark:text-sky-400">
+            Campagne personnalisée : la plateforme n’enregistre pas les variables d’une campagne (vérifié avec
+            « Inspecter »). L’envoi se fait donc directement, destinataire par destinataire, avec les
             vraies valeurs (même mécanisme que l’envoi d’un modèle dans une conversation). Chaque envoi
             est ensuite suivi individuellement (envoyé / livré / lu / échec) via la plateforme.
           </p>
@@ -1244,7 +1243,7 @@ export function CampaignDetail({
                       disabled={hasVars}
                       title={
                         hasVars
-                          ? 'L’envoi programmé ne peut pas personnaliser les variables — utilisez « Envoyer maintenant » (direct).'
+                          ? 'L’envoi programmé ne peut pas personnaliser les variables : utilisez « Envoyer maintenant » (direct).'
                           : undefined
                       }
                     >
@@ -1275,7 +1274,7 @@ export function CampaignDetail({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-red-500"
+                  className="text-muted-foreground hover:text-red-600"
                   onClick={() => void deleteCampaignAction()}
                 >
                   <Trash2 className="size-3.5" /> Supprimer
@@ -1303,7 +1302,7 @@ export function CampaignDetail({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-red-500"
+                  className="text-muted-foreground hover:text-red-600"
                   onClick={() => void deleteCampaignAction()}
                 >
                   <Trash2 className="size-3.5" /> Supprimer
@@ -1327,7 +1326,7 @@ export function CampaignDetail({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground hover:text-red-500"
+                  className="text-muted-foreground hover:text-red-600"
                   onClick={() => void deleteCampaignAction()}
                 >
                   <Trash2 className="size-3.5" /> Supprimer
@@ -1340,7 +1339,7 @@ export function CampaignDetail({
         {directErrors.length > 0 && (
           <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5">
             <p className="text-xs font-medium text-red-600 dark:text-red-400">
-              {directErrors.length} échec(s) d’envoi — détail (message exact de l’API) :
+              {directErrors.length} échec(s) d’envoi. Détail (message exact de l’API) :
             </p>
             <ul className="mt-1.5 max-h-40 space-y-1 overflow-y-auto text-[11px] text-muted-foreground">
               {directErrors.map((line, i) => (
@@ -1355,10 +1354,10 @@ export function CampaignDetail({
 
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         <StatCard label="Destinataires" value={broadcast.recipientCount ?? 0} />
-        <StatCard label="Envoyés" value={statSent} className="text-sky-500" />
-        <StatCard label="Livrés" value={statDelivered} className="text-indigo-500" />
-        <StatCard label="Lus" value={statRead} className="text-emerald-500" />
-        <StatCard label="Échecs" value={statFailed} className="text-red-500" />
+        <StatCard label="Envoyés" value={statSent} className="text-sky-700 dark:text-sky-400" />
+        <StatCard label="Livrés" value={statDelivered} className="text-indigo-600 dark:text-indigo-400" />
+        <StatCard label="Lus" value={statRead} className="text-emerald-700 dark:text-emerald-400" />
+        <StatCard label="Échecs" value={statFailed} className="text-red-600 dark:text-red-400" />
         <StatCard label="Statut" value={badgeLabel} className="col-span-3 sm:col-span-1" />
       </div>
 

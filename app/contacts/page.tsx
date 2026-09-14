@@ -65,8 +65,7 @@ function initials(name: string) {
   );
 }
 
-// ─── Dialog d’import ────────────────────────────────────────────────────────
-
+// Dialog d’import
 function ImportDialog({
   profile,
   accountId,
@@ -168,7 +167,7 @@ function ImportDialog({
       });
       if ((res.created ?? 0) > 0 || (res.skipped ?? 0) > 0) onImported();
     } catch {
-      toast.error("L'import a échoué — vérifiez la configuration du compte.");
+      toast.error("L'import a échoué : vérifiez la configuration du compte.");
     } finally {
       setImporting(false);
     }
@@ -190,7 +189,7 @@ function ImportDialog({
         <DialogHeader>
           <DialogTitle>Importer des contacts</DialogTitle>
           <DialogDescription>
-            Fichier CSV, Excel (.xlsx/.xls) — colonnes détectées automatiquement (nom, téléphone, e-mail,
+            Fichier CSV, Excel (.xlsx/.xls) : colonnes détectées automatiquement (nom, téléphone, e-mail,
             entreprise, tags). Compte : {accountLabel}
           </DialogDescription>
         </DialogHeader>
@@ -240,7 +239,7 @@ function ImportDialog({
                     aria-label={`Colonne ${field.label}`}
                     className="h-9 min-w-0 flex-1 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2 text-xs outline-none"
                   >
-                    <option value="">— Aucune —</option>
+                    <option value="">Aucune</option>
                     {columns.map((header, index) => (
                       <option key={index} value={index}>
                         {header || `Colonne ${index + 1}`}
@@ -268,7 +267,7 @@ function ImportDialog({
 
             {parse.invalid.length > 0 && (
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
-                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
                   {parse.invalid.length + missingPhones} ligne(s) ignorée(s)
                 </p>
                 <p className="mt-1 max-h-20 overflow-y-auto text-[11px] text-muted-foreground">
@@ -289,7 +288,7 @@ function ImportDialog({
                   <span className="min-w-0 flex-1 truncate font-medium">{row.name}</span>
                   {row.phone && <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{row.phone}</span>}
                   {row.tags.length > 0 && (
-                    <span className="hidden max-w-32 truncate text-[10px] text-emerald-600 dark:text-emerald-400 sm:block">
+                    <span className="hidden max-w-32 truncate text-[10px] text-emerald-700 dark:text-emerald-400 sm:block">
                       #{row.tags.join(' #')}
                     </span>
                   )}
@@ -298,14 +297,14 @@ function ImportDialog({
             </div>
 
             {tooMany && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">
+              <p className="text-xs text-amber-700 dark:text-amber-400">
                 Plus de 1000 contacts : seuls les 1000 premiers seront importés.
               </p>
             )}
 
             {result && (
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5 text-xs">
-                <p className="font-medium text-emerald-600 dark:text-emerald-400">
+                <p className="font-medium text-emerald-700 dark:text-emerald-400">
                   Import terminé : {result.created} créé(s) · {result.skipped} doublon(s) ignoré(s)
                 </p>
                 {result.errors.length > 0 && (
@@ -352,8 +351,7 @@ function ImportDialog({
   );
 }
 
-// ─── Page ───────────────────────────────────────────────────────────────────
-
+// Page
 export default function ContactsPage() {
   const { accounts, profiles, isLoading: accountsLoading } = useAccounts();
   const whatsappAccounts = useMemo(
@@ -403,7 +401,7 @@ export default function ContactsPage() {
       toast.success('Contact supprimé');
       refresh();
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`La suppression a échoué.${detail}`);
     }
   }
@@ -531,7 +529,7 @@ export default function ContactsPage() {
                 <Users className="mx-auto size-8 text-muted-foreground/50" />
                 <p className="mt-3 text-sm font-medium">Aucun contact</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Importez un fichier CSV ou Excel pour constituer votre liste — vous pourrez ensuite cibler
+                  Importez un fichier CSV ou Excel pour constituer votre liste, puis ciblez
                   ces contacts par tags dans vos campagnes.
                 </p>
                 <Button size="sm" className="mt-4" onClick={() => setImportOpen(true)} disabled={!effectiveAccountId}>
@@ -570,7 +568,7 @@ export default function ContactsPage() {
                         {contact.tags!.slice(0, 5).map((tag) => (
                           <span
                             key={tag}
-                            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"
+                            className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400"
                           >
                             #{tag}
                           </span>

@@ -99,5 +99,5 @@ export function dominantFailure(
   for (const [key, count] of reasons) {
     if (!best || count > best.count) best = { key, count };
   }
-  return best ? `${best.key} — ${best.count} destinataire${best.count > 1 ? 's' : ''}` : null;
+  return best ? `${best.key} : ${best.count} destinataire${best.count > 1 ? 's' : ''}` : null;
 }

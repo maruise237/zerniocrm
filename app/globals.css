@@ -37,30 +37,30 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.65 0.18 35);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #15803d; /* brand green (green-700): AA on white, matches WhatsApp identity (audit 001, finding 8) */
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.53 0 0);
   --accent: oklch(0.97 0.012 35);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.65 0.18 35);
+  --ring: #15803d;
 
   /* Chat surface tokens (WhatsApp-style inbox palette) */
   --chat-canvas: oklch(0.975 0.005 80);
   --chat-surface: oklch(1 0 0);
   --chat-bubble-incoming: oklch(0.965 0 0);
   --chat-bubble-outgoing: color-mix(in oklab, var(--primary) 15%, white);
-  --chat-border: oklch(0.92 0 0);
+  --chat-border: oklch(0.87 0 0); /* darkened from 0.92: input boundaries (antislop audit 001, finding 6) */
   --chat-hover: oklch(0.955 0 0);
   --chat-input: oklch(0.97 0 0);
   --chat-check: oklch(0.62 0.17 245); /* read-tick blue */
-  --chat-presence: oklch(0.72 0.19 150); /* online green */
+  --chat-presence: oklch(0.62 0.19 150); /* online green, darkened to pass 3:1 non-text (audit 001, finding 6) */
   --chat-warning-bg: oklch(0.96 0.04 90);
   --chat-warning-fg: oklch(0.45 0.1 75);
 }
@@ -72,8 +72,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.7 0.17 35);
-  --primary-foreground: oklch(0.145 0 0);
+  --primary: #4ade80;
+  --primary-foreground: #052e16;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -84,7 +84,7 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.17 35);
+  --ring: #4ade80;
 
   /* Chat surface tokens (dark) */
   --chat-canvas: oklch(0.17 0.005 80);
@@ -102,6 +102,13 @@
 
 * {
   border-color: var(--border);
+}
+
+/* Visible keyboard focus on every interactive element, including inputs
+   that set outline-none (unlayered rule wins over Tailwind utilities). */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 html,

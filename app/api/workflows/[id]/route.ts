@@ -57,7 +57,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const aiPrompt = typeof body.aiSystemPrompt === 'string' ? body.aiSystemPrompt.trim() : undefined;
   const sendText = typeof body.sendMessageText === 'string' ? body.sendMessageText.trim() : undefined;
   if (!name && !description && aiPrompt === undefined && sendText === undefined) {
-    return bad('Rien à modifier — indiquez au moins un champ.');
+    return bad('Rien à modifier : indiquez au moins un champ.');
   }
   if ((aiPrompt !== undefined && !aiPrompt) || (sendText !== undefined && !sendText)) {
     return bad('Le texte ne peut pas être vide.');

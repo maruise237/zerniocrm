@@ -150,7 +150,7 @@ export function TemplateCreateDialog({
         setHeaderMediaUrl(res.url);
         setHeaderMediaName(file.name);
       } else {
-        setErrors("L’upload du média a échoué — réessayez.");
+        setErrors("L’upload du média a échoué, réessayez.");
       }
     } catch (err) {
       setErrors(err instanceof Error ? err.message : "L’upload du média a échoué.");
@@ -214,7 +214,7 @@ export function TemplateCreateDialog({
       setErrors(
         bodyEdgeIssue === 'start'
           ? 'Meta refuse un modèle qui COMMENCE par une variable : ajoutez du texte avant {{1}} (la ponctuation seule ne compte pas).'
-          : 'Meta refuse un modèle qui TERMINE par une variable : ajoutez du texte après la dernière variable (ex. « …à {{3}} en salle d’attente. ») — la ponctuation seule ne compte pas.',
+          : 'Meta refuse un modèle qui TERMINE par une variable : ajoutez du texte après la dernière variable (ex. « …à {{3}} en salle d’attente. », la ponctuation seule ne compte pas).',
       );
       return;
     }
@@ -310,13 +310,13 @@ export function TemplateCreateDialog({
                     setCategory(c);
                     if (c === 'AUTHENTICATION' && headerMediaKind) {
                       setHeaderType('text');
-                      setErrors('Authentification : Meta n’autorise pas d’en-tête média — passage en en-tête texte.');
+                      setErrors('Authentification : Meta n’autorise pas d’en-tête média, passage en en-tête texte.');
                     }
                   }}
                   className={cn(
                     'rounded-lg border px-3 py-2 text-xs font-medium transition',
                     category === c
-                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                       : 'border-[var(--chat-border)] text-muted-foreground hover:bg-[var(--chat-hover)]',
                   )}
                 >
@@ -335,7 +335,7 @@ export function TemplateCreateDialog({
                 const next = e.target.value as HeaderKind;
                 if (category === 'AUTHENTICATION' && next !== 'none' && next !== 'text') {
                   setHeaderType('text');
-                  setErrors('Authentification : Meta n’autorise pas d’en-tête média — choix remis sur « Texte ».');
+                  setErrors('Authentification : Meta n’autorise pas d’en-tête média, choix remis sur « Texte ».');
                   return;
                 }
                 setHeaderType(next);
@@ -374,7 +374,7 @@ export function TemplateCreateDialog({
                     {uploadingMedia ? 'Upload…' : headerMediaName ? 'Remplacer le fichier' : 'Importer le fichier'}
                   </button>
                   <span className="min-w-0 flex-1 truncate text-right text-[11px] text-muted-foreground">
-                    {headerMediaName || (headerMediaUrl ? 'URL fournie' : 'JPEG/PNG, MP4 ou PDF — max 25 Mo')}
+                    {headerMediaName || (headerMediaUrl ? 'URL fournie' : 'JPEG/PNG, MP4 ou PDF (max 25 Mo)')}
                   </span>
                 </div>
                 <input
@@ -412,7 +412,7 @@ export function TemplateCreateDialog({
                   />
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
                     Le fichier importé est hébergé temporairement (7 jours) et sert d’échantillon à la revue
-                    Meta. Pour un média déjà en ligne, collez son URL publique — ou un handle Meta obtenu par
+                    Meta. Pour un média déjà en ligne, collez son URL publique ou un handle Meta obtenu par
                     Resumable Upload pour un usage avancé.
                   </p>
                 </div>
@@ -435,17 +435,17 @@ export function TemplateCreateDialog({
               {bodyText.length}/{MAX_BODY}
             </p>
             {bodyEdgeIssue && (
-              <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+              <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
                 {bodyEdgeIssue === 'start'
-                  ? 'Meta refuse un modèle qui commence par une variable — ajoutez du texte avant {{1}}.'
-                  : 'Meta refuse un modèle qui se termine par une variable — ajoutez du texte après la dernière variable (la ponctuation seule ne compte pas).'}
+                  ? 'Meta refuse un modèle qui commence par une variable : ajoutez du texte avant {{1}}.'
+                  : 'Meta refuse un modèle qui se termine par une variable : ajoutez du texte après la dernière variable (la ponctuation seule ne compte pas).'}
               </p>
             )}
           </div>
 
           {bodyPlaceholders.length > 0 && (
             <div className="space-y-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
-              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
                 Exemples exigés par Meta pour chaque variable
               </p>
               {bodyPlaceholders.map((n) => (
@@ -577,7 +577,7 @@ export function TemplateCreateDialog({
             )}
           </div>
 
-          {errors && <p className="text-xs text-red-500">{errors}</p>}
+          {errors && <p className="text-xs text-red-600 dark:text-red-400">{errors}</p>}
         </div>
 
         <DialogFooter>

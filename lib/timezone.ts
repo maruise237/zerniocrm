@@ -118,7 +118,7 @@ export function zonedLocalToUtcISO(localValue: string, timeZone: string): string
 
 /** Format an ISO instant in the given timezone (fr-FR medium date + short time). */
 export function formatInTimezone(iso: string | null | undefined, timeZone: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   try {

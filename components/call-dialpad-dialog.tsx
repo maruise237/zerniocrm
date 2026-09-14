@@ -73,13 +73,14 @@ type DialState =
   | 'in_call';
 
 const END_REASON_LABEL: Record<string, string> = {
-  hangup: 'Call ended',
-  no_answer: 'No answer',
-  rejected: 'Call was declined or could not be connected',
-  error: 'Call failed',
+  hangup: 'Appel terminé',
+  no_answer: 'Sans réponse',
+  rejected: 'Appel refusé ou connexion impossible',
+  error: 'Échec de l’appel',
 };
 
-const DEFAULT_PROMPT_BODY = 'We would like to call you about your inquiry. Tap Allow to accept.';
+const DEFAULT_PROMPT_BODY =
+  'Nous souhaitons vous appeler au sujet de votre demande. Appuyez sur Autoriser pour accepter.';
 
 const FORWARD_DEST_PATTERN = /^(tel:\+\d{6,}|sip:[^\s]+|wss:\/\/[^\s]+|\+\d{6,15})$/;
 
@@ -96,11 +97,11 @@ function promptBudget(perms: PermissionResponse | null): string | null {
       const period =
         String(l.time_period || '').toLowerCase().includes('week') ||
         String(l.time_period || '').includes('7')
-          ? 'this week'
-          : 'today';
-      return `${left} of ${l.max_allowed} left ${period}`;
+          ? 'cette semaine'
+          : 'aujourd’hui';
+      return `reste ${left} sur ${l.max_allowed} ${period}`;
     });
-  return parts.length ? `Prompt budget: ${parts.join(' · ')}.` : null;
+  return parts.length ? `Quota de demandes : ${parts.join(' · ')}.` : null;
 }
 
 /** Tiny labeled DropdownMenu picker (this repo has no Select component). */
@@ -187,10 +188,10 @@ export function CallDialpadDialog({
       const raw = p?.error?.message || '';
       if (/business-initiated calling is not available|138013/i.test(raw)) {
         throw new Error(
-          'Outbound calling is not available from this number. Meta does not allow business-initiated calls from US, CA, EG, VN, or NG numbers. Receiving calls still works.',
+          'Les appels sortants ne sont pas disponibles pour ce numéro : Meta ne les autorise pas depuis des numéros US, CA, EG, VN ou NG. La réception d’appels reste possible.',
         );
       }
-      throw new Error(raw || 'Could not check call permission. Please try again.');
+      throw new Error(raw || 'Impossible de vérifier la permission d’appel. Réessayez.');
     }
     setPerms(p);
     return !!p.actions?.find((a) => a.action_name === 'start_call')?.can_perform_action;
@@ -215,7 +216,7 @@ export function CallDialpadDialog({
       const canStart = await probePermission();
       setState(canStart ? 'ready' : 'need_permission');
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Permission check failed');
+      toast.error(e instanceof Error ? e.message : 'Échec de la vérification de permission');
       setState('idle');
     } finally {
       setBusy(false);
@@ -241,7 +242,7 @@ export function CallDialpadDialog({
         ticks += 1;
         const canStart = await probePermission().catch((): false => false); // silent while polling
         if (canStart) {
-          toast.success('Permission granted, you can place the call');
+          toast.success('Permission accordée, vous pouvez appeler');
           setState('ready');
         } else if (ticks > 45) {
           clearInterval(t); // stop after ~3min; the manual button still works
@@ -311,20 +312,20 @@ export function CallDialpadDialog({
       if (!r.ok) {
         const raw = String(
           (typeof data?.error === 'string' ? data.error : data?.error?.message) ??
-            'Failed to send',
+            'Échec de l’envoi',
         );
         // Most common rejection: no open 24h service window with this contact.
         if (/re-?engagement|24 hours|131047/i.test(raw)) {
           throw new Error(
-            "This contact hasn't messaged your WhatsApp number in the last 24 hours, so the prompt can't be delivered. Ask them to send your number any message first, then send the request again.",
+            'Ce contact n’a pas écrit à votre numéro WhatsApp au cours des dernières 24 h, la demande ne peut donc pas lui être remise. Demandez-lui d’abord d’envoyer un message à votre numéro, puis renvoyez la demande.',
           );
         }
         throw new Error(raw);
       }
-      toast.success('Permission request sent');
+      toast.success('Demande de permission envoyée');
       setState('request_sent');
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to send');
+      toast.error(e instanceof Error ? e.message : 'Échec de l’envoi');
     } finally {
       setBusy(false);
     }
@@ -359,7 +360,7 @@ export function CallDialpadDialog({
         const msg =
           typeof data?.error === 'string'
             ? data.error
-            : (data?.error?.message ?? 'Failed to place call');
+            : (data?.error?.message ?? 'Impossible d’émettre l’appel');
         throw new Error(msg);
       }
       setCallId(data?.callId ?? null);
@@ -367,7 +368,7 @@ export function CallDialpadDialog({
       setElapsed(0);
       setState('in_call');
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to place call');
+      toast.error(e instanceof Error ? e.message : 'Impossible d’émettre l’appel');
       setState('ready');
     } finally {
       setBusy(false);
@@ -386,11 +387,11 @@ export function CallDialpadDialog({
           <DialogTitle>
             {state === 'in_call'
               ? done
-                ? 'Call finished'
+                ? 'Appel terminé'
                 : connected
-                  ? 'On call'
-                  : 'Calling...'
-              : 'New outbound call'}
+                  ? 'En appel'
+                  : 'Appel en cours...'
+              : 'Nouvel appel sortant'}
           </DialogTitle>
         </DialogHeader>
 
@@ -419,18 +420,18 @@ export function CallDialpadDialog({
               <div className="font-mono text-sm">{to}</div>
               <div className="mt-1 text-sm text-muted-foreground">
                 {done
-                  ? `${END_REASON_LABEL[liveCall?.endReason || ''] || 'Ended'}${
+                  ? `${END_REASON_LABEL[liveCall?.endReason || ''] || 'Terminé'}${
                       typeof liveCall?.durationSeconds === 'number'
                         ? ` · ${liveCall.durationSeconds}s`
                         : ''
                     }`
                   : connected
-                    ? `Connected${liveCall?.transferStartedAt ? ', bridged to your destination' : ''} · ${mmss}`
-                    : 'Ringing on their WhatsApp...'}
+                    ? `Connecté${liveCall?.transferStartedAt ? ', transféré vers votre destination' : ''} · ${mmss}`
+                    : 'Sonnerie sur son WhatsApp...'}
               </div>
               {!done && !connected && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  When they answer, the call is bridged to your configured destination.
+                  Quand il répond, l’appel est transféré vers la destination configurée.
                 </p>
               )}
             </div>
@@ -450,39 +451,41 @@ export function CallDialpadDialog({
               <>
                 <div className="space-y-1.5 rounded-lg border border-[var(--chat-border)] bg-muted/40 p-3 text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">
-                    WhatsApp requires this contact&apos;s permission before a business can call
-                    them.
+                    WhatsApp exige la permission de ce contact avant qu’une entreprise puisse
+                    l’appeler.
                   </p>
                   <ol className="list-decimal space-y-0.5 pl-4">
                     <li>
-                      Send them a permission prompt (the message below appears in their WhatsApp).
+                      Envoyez une demande de permission (le message ci-dessous apparaît dans son
+                      WhatsApp).
                     </li>
                     <li>
-                      They tap <span className="font-medium">Allow</span> on their phone.
+                      Il appuie sur <span className="font-medium">Autoriser</span> sur son
+                      téléphone.
                     </li>
-                    <li>This dialog unlocks the call automatically.</li>
+                    <li>Le bouton d’appel s’active ensuite tout seul dans cette fenêtre.</li>
                   </ol>
                   <p>
-                    The contact must have messaged your number within the last 24 hours, and
-                    WhatsApp allows 1 prompt per contact per day (2 per week).
+                    Le contact doit avoir écrit à votre numéro au cours des dernières 24 h, et
+                    WhatsApp autorise 1 demande par contact et par jour (2 par semaine).
                     {budget ? ` ${budget}` : ''}
                   </p>
                 </div>
                 <Textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  aria-label="Permission prompt message"
+                  aria-label="Message de demande de permission"
                   className="bg-[var(--chat-surface)]"
                 />
               </>
             )}
             {state === 'request_sent' && (
               <div className="space-y-1 rounded-lg border border-[var(--chat-presence)]/30 bg-[var(--chat-presence)]/10 p-3 text-xs">
-                <p className="font-medium">Permission request sent.</p>
+                <p className="font-medium">Demande de permission envoyée.</p>
                 <p className="text-muted-foreground">
-                  Waiting for {to || 'the contact'} to tap{' '}
-                  <span className="font-medium">Allow</span> in WhatsApp. This dialog updates by
-                  itself the moment they do.
+                  En attente de l’appui de {to || 'ce contact'} sur{' '}
+                  <span className="font-medium">Autoriser</span> dans WhatsApp. Cette fenêtre se
+                  met à jour toute seule dès qu’il le fait.
                 </p>
               </div>
             )}
@@ -490,9 +493,9 @@ export function CallDialpadDialog({
               <div className="space-y-3">
                 {estimate && (
                   <p className="text-xs text-muted-foreground">
-                    Est. ~${estimate.perMinuteUsd.toFixed(4)}/min total (
-                    {estimate.country ?? 'unknown country'}), incl. Meta&apos;s rate billed
-                    directly to your WhatsApp account.
+                    Estimation ~${estimate.perMinuteUsd.toFixed(4)}/min au total (
+                    {estimate.country ?? 'pays inconnu'}), tarif Meta inclus, facturé directement
+                    sur votre compte WhatsApp.
                   </p>
                 )}
                 <button
@@ -501,7 +504,7 @@ export function CallDialpadDialog({
                   className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <SlidersHorizontal className="size-3.5" />
-                  Advanced options
+                  Options avancées
                   <ChevronDown
                     className={cn('size-3.5 transition-transform', showAdvanced && 'rotate-180')}
                   />
@@ -510,21 +513,21 @@ export function CallDialpadDialog({
                   <div className="space-y-3">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <OptionPicker
-                        label="Forward the call to"
+                        label="Transférer l’appel vers"
                         value={destMode}
                         options={[
-                          { value: 'default', label: 'Default destination' },
-                          { value: 'custom', label: 'Custom (this call only)' },
+                          { value: 'default', label: 'Destination par défaut' },
+                          { value: 'custom', label: 'Personnalisée (cet appel uniquement)' },
                         ]}
                         onChange={setDestMode}
                       />
                       <OptionPicker
-                        label="Recording"
+                        label="Enregistrement"
                         value={recordMode}
                         options={[
-                          { value: 'default', label: 'Number default' },
-                          { value: 'on', label: 'Record this call' },
-                          { value: 'off', label: "Don't record" },
+                          { value: 'default', label: 'Réglage du numéro' },
+                          { value: 'on', label: 'Enregistrer cet appel' },
+                          { value: 'off', label: 'Ne pas enregistrer' },
                         ]}
                         onChange={setRecordMode}
                       />
@@ -534,12 +537,12 @@ export function CallDialpadDialog({
                         <Input
                           value={customDest}
                           onChange={(e) => setCustomDest(e.target.value)}
-                          placeholder="+12025551234, sip:agent@host, or wss://..."
+                          placeholder="+12025551234, sip:agent@host ou wss://..."
                           className="bg-[var(--chat-surface)]"
                         />
                         {customDest.trim() && !customDestValid && (
                           <p className="mt-1 text-xs text-destructive">
-                            Use an E.164 number (+...), sip: URI, or wss:// URL.
+                            Utilisez un numéro E.164 (+...), une URI sip: ou une URL wss://.
                           </p>
                         )}
                       </div>
@@ -553,26 +556,26 @@ export function CallDialpadDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
-            {state === 'in_call' && done ? 'Close' : state === 'in_call' ? 'Dismiss' : 'Cancel'}
+            {state === 'in_call' && done ? 'Fermer' : state === 'in_call' ? 'Masquer' : 'Annuler'}
           </Button>
           {state === 'idle' || state === 'checking' ? (
             <Button onClick={() => void check()} disabled={!to || busy}>
-              {busy ? 'Checking...' : 'Check permission'}
+              {busy ? 'Vérification...' : 'Vérifier la permission'}
             </Button>
           ) : state === 'need_permission' ? (
             <Button onClick={() => void requestPermission()} disabled={busy}>
-              {busy ? 'Sending...' : 'Send call permission request'}
+              {busy ? 'Envoi...' : 'Envoyer la demande de permission'}
             </Button>
           ) : state === 'request_sent' ? (
             <Button onClick={() => void check()} disabled={busy} variant="outline">
-              {busy ? 'Checking...' : 'Check now'}
+              {busy ? 'Vérification...' : 'Vérifier maintenant'}
             </Button>
           ) : state === 'ready' || state === 'placing' ? (
             <Button
               onClick={() => void placeCall()}
               disabled={busy || (destMode === 'custom' && !customDestValid)}
             >
-              {state === 'placing' || busy ? 'Placing call...' : 'Call now'}
+              {state === 'placing' || busy ? 'Appel en cours...' : 'Appeler maintenant'}
             </Button>
           ) : state === 'in_call' && done ? (
             <Button
@@ -583,7 +586,7 @@ export function CallDialpadDialog({
                 setCallId(null);
               }}
             >
-              Call again
+              Rappeler
             </Button>
           ) : null}
         </DialogFooter>

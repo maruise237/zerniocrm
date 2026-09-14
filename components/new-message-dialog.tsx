@@ -224,7 +224,7 @@ export function NewMessageDialog({
                 <p className="text-xs text-muted-foreground">
                   Nouveau contact&nbsp;? WhatsApp impose de démarrer par un modèle approuvé&nbsp;:
                   choisissez un modèle, remplissez ses champs, puis envoyez. Le contact le reçoit
-                  comme un message normal — et vous pourrez ensuite discuter librement dès sa
+                  comme un message normal, et vous pourrez ensuite discuter librement dès sa
                   réponse.
                 </p>
                 <TemplateFields composer={wa} />

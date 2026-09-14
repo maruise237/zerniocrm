@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   const accountId = typeof body.accountId === 'string' ? body.accountId.trim() : '';
   const profileId = typeof body.profileId === 'string' ? body.profileId.trim() : '';
   if (!accountId) return badRequest('Choisissez le compte WhatsApp sur lequel l’automatisation agira.');
-  if (!profileId) return badRequest('Profil introuvable — rechargez la page puis réessayez.');
+  if (!profileId) return badRequest('Profil introuvable : rechargez la page puis réessayez.');
 
   const validated = validateTemplateFields(template, body.fields);
   if (!validated.ok) return badRequest(validated.error);

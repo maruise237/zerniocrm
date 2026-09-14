@@ -134,7 +134,7 @@ export function wasDirectSent(broadcastId: string): boolean {
   }
 }
 
-// ─── Campagnes masquées localement ─────────────────────────────────────────
+// Campagnes masquées localement
 // Zernio ne supprime que les brouillons. Une campagne envoyée/échouée peut
 // être « supprimée » de la liste en la masquant localement (elle reste dans
 // l'historique Zernio).
@@ -162,7 +162,7 @@ export function isCampaignHidden(broadcastId: string): boolean {
   return loadHiddenCampaignIds().includes(broadcastId);
 }
 
-// ─── Résultat d'un envoi direct (affiché quand Zernio reste « draft ») ─────
+// Résultat d'un envoi direct (affiché quand Zernio reste « draft »)
 export interface DirectSendResultLocal {
   sent: number;
   failed: number;

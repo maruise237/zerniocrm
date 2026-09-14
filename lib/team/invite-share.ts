@@ -1,4 +1,4 @@
-// ── Options et libellés d'invitation (client-safe) ────────────────────────
+// Options et libellés d'invitation (client-safe)
 // Module pur sans dépendance node : importable depuis les composants client.
 // La partie crypto (génération/hash de jeton) vit dans lib/team/tokens.ts.
 
@@ -56,8 +56,8 @@ export function buildInviteMailto(inviteUrl: string, inviterLabel: string, roleL
 
 /** Date courte lisible : « 12 sept. 2026 ». */
 export function formatDate(value: string | Date | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 }

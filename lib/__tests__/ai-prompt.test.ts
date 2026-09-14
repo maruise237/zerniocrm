@@ -18,7 +18,7 @@ describe('META_TEMPLATE_AI_PROMPT', () => {
     expect(META_TEMPLATE_AI_PROMPT).toContain('1024');
     expect(META_TEMPLATE_AI_PROMPT).toContain('QUICK_REPLY');
     expect(META_TEMPLATE_AI_PROMPT).toContain('PHONE_NUMBER');
-    expect(META_TEMPLATE_AI_PROMPT).toContain('maximum 3 boutons');
+    expect(META_TEMPLATE_AI_PROMPT).toContain('3 boutons maximum');
   });
 
   it('réclame un résultat aligné sur les champs du formulaire CRM', () => {

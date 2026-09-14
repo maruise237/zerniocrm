@@ -65,7 +65,7 @@ export function ContactDialog({
   const normalizedPhone = useMemo(() => normalizePhone(phone), [phone]);
   const phoneError = useMemo(() => {
     if (!phone.trim()) return null;
-    return normalizedPhone ? null : 'Numéro invalide — attendez un format international (ex. +237612345678).';
+    return normalizedPhone ? null : 'Numéro invalide : attendez un format international (ex. +237612345678).';
   }, [phone, normalizedPhone]);
 
   function addTag(value: string) {
@@ -123,7 +123,7 @@ export function ContactDialog({
       onOpenChange(false);
       onSaved();
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(isEdit ? `La mise à jour a échoué.${detail}` : `La création a échoué.${detail}`);
     } finally {
       setSaving(false);
@@ -156,7 +156,7 @@ export function ContactDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="contact-phone">
-              Téléphone (WhatsApp){isEdit ? '' : ' — crée le canal WhatsApp'}
+              Téléphone (WhatsApp){isEdit ? '' : ' : crée le canal WhatsApp'}
             </Label>
             <Input
               id="contact-phone"
@@ -169,10 +169,10 @@ export function ContactDialog({
             />
             {isEdit && (
               <p className="text-[11px] text-muted-foreground">
-                Le numéro du canal ne se modifie pas — supprimez puis recréez le contact si besoin.
+                Le numéro du canal ne se modifie pas : supprimez puis recréez le contact si besoin.
               </p>
             )}
-            {!isEdit && phoneError && <p className="text-[11px] text-red-500">{phoneError}</p>}
+            {!isEdit && phoneError && <p className="text-[11px] text-red-600 dark:text-red-400">{phoneError}</p>}
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -205,7 +205,7 @@ export function ContactDialog({
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400"
                 >
                   #{tag}
                   <button
@@ -253,7 +253,7 @@ export function ContactDialog({
               </div>
             )}
             <p className="text-[11px] text-muted-foreground">
-              Écrivez un tag puis Entrée — les tags créés ici serviront à cibler vos campagnes.
+              Écrivez un tag puis Entrée. Les tags créés ici serviront à cibler vos campagnes.
             </p>
           </div>
 

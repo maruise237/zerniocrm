@@ -1,4 +1,4 @@
-// ── Rôles et autorisations de l'équipe ─────────────────────────────────────
+// Rôles et autorisations de l'équipe
 // Module pur (sans dépendance Next/DB) pour rester testable par Vitest.
 // Pensé pour des utilisateurs non techniques : des rôles nommés en français
 // avec des descriptions claires, et des autorisations explicites par module.

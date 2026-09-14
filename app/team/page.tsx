@@ -216,7 +216,7 @@ export default function TeamPage() {
           {error && !isLoading && (
             <Card className="mt-6">
               <div className="flex items-start gap-3">
-                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                 <div>
                   <p className="text-sm font-medium">Impossible de charger l'équipe</p>
                   <p className="mt-1 text-sm text-muted-foreground">{error.message}</p>
@@ -263,7 +263,7 @@ export default function TeamPage() {
 
           {data && !isLocalMode && canManage && (
             <>
-              {/* ── Formulaire d'invitation ─────────────────────────── */}
+              {/* Formulaire d'invitation */}
               <Card className="mt-6">
                 <h2 className="flex items-center gap-2 text-base font-semibold">
                   <UserPlus className="h-5 w-5 text-[#128C7E]" />
@@ -435,13 +435,13 @@ export default function TeamPage() {
                       onClick={() => setCreated(null)}
                       className="mt-2 min-h-[44px] text-xs text-muted-foreground underline-offset-2 hover:underline"
                     >
-                      J'ai transmis le lien — masquer
+                      J'ai transmis le lien (masquer)
                     </button>
                   </div>
                 )}
               </Card>
 
-              {/* ── Invitations en attente ──────────────────────────── */}
+              {/* Invitations en attente */}
               {invitations.length > 0 && (
                 <Card className="mt-4">
                   <h2 className="text-base font-semibold">Invitations en attente ({invitations.length})</h2>
@@ -450,7 +450,7 @@ export default function TeamPage() {
                       <li key={inv.id} className="flex flex-wrap items-center gap-2 py-3">
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{inv.email}</p>
-                          <p className={cn('text-xs', inv.expired ? 'text-red-500' : 'text-muted-foreground')}>
+                          <p className={cn('text-xs', inv.expired ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>
                             {roleLabel(inv.role)} · {formatExpiry(inv.expiresAt)}
                           </p>
                         </div>
@@ -475,7 +475,7 @@ export default function TeamPage() {
                 </Card>
               )}
 
-              {/* ── Collaborateurs ──────────────────────────────────── */}
+              {/* Collaborateurs */}
               <Card className="mt-4">
                 <h2 className="text-base font-semibold">Collaborateurs ({members.length})</h2>
                 <ul className="mt-3 divide-y divide-[var(--chat-border)]">

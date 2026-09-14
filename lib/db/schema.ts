@@ -22,7 +22,7 @@ export const whatsappMessages = pgTable('whatsapp_messages', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({ userIdx: index('idx_whatsapp_messages_user_id').on(table.userId), conversationIdx: index('idx_whatsapp_messages_conversation_id').on(table.conversationId), eventUnique: uniqueIndex('whatsapp_messages_external_event_unique').on(table.externalEventId) }));
 
-// ── Équipe : invitations (liens magiques) et membres ──────────────────────
+// Équipe : invitations (liens magiques) et membres
 // Modèle « workspace » : le propriétaire (celui qui a configuré la clé API
 // Zernio dans zernio_config) invite des collaborateurs sur son espace.
 // Les collaborateurs n'ont pas de clé propre : ils accèdent aux données du
@@ -67,7 +67,7 @@ export const teamMembers = pgTable('team_members', {
 export type TeamInvitation = typeof teamInvitations.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
 
-// ── Campagnes : envois directs personnalisés ──────────────────────────────
+// Campagnes : envois directs personnalisés
 // L'envoi personnalisé (variables {{1}}, {{2}}…) part destinataire par
 // destinataire via l'ouverture de conversation Zernio — hors moteur
 // broadcast, qui ne suit donc pas ces messages. Cette table relie chaque

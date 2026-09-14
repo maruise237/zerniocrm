@@ -42,7 +42,7 @@ const EMPTY = (connected: boolean, found: boolean): WhatsappStatus => ({
 /** Traduction des codes de déconnexion observés chez Zernio (aucune invention). */
 const REASONS_FR: Record<string, string> = {
   PARTNER_REMOVED:
-    'le partenaire technique de la plateforme a été retiré du numéro par le système — à reconnecter',
+    'le partenaire technique de la plateforme a été retiré du numéro par le système, à reconnecter',
   ACCOUNT_DISCONNECTED: 'le compte a été déconnecté',
   USER_INITIATED: 'la déconnexion a été demandée depuis la plateforme',
 };
@@ -89,8 +89,8 @@ export function whatsappStatusFromAccounts(body: unknown): WhatsappStatus {
     ? null
     : (knownReason ??
       (disconnectEvent
-        ? `La plateforme signale « ${disconnectEvent} »${disconnectReason ? ` (${disconnectReason})` : ''} — à reconnecter`
-        : 'déconnecté — à reconnecter'));
+        ? `La plateforme signale « ${disconnectEvent} »${disconnectReason ? ` (${disconnectReason})` : ''}, à reconnecter`
+        : 'déconnecté, à reconnecter'));
 
   return {
     found: true,

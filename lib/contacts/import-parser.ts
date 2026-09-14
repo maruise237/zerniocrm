@@ -133,7 +133,7 @@ export async function parseContactFile(file: File): Promise<ContactParseResult> 
   const rows: ParsedContactRow[] = [];
   const invalid: { row: number; reason: string }[] = [];
 
-  // ── Headerless mode: bare phone lists (CSV/Excel column or line per number)
+  // Headerless mode: bare phone lists (CSV/Excel column or line per number)
   if (headerIndex === -1) {
     grid.forEach((raw, index) => {
       if (raw.every((c) => !c.trim())) return;

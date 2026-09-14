@@ -593,7 +593,7 @@ export function InteractiveDrawer({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Label>
-                  Libellé du bouton <span className="font-normal text-muted-foreground">(optional)</span>
+                  Libellé du bouton <span className="font-normal text-muted-foreground">(facultatif)</span>
                 </Label>
                 <Counter value={callLabel} max={20} />
               </div>
@@ -604,8 +604,8 @@ export function InteractiveDrawer({
                 placeholder="Appeler"
               />
               <p className="text-xs text-muted-foreground">
-                Tapping the button starts a WhatsApp voice call to this number. Requires Calling
-                to be enabled on the number; Meta rejects the send otherwise.
+                Un appui sur le bouton démarre un appel vocal WhatsApp vers ce numéro. Les appels
+                doivent être activés sur le numéro, sinon Meta refuse l’envoi.
               </p>
             </div>
           </TabsContent>
@@ -617,7 +617,7 @@ export function InteractiveDrawer({
           </Button>
           <Button onClick={handleSend} disabled={!canSend || sending}>
             {sending && <Loader2 className="size-4 animate-spin" />}
-            Send
+            Envoyer
           </Button>
         </DialogFooter>
       </DialogContent>

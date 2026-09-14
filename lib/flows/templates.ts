@@ -89,7 +89,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     name: 'Réponse par mot-clé',
     tagline: 'Envoie votre message dès qu’un contact écrit un mot précis (PRIX, CATALOGUE…).',
     detail:
-      'Quand un contact écrit l’un de vos mots-clés, il reçoit immédiatement le message que vous avez préparé — une seule fois par contact, sans que vous n’interveniez.',
+      'Quand un contact écrit l’un de vos mots-clés, il reçoit immédiatement le message que vous avez préparé, une seule fois par contact, sans que vous n’interveniez.',
     fields: [
       {
         name: 'keywords',
@@ -146,7 +146,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     name: 'Qualification de contact',
     tagline: 'Pose vos 3 questions au nouveau contact, résume son besoin et alerte votre équipe.',
     detail:
-      'Chaque nouveau contact reçoit vos questions une par une, à son rythme. Ses réponses sont résumées automatiquement, enregistrées sur sa fiche, et votre équipe est alertée avec le récapitulatif — prête à conclure.',
+      'Chaque nouveau contact reçoit vos questions une par une, à son rythme. Ses réponses sont résumées automatiquement, enregistrées sur sa fiche, et votre équipe est alertée avec le récapitulatif, prête à conclure.',
     fields: [
       {
         name: 'question1',
@@ -213,8 +213,7 @@ export function validateTemplateFields(
   return { ok: true, values };
 }
 
-// ── Construction du graphe (contrat Zernio WorkflowNode/WorkflowEdge) ───────
-
+// Construction du graphe (contrat Zernio WorkflowNode/WorkflowEdge)
 type NodeConfig = Record<string, unknown>;
 interface BuiltNode {
   id: string;
@@ -248,7 +247,7 @@ function faqBlock(faq: string): string {
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
-  if (lines.length === 0) return '- (aucune FAQ fournie — restez prudent et renvoyez vers l’équipe)';
+  if (lines.length === 0) return '- (aucune FAQ fournie : restez prudent et renvoyez vers l’équipe)';
   return lines.map((l) => (l.startsWith('-') ? l : `- ${l}`)).join('\n');
 }
 
@@ -315,7 +314,7 @@ function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
           '- Oriente vers le bon lien ou la bonne étape suivante.',
           '- Chaque personne doit se sentir écoutée et aidée.',
           '',
-          '# CE QUE TU SAIS (utilise UNIQUEMENT ces informations et la conversation en cours — n’invente jamais)',
+          '# CE QUE TU SAIS (utilise UNIQUEMENT ces informations et la conversation en cours, n’invente jamais)',
           `- Ce que nous proposons et nos prix : ${f.offer}`,
           `- Horaires : ${f.hours || 'non précisés'}`,
           `- Liens utiles : ${f.links || 'non précisés'}`,
@@ -324,11 +323,11 @@ function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
           '',
           '# STYLE',
           '- Chaleureux, direct, humain. Messages courts, un point à la fois, jamais un mur de texte ; un peu d’emoji est acceptable.',
-          '- Utilise la conversation en cours — ne repose jamais une question déjà posée, ne te représente pas deux fois.',
+          '- Utilise la conversation en cours : ne repose jamais une question déjà posée, ne te représente pas deux fois.',
           '- Réponds dans la langue du client.',
           '',
           '# RÈGLES',
-          '- Utilise uniquement les faits ci-dessus. Si tu ne sais pas, dis que tu vas vérifier avec l’équipe — n’invente jamais un prix, une politique, un statut de commande ou une date.',
+          '- Utilise uniquement les faits ci-dessus. Si tu ne sais pas, dis que tu vas vérifier avec l’équipe : n’invente jamais un prix, une politique, un statut de commande ou une date.',
           '- Ne promets pas de remboursements, de réductions ou de délais qui ne t’ont pas été accordés.',
           '- Reste sur le service client ; ne t’éloigne pas du sujet.',
           '',
@@ -387,7 +386,7 @@ function buildSupportAgent(f: TemplateFieldValues): BuiltWorkflow {
     { id: 'e10', source: 'wait', target: 'done', sourceHandle: 'timeout' },
   ];
   return {
-    name: f.businessName ? `Agent client — ${f.businessName}` : 'Agent client 24h/24',
+    name: f.businessName ? `Agent client : ${f.businessName}` : 'Agent client 24h/24',
     description:
       'Agent client 24 h/24 : répond aux questions, mémorise la conversation, transfère à un humain sur demande, sur une question dépassant ses informations, ou en cas d’erreur.',
     platform: 'whatsapp',
@@ -447,7 +446,7 @@ function buildWelcomeHandoff(f: TemplateFieldValues): BuiltWorkflow {
   nodes.push({
     id: 'handoff',
     type: 'handoff',
-    config: { note: 'Nouveau contact accueilli — à prendre en charge par l’équipe.' },
+    config: { note: 'Nouveau contact accueilli, à prendre en charge par l’équipe.' },
   });
   const edges: BuiltEdge[] = [];
   link(nodes, edges);
@@ -498,7 +497,7 @@ function buildLeadQualifier(f: TemplateFieldValues): BuiltWorkflow {
           '- ce que le contact veut (besoin principal),',
           '- son budget ou contrainte si elle est mentionnée,',
           '- une recommandation de la prochaine action pour l’équipe.',
-          'Utilise uniquement les réponses fournies — n’invente rien. Réponds en français simple.',
+          'Utilise uniquement les réponses fournies : n’invente rien. Réponds en français simple.',
         ].join('\n'),
         userPromptTemplate: [
           'Question 1 : ' + f.question1,
@@ -521,7 +520,7 @@ function buildLeadQualifier(f: TemplateFieldValues): BuiltWorkflow {
     {
       id: 'handoff',
       type: 'handoff',
-      config: { note: 'Contact qualifié — résumé : {{recap}}' },
+      config: { note: 'Contact qualifié. Résumé : {{recap}}' },
     },
   );
   if (f.tag) nodes.splice(nodes.length - 1, 0, { id: 'tag', type: 'add_tag', config: { tag: f.tag } });

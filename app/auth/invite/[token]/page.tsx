@@ -180,7 +180,7 @@ export default function InviteAcceptPage() {
             ) : (
               <>
                 {acceptError && (
-                  <p className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500" role="alert">
+                  <p className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400" role="alert">
                     {acceptError}
                   </p>
                 )}
@@ -231,7 +231,7 @@ export default function InviteAcceptPage() {
                       href={`/auth/sign-in?next=${encodeURIComponent(safeNext)}`}
                       className="flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--chat-border)] font-medium hover:bg-[var(--chat-hover)]"
                     >
-                      J'ai déjà un compte — Se connecter
+                      J'ai déjà un compte : Se connecter
                     </Link>
                   </div>
                 )}

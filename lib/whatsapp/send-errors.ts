@@ -13,7 +13,7 @@ const RULES: { pattern: RegExp; fr: string }[] = [
   {
     // Zernio TEMPLATE_REQUIRED — envoi libre à un contact froid.
     pattern: /must start with an approved template|TEMPLATE_REQUIRED/i,
-    fr: "WhatsApp impose de démarrer une conversation par un modèle approuvé. Choisissez un modèle ci-dessus, remplissez les champs, puis renvoyez — après la réponse du contact, vous pourrez écrire librement.",
+    fr: "WhatsApp impose de démarrer une conversation par un modèle approuvé. Choisissez un modèle ci-dessus, remplissez les champs, puis renvoyez : après la réponse du contact, vous pourrez écrire librement.",
   },
   {
     // Zernio INVALID_TEMPLATE_PARAMS — nombre de valeurs incorrect.

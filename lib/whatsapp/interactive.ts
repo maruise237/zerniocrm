@@ -10,8 +10,7 @@
 export const MAX_BUTTONS = 3;
 export const MAX_LIST_ROWS = 10;
 
-// 1. Reply buttons -----------------------------------------------------------
-
+// Reply buttons
 export function buildButtonsBody({ message, labels }: { message: string; labels: string[] }) {
   return {
     message,
@@ -29,8 +28,7 @@ export function validateButtons({ message, labels }: { message: string; labels: 
   return message.trim().length > 0 && labels.some((l) => l.trim().length > 0);
 }
 
-// 2. List (single section) ---------------------------------------------------
-
+// List (single section)
 export interface ListRow {
   title: string;
   description?: string;
@@ -86,8 +84,7 @@ export function validateList({
   );
 }
 
-// 3. CTA URL -----------------------------------------------------------------
-
+// CTA URL
 export function buildCtaUrlBody({
   message,
   displayText,
@@ -121,8 +118,7 @@ export function validateCtaUrl({
   return message.trim().length > 0 && displayText.trim().length > 0 && url.trim().length > 0;
 }
 
-// 4. Flow --------------------------------------------------------------------
-
+// Flow
 export type FlowAction = 'navigate' | 'data_exchange';
 
 export function buildFlowBody({
@@ -180,8 +176,7 @@ export function validateFlow({
   );
 }
 
-// 5. Location request --------------------------------------------------------
-
+// Location request
 export function buildLocationRequestBody({ message }: { message: string }) {
   return {
     interactive: {
@@ -196,8 +191,7 @@ export function validateLocationRequest({ message }: { message: string }): boole
   return message.trim().length > 0;
 }
 
-// 6. Call button -------------------------------------------------------------
-
+// Call button
 export function buildCallButtonBody({
   message,
   displayText,

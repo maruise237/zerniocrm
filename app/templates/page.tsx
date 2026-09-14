@@ -89,14 +89,14 @@ function ComponentPreview({ template }: { template: ZernioTemplate }) {
         )}
         {headerFormat && headerFormat !== 'TEXT' && (
           <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
-            🖼 En-tête {HEADER_FORMAT_LABELS[headerFormat] ?? headerFormat.toLowerCase()}
+            En-tête {HEADER_FORMAT_LABELS[headerFormat] ?? headerFormat.toLowerCase()}
           </p>
         )}
         {body?.text ? (
           <p className="text-[13px] leading-relaxed text-foreground">
             {body.text.split(/(\{\{\d+\}\})/g).map((part, i) =>
               /^\{\{\d+\}\}$/.test(part) ? (
-                <span key={i} className="rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-emerald-600 dark:text-emerald-400">
+                <span key={i} className="rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-emerald-700 dark:text-emerald-400">
                   {part}
                 </span>
               ) : (
@@ -114,7 +114,7 @@ function ComponentPreview({ template }: { template: ZernioTemplate }) {
           {buttons.buttons.map((b, i) => (
             <div
               key={i}
-              className="rounded-lg border border-emerald-500/30 bg-[var(--chat-surface)] px-3 py-2 text-center text-xs font-medium text-emerald-600 dark:text-emerald-400"
+              className="rounded-lg border border-emerald-500/30 bg-[var(--chat-surface)] px-3 py-2 text-center text-xs font-medium text-emerald-700 dark:text-emerald-400"
             >
               {b.text || b.url || 'Bouton'}
             </div>
@@ -333,7 +333,7 @@ export default function TemplatesPage() {
                     { duration: 8000 },
                   );
                 } catch {
-                  toast.error('Copie impossible — votre navigateur a refusé l’accès au presse-papiers.');
+                  toast.error('Copie impossible : votre navigateur a refusé l’accès au presse-papiers.');
                 }
               }}
             >
@@ -405,10 +405,10 @@ export default function TemplatesPage() {
                       className={cn(
                         'flex size-9 shrink-0 items-center justify-center rounded-xl',
                         template.status === 'APPROVED'
-                          ? 'bg-emerald-500/10 text-emerald-500'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                           : template.status === 'REJECTED'
-                            ? 'bg-red-500/10 text-red-500'
-                            : 'bg-amber-500/10 text-amber-500',
+                            ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
                       )}
                     >
                       {template.status === 'APPROVED' ? (
@@ -446,7 +446,7 @@ export default function TemplatesPage() {
                       size="icon"
                       onClick={() => void handleDelete(template)}
                       aria-label={`Supprimer ${template.name}`}
-                      className="size-8 text-muted-foreground hover:text-red-500"
+                      className="size-8 text-muted-foreground hover:text-red-600"
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -498,11 +498,11 @@ export default function TemplatesPage() {
               toast.success(
                 res.template?.status === 'APPROVED'
                   ? 'Modèle créé (pré-approuvé)'
-                  : 'Modèle créé — en attente de la revue Meta',
+                  : 'Modèle créé, en attente de la revue Meta',
               );
             } catch (err) {
               const raw = err instanceof ApiError && err.message ? err.message : '';
-              const detail = raw ? ` — ${translateTemplateError(raw)}` : '';
+              const detail = raw ? ` (${translateTemplateError(raw)})` : '';
               toast.error(
                 "Le modèle n'a pas pu être créé. Vérifiez les champs (exemples de variables et média d'en-tête requis par Meta)." +
                   detail,

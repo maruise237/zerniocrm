@@ -53,7 +53,7 @@ import { CampaignCreateDialog } from './create-dialog';
 import { CampaignDetail } from './detail-view';
 
 function formatListDate(value?: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   return formatInTimezone(value, getTimezoneSetting());
 }
 
@@ -83,7 +83,7 @@ function CampaignRow({
     ['completed', 'failed', 'cancelled'].includes(broadcast.status) || directDone;
   const badgeLabel = directDone ? 'Envoyé (direct)' : meta.label;
   const badgeClass = directDone
-    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
     : meta.badge;
   const badgeDot = directDone ? 'bg-emerald-500' : meta.dot;
   return (
@@ -96,12 +96,12 @@ function CampaignRow({
           className={cn(
             'flex size-9 shrink-0 items-center justify-center rounded-xl',
             broadcast.status === 'completed'
-              ? 'bg-emerald-500/10 text-emerald-500'
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
               : broadcast.status === 'failed'
-                ? 'bg-red-500/10 text-red-500'
+                ? 'bg-red-500/10 text-red-600 dark:text-red-400'
                 : broadcast.status === 'sending'
-                  ? 'bg-amber-500/10 text-amber-500'
-                  : 'bg-slate-500/10 text-slate-500',
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                  : 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
           )}
         >
           {broadcast.status === 'completed' ? (
@@ -128,7 +128,7 @@ function CampaignRow({
               {broadcast.template?.name ? (
                 <>
                   Modèle{' '}
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400">{broadcast.template.name}</span>
+                  <span className="font-mono text-emerald-700 dark:text-emerald-400">{broadcast.template.name}</span>
                   {broadcast.template.language
                     ? ` · ${formatTemplateLanguage(broadcast.template.language)}`
                     : ''}
@@ -148,29 +148,29 @@ function CampaignRow({
             {/* Suivi réel des envois directs (statuts Zernio par destinataire) */}
             {aggregate && (
               <>
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">· {aggregate.sent} envoyés</span>
-                {aggregate.read > 0 && <span className="font-medium text-emerald-600 dark:text-emerald-400">· {aggregate.read} lus</span>}
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">· {aggregate.sent} envoyés</span>
+                {aggregate.read > 0 && <span className="font-medium text-emerald-700 dark:text-emerald-400">· {aggregate.read} lus</span>}
                 {aggregate.delivered > aggregate.read && (
-                  <span className="text-indigo-500">· {aggregate.delivered} livrés</span>
+                  <span className="text-indigo-600 dark:text-indigo-400">· {aggregate.delivered} livrés</span>
                 )}
-                {aggregate.failed > 0 && <span className="text-red-500">· {aggregate.failed} échecs</span>}
+                {aggregate.failed > 0 && <span className="text-red-600 dark:text-red-400">· {aggregate.failed} échecs</span>}
               </>
             )}
             {!aggregate && directResult && (
-              <span className="font-medium text-emerald-600 dark:text-emerald-400">· {directResult.sent} envoyés (direct)</span>
+              <span className="font-medium text-emerald-700 dark:text-emerald-400">· {directResult.sent} envoyés (direct)</span>
             )}
             {!aggregate && directResult && directResult.failed > 0 && (
-              <span className="text-red-500">· {directResult.failed} échecs</span>
+              <span className="text-red-600 dark:text-red-400">· {directResult.failed} échecs</span>
             )}
             {!aggregate && !directResult && (broadcast.sentCount ?? 0) > 0 && (
               <span className="text-sky-500">· {broadcast.sentCount} envoyés</span>
             )}
             {(broadcast.deliveredCount ?? 0) > 0 && (
-              <span className="text-indigo-500">· {broadcast.deliveredCount} livrés</span>
+              <span className="text-indigo-600 dark:text-indigo-400">· {broadcast.deliveredCount} livrés</span>
             )}
             {(broadcast.readCount ?? 0) > 0 && <span className="text-emerald-500">· {broadcast.readCount} lus</span>}
             {!aggregate && !directResult && (broadcast.failedCount ?? 0) > 0 && (
-              <span className="text-red-500">· {broadcast.failedCount} échecs</span>
+              <span className="text-red-600 dark:text-red-400">· {broadcast.failedCount} échecs</span>
             )}
           </span>
         </span>
@@ -281,7 +281,7 @@ export default function CampaignsPage() {
       refresh();
       setSelectedId(copy.id);
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`La duplication a échoué.${detail}`);
     } finally {
       setBusyId(null);
@@ -330,7 +330,7 @@ export default function CampaignsPage() {
         });
         if (variableCount > 0) {
           toast.error(
-            `Le modèle « ${copy.template.name} » contient des variables mais la personnalisation est introuvable — dupliquez puis modifiez les variables avant de relancer.`,
+            `Le modèle « ${copy.template.name} » contient des variables mais la personnalisation est introuvable : dupliquez puis modifiez les variables avant de relancer.`,
           );
           return;
         }
@@ -340,7 +340,7 @@ export default function CampaignsPage() {
       refresh();
       setSelectedId(copy.id);
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`La relance a échoué.${detail}`);
     } finally {
       setBusyId(null);
@@ -372,7 +372,7 @@ export default function CampaignsPage() {
       if (selectedId === broadcast.id) setSelectedId(null);
       refresh();
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`La suppression a échoué.${detail}`);
     } finally {
       setBusyId(null);
@@ -474,7 +474,7 @@ export default function CampaignsPage() {
         )}
 
         <footer className="mt-8 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 pb-5 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1.5"><MessageCircle className="size-3.5" /> Les campagnes utilisent les modèles approuvés — chaque destinataire compte un message.</span>
+          <span className="flex items-center gap-1.5"><MessageCircle className="size-3.5" /> Les campagnes utilisent les modèles approuvés : chaque destinataire compte un message.</span>
           <span className="opacity-50">·</span>
           <span>Propulsé par <span className="font-medium text-foreground">Kamtech</span> · WhatsApp CRM</span>
         </footer>

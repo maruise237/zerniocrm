@@ -26,8 +26,8 @@ describe('formatInTimezone', () => {
   });
 
   it('returns a dash for empty values', () => {
-    expect(formatInTimezone(null, 'UTC')).toBe('—');
-    expect(formatInTimezone(undefined, 'UTC')).toBe('—');
+    expect(formatInTimezone(null, 'UTC')).toBe('-');
+    expect(formatInTimezone(undefined, 'UTC')).toBe('-');
   });
 });
 

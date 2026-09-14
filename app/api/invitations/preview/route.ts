@@ -48,8 +48,8 @@ export async function POST(request: Request) {
         code: `db_${reason}`,
         error:
           reason === 'schema_missing'
-            ? "La base de données est connectée, mais ses tables n'existent pas encore : les migrations doivent être appliquées une fois sur le projet (commande « npm run db:push » — voir README, section Déploiement)."
-            : 'La base de données est momentanément indisponible. Réessayez dans un instant — si le problème persiste, vérifiez la configuration DATABASE_URL.',
+            ? "La base de données est connectée, mais ses tables n'existent pas encore : les migrations doivent être appliquées une fois sur le projet (commande « npm run db:push », voir README, section Déploiement)."
+            : 'La base de données est momentanément indisponible. Réessayez dans un instant ; si le problème persiste, vérifiez la configuration DATABASE_URL.',
       },
       { status: 503 },
     );

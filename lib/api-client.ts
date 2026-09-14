@@ -93,13 +93,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   }
   return res.json() as Promise<T>;
 }
-
-// ---------------------------------------------------------------------------
 // Rate-limit latch: a 429 anywhere pauses all polling until the window passes.
 // Module-scope store consumed via useSyncExternalStore so every poller and the
 // UI banner share one source of truth without a provider.
-// ---------------------------------------------------------------------------
-
 let pausedUntil = 0;
 const listeners = new Set<() => void>();
 let expiryTimer: ReturnType<typeof setTimeout> | null = null;

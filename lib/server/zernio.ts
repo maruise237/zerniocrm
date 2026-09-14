@@ -18,7 +18,7 @@ const FORWARDED_HEADERS = [
   'retry-after',
 ];
 
-// ── Résolution de la clé API par utilisateur ────────────────────────────────
+// Résolution de la clé API par utilisateur
 // Modèle multitenant : chaque utilisateur stocke sa propre clé Zernio dans
 // `zernio_config` (saisie dans /settings). Les routes proxy résolvent la clé
 // depuis la session. Un cache en mémoire (60 s) évite une requête SQL par

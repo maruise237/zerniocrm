@@ -12,12 +12,12 @@ export const TEMPLATE_STATUS_META: Record<
 > = {
   APPROVED: {
     label: 'Approuvé',
-    badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
     dot: 'bg-emerald-500',
   },
   PENDING: {
     label: 'En attente de revue',
-    badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    badge: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
     dot: 'bg-amber-500',
   },
   REJECTED: {
@@ -79,12 +79,12 @@ export const BROADCAST_STATUS_META: Record<
   },
   sending: {
     label: 'Envoi en cours',
-    badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    badge: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
     dot: 'bg-amber-500',
   },
   completed: {
     label: 'Terminée',
-    badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
     dot: 'bg-emerald-500',
   },
   failed: {
@@ -111,7 +111,7 @@ export const RECIPIENT_STATUS_BADGE: Record<BroadcastRecipientStatus, string> = 
   pending: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
   sent: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
   delivered: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-  read: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  read: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
   failed: 'bg-red-500/10 text-red-600 dark:text-red-400',
 };
 
@@ -236,7 +236,7 @@ export function translateTemplateError(raw: string): string {
 }
 
 export function formatTemplateLanguage(language?: string): string {
-  if (!language) return '—';
+  if (!language) return '-';
   const entry = TEMPLATE_LANGUAGES.find(([code]) => code === language);
   return entry ? `${entry[1]} (${language})` : language;
 }

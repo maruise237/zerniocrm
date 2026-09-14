@@ -126,7 +126,7 @@ export default function Home() {
       patchConversation(conversation.id, { unreadCount: 0 });
       await refresh();
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`Impossible de marquer comme lu.${detail}`);
     }
   }
@@ -148,14 +148,14 @@ export default function Home() {
       toast.success('Conversation archivée');
       await refresh();
     } catch (err) {
-      const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : '';
       toast.error(`Impossible d’archiver la conversation.${detail}`);
     }
   }
 
   return (
     <main className="flex h-dvh min-h-dvh w-full flex-col overflow-hidden bg-[var(--chat-canvas)] text-foreground">
-      {/* ── Barre de navigation desktop (au-dessus des colonnes) ─────────── */}
+      {/* Barre de navigation desktop (au-dessus des colonnes) */}
       <div className="hidden shrink-0 items-center gap-2 border-b border-[var(--chat-border)] bg-[var(--chat-surface)] px-4 py-2 lg:flex">
         <div className="flex items-center gap-2.5 pr-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#25D366] text-white">
@@ -173,7 +173,7 @@ export default function Home() {
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-      {/* ── Colonne conversation ─────────────────────────────────────────── */}
+      {/* Colonne conversation */}
       <aside
         className={cn(
           'w-full flex-col border-r border-[var(--chat-border)] bg-[var(--chat-surface)] md:flex md:w-[330px] lg:w-[370px]',
@@ -213,7 +213,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted-foreground">
               Boîte de réception{' '}
-              <span className="ml-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600">{unread}</span>
+              <span className="ml-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400">{unread}</span>
             </p>
             <button
               onClick={() => setFilterOpen((open) => !open)}
@@ -347,7 +347,7 @@ export default function Home() {
         </button>
       </aside>
 
-      {/* ── Fil de discussion (composer complet : médias, vocal, interactifs…) ── */}
+      {/* Fil de discussion (composer complet : médias, vocal, interactifs…) */}
       <section
         className={cn(
           'h-full min-w-0 flex-1 flex-col md:flex',
@@ -386,7 +386,7 @@ export default function Home() {
         />
       </section>
 
-      {/* ── Panneau contact (desktop) ────────────────────────────────────── */}
+      {/* Panneau contact (desktop) */}
       <aside className="hidden w-[280px] border-l border-[var(--chat-border)] bg-[var(--chat-surface)] lg:flex lg:flex-col">
         {activeConversation && (
           <div className="border-b border-[var(--chat-border)] px-5 py-5">
@@ -402,7 +402,7 @@ export default function Home() {
                 max={5}
                 className="mt-2 justify-center"
               />
-              <span className="mt-3 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-600">
+              <span className="mt-3 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-700 dark:text-emerald-400">
                 Client WhatsApp
               </span>
             </div>

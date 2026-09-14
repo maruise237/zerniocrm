@@ -38,7 +38,7 @@ export function getQuickReplyBadge(meta: Meta): string | undefined {
   return metaString(meta, 'postbackTitle') || quickReply || callback || postback;
 }
 
-// ── WhatsApp interactive (metadata.waInteractive) ───────────────────────────
+// WhatsApp interactive (metadata.waInteractive)
 // Compact mirror of what the recipient sees (buttons / list / CTA / flow /
 // location request / call button). Shapes mirror whatsapp-interactive-meta;
 // anything unrecognized parses to { kind: 'unknown' }
@@ -92,8 +92,7 @@ export function getWaInteractive(meta: Meta): WaInteractive | undefined {
   return { kind: 'unknown' };
 }
 
-// ── Location pin (metadata.location) ────────────────────────────────────────
-
+// Location pin (metadata.location)
 export interface MessageLocation {
   latitude: number;
   longitude: number;
@@ -113,8 +112,7 @@ export function getLocation(meta: Meta): MessageLocation | undefined {
   };
 }
 
-// ── Contact cards (metadata.contacts) ───────────────────────────────────────
-
+// Contact cards (metadata.contacts)
 export interface MessageContact {
   formattedName: string;
   phone?: string;
