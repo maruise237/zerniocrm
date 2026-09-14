@@ -78,7 +78,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const edges = workflow.workflow?.edges ?? workflow.edges;
   if (!Array.isArray(nodes) || !Array.isArray(edges)) {
     return Response.json(
-      { error: "Impossible de lire le détail de l'automatisation chez Zernio. Réessayez dans un instant.", code: 'upstream_error' },
+      { error: "Impossible de lire le détail de l'automatisation sur la plateforme. Réessayez dans un instant.", code: 'upstream_error' },
       { status: 502 },
     );
   }

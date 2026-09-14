@@ -14,7 +14,7 @@ export async function GET() {
   const body = (await upstream.json().catch(() => null)) as unknown;
   if (!body) {
     return Response.json(
-      { error: "Réponse illisible de Zernio. Réessayez dans un instant.", code: 'upstream_error' },
+      { error: "Réponse illisible de la plateforme. Réessayez dans un instant.", code: 'upstream_error' },
       { status: 502 },
     );
   }

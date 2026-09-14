@@ -294,7 +294,7 @@ export default function CampaignsPage() {
     if (
       !window.confirm(
         `Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\n` +
-          "L’envoi groupé Zernio ne peut se faire que sur un brouillon : une campagne identique (même nom) sera créée puis envoyée. L’ancienne reste dans l’historique.",
+          "L’envoi groupé ne peut se faire que sur un brouillon : une campagne identique (même nom) sera créée puis envoyée. L’ancienne reste dans l’historique.",
       )
     ) {
       return;
@@ -354,7 +354,7 @@ export default function CampaignsPage() {
       !window.confirm(
         isDraft
           ? `Supprimer définitivement le brouillon « ${broadcast.name} » ?`
-          : `Supprimer « ${broadcast.name} » ?\nZernio ne supprime que les brouillons : la campagne sera masquée de votre liste (elle reste dans l’historique Zernio).`,
+          : `Supprimer « ${broadcast.name} » ?\nSeuls les brouillons peuvent être supprimés : la campagne sera masquée de votre liste (elle reste dans l’historique).`,
       )
     ) {
       return;

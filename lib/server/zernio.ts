@@ -49,7 +49,7 @@ export function unauthorizedResponse(): Response {
 export function userKeyMissingResponse(): Response {
   return keyErrorResponse(
     409,
-    "Configurez d'abord votre clé API Zernio dans la page Paramètres.",
+    "Configurez d'abord votre clé API dans la page Paramètres.",
     'user_key_missing',
   );
 }
@@ -58,7 +58,7 @@ export function userKeyMissingResponse(): Response {
 export function ownerKeyMissingResponse(): Response {
   return keyErrorResponse(
     409,
-    "Le propriétaire de cet espace n'a pas encore configuré sa clé API Zernio. Demandez-lui de la renseigner dans ses Paramètres.",
+    "Le propriétaire de cet espace n'a pas encore configuré sa clé API. Demandez-lui de la renseigner dans ses Paramètres.",
     'owner_key_missing',
   );
 }
@@ -84,7 +84,7 @@ export async function resolveUserKey(): Promise<ResolvedKey> {
       ok: false,
       response: keyErrorResponse(
         409,
-        "Aucune base de données configurée et ZERNIO_API_KEY absente : impossible de résoudre une clé API Zernio.",
+        "Aucune base de données configurée et ZERNIO_API_KEY absente : impossible de résoudre une clé API.",
         'missing_api_key',
       ),
     };
@@ -129,8 +129,8 @@ function upstreamUnavailable(err: unknown): Response {
   return Response.json(
     {
       error: timedOut
-        ? 'Zernio met trop de temps à répondre. Réessayez dans un instant.'
-        : 'Zernio est injoignable depuis le serveur. Vérifiez la connexion réseau puis réessayez.',
+        ? 'La plateforme met trop de temps à répondre. Réessayez dans un instant.'
+        : 'La plateforme est injoignable depuis le serveur. Vérifiez la connexion réseau puis réessayez.',
       code: timedOut ? 'upstream_timeout' : 'upstream_unreachable',
     },
     { status: 504 },

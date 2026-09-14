@@ -589,7 +589,7 @@ export function templateSummary(templateId: string, values: TemplateFieldValues)
     case 'support-agent':
       return [
         'Il répond automatiquement à chaque message reçu sur WhatsApp, 24 h/24.',
-        'Son IA utilise le modèle intégré de Zernio : aucun modèle à choisir, aucune clé à fournir.',
+        'Son IA utilise le modèle intégré de la plateforme : aucun modèle à choisir, aucune clé à fournir.',
         'Il se souvient de la conversation pour ne jamais se répéter ni se représenter.',
         'Il s’appuie uniquement sur vos informations : offre, horaires, liens, FAQ.',
         'Il passe la main à un humain quand il le faut : demande du client, question au-delà de ses informations, ou erreur.',
@@ -612,7 +612,7 @@ export function templateSummary(templateId: string, values: TemplateFieldValues)
     case 'lead-qualifier':
       return [
         'Chaque nouveau contact reçoit vos questions une par une, à son rythme.',
-        'Ses réponses sont résumées automatiquement (modèle intégré Zernio, sans clé à configurer).',
+        'Ses réponses sont résumées automatiquement (modèle intégré, sans clé à configurer).',
         'Le résumé est enregistré sur la fiche du contact (champ « besoin »).',
         'Votre équipe est alertée avec le récapitulatif pour conclure.',
         values.tag ? `Le contact est étiqueté « ${values.tag} ».` : 'Aucune étiquette ajoutée au contact.',

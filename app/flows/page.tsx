@@ -278,7 +278,7 @@ function WorkflowWizard({
 
             <p className="text-xs text-muted-foreground">
               Elle sera activée dès sa création. Vous pourrez la mettre en pause à tout moment — rien
-              n’est envoyé sans que Zernio ne l’exécute pour vous.
+              n’est envoyé sans que la plateforme ne l’exécute pour vous.
             </p>
 
             {create.isError && (
@@ -374,11 +374,11 @@ function WhatsappStatusBanner() {
         <div className="flex items-start gap-3">
           <Unplug className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
-            <p className="text-sm font-medium">Aucun numéro WhatsApp n’est connecté à Zernio</p>
+            <p className="text-sm font-medium">Aucun numéro WhatsApp n’est connecté</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Sans numéro connecté, aucun message ne peut arriver et vos automatisations resteront
-              silencieuses, même si elles sont actives. Connectez un numéro dans la page Paramètres
-              ou chez Zernio, puis revenez ici — l’état se met à jour tout seul.
+              silencieuses, même si elles sont actives. Connectez un numéro dans la page Paramètres,
+              puis revenez ici — l’état se met à jour tout seul.
             </p>
           </div>
         </div>
@@ -421,7 +421,7 @@ function WhatsappStatusBanner() {
           <p className="mt-1 text-sm text-muted-foreground">
             {when && <>Déconnecté le {when}. </>}
             {status.humanReason && <>{status.humanReason.charAt(0).toUpperCase() + status.humanReason.slice(1)}. </>}
-            Tant que le numéro n’est pas reconnecté, <span className="font-medium text-foreground">aucun message ne peut arriver : vos automatisations ne se déclencheront pas, même actives</span>. Reconnectez le numéro chez Zernio, puis revenez sur cette page.
+            Tant que le numéro n’est pas reconnecté, <span className="font-medium text-foreground">aucun message ne peut arriver : vos automatisations ne se déclencheront pas, même actives</span>. Reconnectez le numéro dans la page Paramètres, puis revenez sur cette page.
           </p>
         </div>
       </div>
@@ -442,8 +442,8 @@ function AgentAiInfoCard() {
             <li className="flex items-start gap-2">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
               <span>
-                L’agent utilise le <span className="font-medium text-foreground">modèle intégré de Zernio</span> : aucun
-                modèle à choisir, aucune clé IA à fournir — Zernio le fait tourner pour vous, 24 h/24.
+                L’agent utilise le <span className="font-medium text-foreground">modèle intégré de la plateforme</span> : aucun
+                modèle à choisir, aucune clé IA à fournir — il tourne pour vous, 24 h/24.
               </span>
             </li>
             <li className="flex items-start gap-2">
@@ -468,7 +468,7 @@ function AgentAiInfoCard() {
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
               <span>
                 Pour vérifier qu’il fonctionne réellement : ouvrez « Exécutions » sur une
-                automatisation ci-dessous — chaque passage est tracé par Zernio (succès, transfert à
+                automatisation ci-dessous — chaque passage est tracé (succès, transfert à
                 un humain, erreur avec sa raison exacte).
               </span>
             </li>
@@ -661,7 +661,7 @@ function WorkflowCard({
       {showRuns && (
         <div className="mt-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-canvas)] p-3">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Exécutions réelles (tracées par Zernio)
+            Exécutions réelles (traçabilité complète)
           </p>
           <WorkflowExecutionsList workflowId={workflow.id} />
         </div>
@@ -764,7 +764,7 @@ export default function FlowsPage() {
           <section className="mt-6">
                 <h2 className="text-base font-semibold">Démarrer en 2 minutes</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Choisissez un modèle, répondez à quelques questions, Zernio s’occupe du reste.
+                  Choisissez un modèle, répondez à quelques questions, Kamtech s’occupe du reste.
                 </p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   {WORKFLOW_TEMPLATES.map((template) => {

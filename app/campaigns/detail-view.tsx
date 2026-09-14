@@ -509,7 +509,7 @@ function mergeTrackingStatus(
   const nativeStatus = (native?.status ?? 'pending').toLowerCase();
   if (!direct) return { status: nativeStatus, note: native?.error ?? native?.errorExplanation ?? null };
   const directStatus = direct.status.toLowerCase();
-  if (directStatus === 'failed') return { status: 'failed', note: 'Envoi direct en échec (voir inbox Zernio).' };
+  if (directStatus === 'failed') return { status: 'failed', note: 'Envoi direct en échec (voir inbox).' };
   const rankDirect = STATUS_RANK[directStatus] ?? 1;
   const rankNative = STATUS_RANK[nativeStatus] ?? 0;
   if (nativeStatus === 'failed') return { status: 'failed', note: native?.error ?? native?.errorExplanation ?? null };
@@ -1020,7 +1020,7 @@ export function CampaignDetail({
       setInspectOpen(true);
     } catch (err) {
       const detail = err instanceof ApiError && err.message ? ` — ${err.message}` : '';
-      toast.error(`Impossible de lire la campagne chez Zernio.${detail}`);
+      toast.error(`Impossible de lire la campagne sur la plateforme.${detail}`);
     }
   }
 
@@ -1065,7 +1065,7 @@ export function CampaignDetail({
       !window.confirm(
         draft
           ? `Supprimer définitivement le brouillon « ${broadcast.name} » ?`
-          : `Supprimer « ${broadcast.name} » ?\nZernio ne supprime que les brouillons : la campagne sera masquée de votre liste (elle reste dans l’historique Zernio).`,
+          : `Supprimer « ${broadcast.name} » ?\nSeuls les brouillons peuvent être supprimés : la campagne sera masquée de votre liste (elle reste dans l’historique).`,
       )
     ) {
       return;
@@ -1111,7 +1111,7 @@ export function CampaignDetail({
     if (
       !window.confirm(
         `Relancer « ${broadcast.name} » vers ses ${count} destinataire(s) ?\n` +
-          "L’envoi groupé Zernio ne peut se faire que sur un brouillon : une campagne identique (même nom) sera créée puis envoyée. L’ancienne reste dans l’historique.",
+          "L’envoi groupé ne peut se faire que sur un brouillon : une campagne identique (même nom) sera créée puis envoyée. L’ancienne reste dans l’historique.",
       )
     ) {
       return;
@@ -1196,13 +1196,13 @@ export function CampaignDetail({
                 ✓ Envoyé en direct le {formatDate(directResult.at)} — {directResult.sent} envoyé(s)
                 {directResult.failed > 0 ? `, ${directResult.failed} échec(s)` : ''}
                 {hasDirectTracking
-                  ? ' · Statuts réels suivis ci-dessous (envoyé / livré / lu), rafraîchis depuis l’inbox Zernio.'
+                  ? ' · Statuts réels suivis ci-dessous (envoyé / livré / lu), rafraîchis automatiquement.'
                   : ' · Les statuts détaillés apparaîtront d’ici quelques instants.'}
               </p>
             )}
             {broadcast.status === 'failed' && failureReason && (
               <p className="mt-2 rounded-lg bg-red-500/5 px-3 py-2 text-[11px] leading-relaxed text-red-600 dark:text-red-400">
-                Échec signalé par Zernio : {failureReason}.
+                Échec signalé par WhatsApp : {failureReason}.
               </p>
             )}
           </div>
@@ -1212,7 +1212,7 @@ export function CampaignDetail({
               size="sm"
               onClick={() => void openInspect()}
               className="text-muted-foreground"
-              title="Voir l’objet campagne brut enregistré chez Zernio (diagnostic personnalisation)"
+              title="Voir l’objet campagne brut enregistré sur la plateforme (diagnostic personnalisation)"
             >
               <Code2 className="size-4" /> Inspecter
             </Button>
@@ -1221,10 +1221,10 @@ export function CampaignDetail({
 
         {hasVars && isDraft && (
           <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
-            ℹ️ Campagne personnalisée : Zernio n’enregistre pas les variables d’une campagne (vérifié avec
+            ℹ️ Campagne personnalisée : la plateforme n’enregistre pas les variables d’une campagne (vérifié avec
             « Inspecter ») — l’envoi se fait donc directement, destinataire par destinataire, avec les
             vraies valeurs (même mécanisme que l’envoi d’un modèle dans une conversation). Chaque envoi
-            est ensuite suivi individuellement (envoyé / livré / lu / échec) via l’inbox Zernio.
+            est ensuite suivi individuellement (envoyé / livré / lu / échec) via la plateforme.
           </p>
         )}
 
@@ -1244,7 +1244,7 @@ export function CampaignDetail({
                       disabled={hasVars}
                       title={
                         hasVars
-                          ? 'L’envoi programmé de Zernio ne peut pas personnaliser les variables — utilisez « Envoyer maintenant » (direct).'
+                          ? 'L’envoi programmé ne peut pas personnaliser les variables — utilisez « Envoyer maintenant » (direct).'
                           : undefined
                       }
                     >
@@ -1398,7 +1398,7 @@ export function CampaignDetail({
         <Dialog open={inspectOpen} onOpenChange={setInspectOpen}>
           <DialogContent className="flex max-h-[85vh] flex-col p-0 sm:max-w-2xl">
             <DialogHeader className="border-b border-[var(--chat-border)] px-5 pt-5">
-              <DialogTitle className="text-sm">Campagne brute (Zernio)</DialogTitle>
+              <DialogTitle className="text-sm">Campagne brute (plateforme)</DialogTitle>
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
               <pre className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
