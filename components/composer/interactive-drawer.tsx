@@ -292,12 +292,14 @@ export function InteractiveDrawer({
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="buttons" className="px-1 text-xs">Boutons</TabsTrigger>
-            <TabsTrigger value="list" className="px-1 text-xs">Liste</TabsTrigger>
-            <TabsTrigger value="cta" className="px-1 text-xs">Lien</TabsTrigger>
-            <TabsTrigger value="location" className="px-1 text-xs">Localisation</TabsTrigger>
-            <TabsTrigger value="call" className="px-1 text-xs">Appel</TabsTrigger>
+          {/* flex + scroll horizontal : les labels gardent leur largeur naturelle
+              au lieu d'être écrasés par grid-cols-5 sur écran étroit (360px). */}
+          <TabsList className="flex w-full gap-0.5 overflow-x-auto">
+            <TabsTrigger value="buttons" className="[flex:none] px-2.5 text-xs">Boutons</TabsTrigger>
+            <TabsTrigger value="list" className="[flex:none] px-2.5 text-xs">Liste</TabsTrigger>
+            <TabsTrigger value="cta" className="[flex:none] px-2.5 text-xs">Lien</TabsTrigger>
+            <TabsTrigger value="location" className="[flex:none] px-2.5 text-xs">Localisation</TabsTrigger>
+            <TabsTrigger value="call" className="[flex:none] px-2.5 text-xs">Appel</TabsTrigger>
           </TabsList>
 
           {/* Buttons: body + up to 3 reply buttons */}
@@ -500,7 +502,10 @@ export function InteractiveDrawer({
                   )}
                   <ChevronDown className="size-4 shrink-0 opacity-60" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="max-h-64 w-72 overflow-y-auto">
+                <DropdownMenuContent
+                  align="start"
+                  className="max-h-64 w-[var(--radix-dropdown-menu-trigger-width)] min-w-[11rem] overflow-y-auto"
+                >
                   {flows.map((f) => (
                     <DropdownMenuItem key={f.id} onSelect={() => setFlowId(f.id)}>
                       <span className="truncate">{f.name}</span>
@@ -537,7 +542,7 @@ export function InteractiveDrawer({
                   <span>{FLOW_ACTION_LABELS[flowAction]}</span>
                   <ChevronDown className="size-4 shrink-0 opacity-60" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-72">
+                <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[11rem]">
                   {(Object.keys(FLOW_ACTION_LABELS) as FlowAction[]).map((a) => (
                     <DropdownMenuItem key={a} onSelect={() => setFlowAction(a)}>
                       {FLOW_ACTION_LABELS[a]}
@@ -573,8 +578,7 @@ export function InteractiveDrawer({
                 placeholder="ex. Partagez votre position pour trouver le magasin le plus proche"
               />
               <p className="text-xs text-muted-foreground">
-                WhatsApp affiche un bouton « Envoyer la position » sous votre message. La réponse
-                arrive dans la conversation sous forme de message de localisation.
+                Le contact voit un bouton « Envoyer la position » et sa position arrive ensuite dans la conversation.
               </p>
             </div>
           </TabsContent>
@@ -593,7 +597,7 @@ export function InteractiveDrawer({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Label>
-                  Libellé du bouton <span className="font-normal text-muted-foreground">(facultatif)</span>
+                  Libellé du bouton <span className="font-normal text-muted-foreground">(optionnel)</span>
                 </Label>
                 <Counter value={callLabel} max={20} />
               </div>
@@ -604,8 +608,7 @@ export function InteractiveDrawer({
                 placeholder="Appeler"
               />
               <p className="text-xs text-muted-foreground">
-                Un appui sur le bouton démarre un appel vocal WhatsApp vers ce numéro. Les appels
-                doivent être activés sur le numéro, sinon Meta refuse l’envoi.
+                L'appel doit être activé sur votre numéro, sinon Meta refuse l'envoi.
               </p>
             </div>
           </TabsContent>

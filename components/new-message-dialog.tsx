@@ -164,6 +164,9 @@ export function NewMessageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* Structure flex + zone défilante : le picker de modèles reste utilisable
+          et les boutons Annuler/Envoyer restent visibles, même avec de longues
+          listes de variables. L'erreur s'affiche au-dessus des boutons. */}
       <DialogContent className="flex max-h-[85dvh] flex-col gap-4 overflow-hidden sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Nouveau message</DialogTitle>
@@ -175,12 +178,10 @@ export function NewMessageDialog({
             Aucun de vos comptes connectés ne permet de démarrer une conversation. WhatsApp, X, Bluesky et Reddit le permettent.
           </p>
         ) : (
-          /* Zone défilante : modèles à nombreuses variables restent utilisables,
-             le pied (bouton Envoyer) reste visible. */
           <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
             <div className="space-y-3">
             <div className="space-y-1">
-              <Label className="text-xs">From</Label>
+              <Label className="text-xs">Compte</Label>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   aria-label="Choisir un compte"
@@ -198,7 +199,10 @@ export function NewMessageDialog({
                   )}
                   <ChevronDown className="size-4 shrink-0 opacity-60" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="max-h-72 w-72 overflow-y-auto">
+                <DropdownMenuContent
+                  align="start"
+                  className="max-h-72 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+                >
                   {eligible.map((a) => (
                     <DropdownMenuItem key={a._id} onSelect={() => setAccountId(a._id)}>
                       <PlatformIcon platform={a.platform} />
@@ -225,10 +229,7 @@ export function NewMessageDialog({
             {isWhatsApp ? (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  Nouveau contact&nbsp;? WhatsApp impose de démarrer par un modèle approuvé&nbsp;:
-                  choisissez un modèle, remplissez ses champs, puis envoyez. Le contact le reçoit
-                  comme un message normal, et vous pourrez ensuite discuter librement dès sa
-                  réponse.
+                  Nouveau contact ? WhatsApp impose de démarrer par un modèle approuvé.
                 </p>
                 <TemplateFields composer={wa} />
               </div>
@@ -244,7 +245,6 @@ export function NewMessageDialog({
                 />
               </div>
             )}
-
             </div>
           </div>
         )}

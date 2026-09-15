@@ -455,18 +455,15 @@ export function Composer({
     // n accepte qu un modèle approuvé, mais le bon message est différent.
     const neverIncoming = !messages.some((m) => m.direction === 'incoming');
     return (
-      <footer className="flex-none border-t border-[var(--chat-border)] bg-[var(--chat-surface)] p-3">
+      <footer className="flex-none border-t border-[var(--chat-border)] bg-[var(--chat-surface)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="flex max-h-[68dvh] flex-col gap-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-warning-bg)] p-3">
           {neverIncoming ? (
             <p className="text-xs text-[var(--chat-warning-fg)]">
-              Ce contact ne vous a jamais écrit&nbsp;: WhatsApp impose de démarrer la conversation
-              par un modèle approuvé. Choisissez un modèle ci-dessous et envoyez : dès sa réponse,
-              vous pourrez discuter librement.
+              Ce contact ne vous a jamais écrit&nbsp;: choisissez un modèle approuvé ci-dessous pour démarrer la conversation.
             </p>
           ) : (
             <p className="text-xs text-[var(--chat-warning-fg)]">
-              Plus de 24 h se sont écoulées depuis le dernier message de ce contact. WhatsApp
-              n&apos;accepte plus que les modèles approuvés, choisissez-en un pour le recontacter.
+              Plus de 24 h depuis son dernier message&nbsp;: WhatsApp n&apos;accepte que les modèles approuvés.
             </p>
           )}
           {/* Zone défilante : les champs de variables ne repoussent plus le bouton hors écran. */}
@@ -489,7 +486,7 @@ export function Composer({
   }
 
   return (
-    <footer className="flex-none space-y-2 border-t border-[var(--chat-border)] bg-[var(--chat-surface)] p-3">
+    <footer className="flex-none space-y-2 border-t border-[var(--chat-border)] bg-[var(--chat-surface)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {/* Drop overlay: purely visual; the document-level listeners do the work. */}
       {dragging && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-background/80">
@@ -500,8 +497,7 @@ export function Composer({
       )}
 
       {replyingTo && !recordingVoice && (
-        <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-1.5">
-          <span aria-hidden="true" className="w-[3px] shrink-0 self-stretch rounded-full bg-primary" />
+        <div className="flex items-center gap-2 rounded-lg border-l-2 border-primary bg-muted/60 px-3 py-1.5">
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium">
               Réponse à{' '}
@@ -615,7 +611,7 @@ export function Composer({
                     key={emoji}
                     type="button"
                     onClick={() => insertEmoji(emoji)}
-                    className="flex size-8 items-center justify-center rounded-md text-lg hover:bg-muted"
+                    className="flex size-7 items-center justify-center rounded-md text-lg hover:bg-muted"
                   >
                     {emoji}
                   </button>
@@ -652,7 +648,7 @@ export function Composer({
                   <FileUp className="size-4" /> Fichier
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setExtraMode('location')}>
-                  <MapPin className="size-4" /> Location
+                  <MapPin className="size-4" /> Position
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setExtraMode('contact')}>
                   <User className="size-4" /> Contact

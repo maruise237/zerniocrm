@@ -75,12 +75,12 @@ type DialState =
 const END_REASON_LABEL: Record<string, string> = {
   hangup: 'Appel terminé',
   no_answer: 'Sans réponse',
-  rejected: 'Appel refusé ou connexion impossible',
+  rejected: 'Appel refusé ou non abouti',
   error: 'Échec de l’appel',
 };
 
 const DEFAULT_PROMPT_BODY =
-  'Nous souhaitons vous appeler au sujet de votre demande. Appuyez sur Autoriser pour accepter.';
+  'Nous souhaitons vous appeler au sujet de votre demande. Touchez Autoriser pour accepter.';
 
 const FORWARD_DEST_PATTERN = /^(tel:\+\d{6,}|sip:[^\s]+|wss:\/\/[^\s]+|\+\d{6,15})$/;
 
@@ -99,7 +99,7 @@ function promptBudget(perms: PermissionResponse | null): string | null {
         String(l.time_period || '').includes('7')
           ? 'cette semaine'
           : 'aujourd’hui';
-      return `reste ${left} sur ${l.max_allowed} ${period}`;
+      return `${left} sur ${l.max_allowed} restant(s) ${period}`;
     });
   return parts.length ? `Quota de demandes : ${parts.join(' · ')}.` : null;
 }
@@ -188,7 +188,7 @@ export function CallDialpadDialog({
       const raw = p?.error?.message || '';
       if (/business-initiated calling is not available|138013/i.test(raw)) {
         throw new Error(
-          'Les appels sortants ne sont pas disponibles pour ce numéro : Meta ne les autorise pas depuis des numéros US, CA, EG, VN ou NG. La réception d’appels reste possible.',
+          "Les appels sortants ne sont pas disponibles pour ce numéro : Meta ne les autorise pas depuis les numéros US, CA, EG, VN ou NG. La réception d'appels fonctionne toujours.",
         );
       }
       throw new Error(raw || 'Impossible de vérifier la permission d’appel. Réessayez.');
@@ -216,7 +216,7 @@ export function CallDialpadDialog({
       const canStart = await probePermission();
       setState(canStart ? 'ready' : 'need_permission');
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Échec de la vérification de permission');
+      toast.error(e instanceof Error ? e.message : 'Vérification impossible');
       setState('idle');
     } finally {
       setBusy(false);
@@ -312,12 +312,12 @@ export function CallDialpadDialog({
       if (!r.ok) {
         const raw = String(
           (typeof data?.error === 'string' ? data.error : data?.error?.message) ??
-            'Échec de l’envoi',
+            'Failed to send',
         );
         // Most common rejection: no open 24h service window with this contact.
         if (/re-?engagement|24 hours|131047/i.test(raw)) {
           throw new Error(
-            'Ce contact n’a pas écrit à votre numéro WhatsApp au cours des dernières 24 h, la demande ne peut donc pas lui être remise. Demandez-lui d’abord d’envoyer un message à votre numéro, puis renvoyez la demande.',
+            "This contact hasn't messaged your WhatsApp number in the last 24 hours, so the prompt can't be delivered. Ask them to send your number any message first, then send the request again.",
           );
         }
         throw new Error(raw);
@@ -360,7 +360,7 @@ export function CallDialpadDialog({
         const msg =
           typeof data?.error === 'string'
             ? data.error
-            : (data?.error?.message ?? 'Impossible d’émettre l’appel');
+            : (data?.error?.message ?? 'Failed to place call');
         throw new Error(msg);
       }
       setCallId(data?.callId ?? null);
@@ -368,7 +368,7 @@ export function CallDialpadDialog({
       setElapsed(0);
       setState('in_call');
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Impossible d’émettre l’appel');
+      toast.error(e instanceof Error ? e.message : 'Échec de l’appel');
       setState('ready');
     } finally {
       setBusy(false);
@@ -390,8 +390,8 @@ export function CallDialpadDialog({
                 ? 'Appel terminé'
                 : connected
                   ? 'En appel'
-                  : 'Appel en cours...'
-              : 'Nouvel appel sortant'}
+                  : 'Appel en cours…'
+              : 'Nouvel appel'}
           </DialogTitle>
         </DialogHeader>
 
@@ -427,11 +427,11 @@ export function CallDialpadDialog({
                     }`
                   : connected
                     ? `Connecté${liveCall?.transferStartedAt ? ', transféré vers votre destination' : ''} · ${mmss}`
-                    : 'Sonnerie sur son WhatsApp...'}
+                    : 'Sonnerie sur son WhatsApp…'}
               </div>
               {!done && !connected && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Quand il répond, l’appel est transféré vers la destination configurée.
+                  Dès qu’il répond, l’appel est transféré vers votre destination configurée.
                 </p>
               )}
             </div>
@@ -451,30 +451,27 @@ export function CallDialpadDialog({
               <>
                 <div className="space-y-1.5 rounded-lg border border-[var(--chat-border)] bg-muted/40 p-3 text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">
-                    WhatsApp exige la permission de ce contact avant qu’une entreprise puisse
-                    l’appeler.
+                    WhatsApp exige l’accord du contact avant qu’une entreprise ne l’appelle.
                   </p>
                   <ol className="list-decimal space-y-0.5 pl-4">
                     <li>
-                      Envoyez une demande de permission (le message ci-dessous apparaît dans son
-                      WhatsApp).
+                      Envoyez une demande d’autorisation (le message ci-dessous apparaît dans son WhatsApp).
                     </li>
                     <li>
-                      Il appuie sur <span className="font-medium">Autoriser</span> sur son
-                      téléphone.
+                      Il touche <span className="font-medium">Autoriser</span> sur son téléphone.
                     </li>
-                    <li>Le bouton d’appel s’active ensuite tout seul dans cette fenêtre.</li>
+                    <li>L’appel se débloque automatiquement ici.</li>
                   </ol>
                   <p>
-                    Le contact doit avoir écrit à votre numéro au cours des dernières 24 h, et
-                    WhatsApp autorise 1 demande par contact et par jour (2 par semaine).
+                    Le contact doit vous avoir écrit ces dernières 24 h ; WhatsApp limite à 1
+                    demande/jour (2/semaine).
                     {budget ? ` ${budget}` : ''}
                   </p>
                 </div>
                 <Textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  aria-label="Message de demande de permission"
+                  aria-label="Message de demande d’autorisation"
                   className="bg-[var(--chat-surface)]"
                 />
               </>
@@ -483,9 +480,9 @@ export function CallDialpadDialog({
               <div className="space-y-1 rounded-lg border border-[var(--chat-presence)]/30 bg-[var(--chat-presence)]/10 p-3 text-xs">
                 <p className="font-medium">Demande de permission envoyée.</p>
                 <p className="text-muted-foreground">
-                  En attente de l’appui de {to || 'ce contact'} sur{' '}
-                  <span className="font-medium">Autoriser</span> dans WhatsApp. Cette fenêtre se
-                  met à jour toute seule dès qu’il le fait.
+                  En attente que {to || 'le contact'} touche{' '}
+                  <span className="font-medium">Autoriser</span> dans WhatsApp : cette fenêtre se
+                  met à jour seule dès qu’il le fait.
                 </p>
               </div>
             )}
@@ -493,9 +490,9 @@ export function CallDialpadDialog({
               <div className="space-y-3">
                 {estimate && (
                   <p className="text-xs text-muted-foreground">
-                    Estimation ~${estimate.perMinuteUsd.toFixed(4)}/min au total (
-                    {estimate.country ?? 'pays inconnu'}), tarif Meta inclus, facturé directement
-                    sur votre compte WhatsApp.
+                    ≈ ${estimate.perMinuteUsd.toFixed(4)}/min total (
+                    {estimate.country ?? 'pays inconnu'}), tarif Meta facturé sur votre compte
+                    WhatsApp.
                   </p>
                 )}
                 <button
@@ -517,7 +514,7 @@ export function CallDialpadDialog({
                         value={destMode}
                         options={[
                           { value: 'default', label: 'Destination par défaut' },
-                          { value: 'custom', label: 'Personnalisée (cet appel uniquement)' },
+                          { value: 'custom', label: 'Personnalisée (cet appel)' },
                         ]}
                         onChange={setDestMode}
                       />
@@ -525,7 +522,7 @@ export function CallDialpadDialog({
                         label="Enregistrement"
                         value={recordMode}
                         options={[
-                          { value: 'default', label: 'Réglage du numéro' },
+                          { value: 'default', label: 'Par défaut du numéro' },
                           { value: 'on', label: 'Enregistrer cet appel' },
                           { value: 'off', label: 'Ne pas enregistrer' },
                         ]}
@@ -537,12 +534,12 @@ export function CallDialpadDialog({
                         <Input
                           value={customDest}
                           onChange={(e) => setCustomDest(e.target.value)}
-                          placeholder="+12025551234, sip:agent@host ou wss://..."
+                          placeholder="+12025551234, sip:agent@host, or wss://..."
                           className="bg-[var(--chat-surface)]"
                         />
                         {customDest.trim() && !customDestValid && (
                           <p className="mt-1 text-xs text-destructive">
-                            Utilisez un numéro E.164 (+...), une URI sip: ou une URL wss://.
+                            Utilisez un numéro E.164 (+…), un URI sip: ou une URL wss://.
                           </p>
                         )}
                       </div>
@@ -560,22 +557,22 @@ export function CallDialpadDialog({
           </Button>
           {state === 'idle' || state === 'checking' ? (
             <Button onClick={() => void check()} disabled={!to || busy}>
-              {busy ? 'Vérification...' : 'Vérifier la permission'}
+              {busy ? 'Vérification…' : 'Vérifier la permission'}
             </Button>
           ) : state === 'need_permission' ? (
             <Button onClick={() => void requestPermission()} disabled={busy}>
-              {busy ? 'Envoi...' : 'Envoyer la demande de permission'}
+              {busy ? 'Envoi…' : 'Envoyer la demande'}
             </Button>
           ) : state === 'request_sent' ? (
             <Button onClick={() => void check()} disabled={busy} variant="outline">
-              {busy ? 'Vérification...' : 'Vérifier maintenant'}
+              {busy ? 'Vérification…' : 'Vérifier maintenant'}
             </Button>
           ) : state === 'ready' || state === 'placing' ? (
             <Button
               onClick={() => void placeCall()}
               disabled={busy || (destMode === 'custom' && !customDestValid)}
             >
-              {state === 'placing' || busy ? 'Appel en cours...' : 'Appeler maintenant'}
+              {state === 'placing' || busy ? 'Appel…' : 'Appeler'}
             </Button>
           ) : state === 'in_call' && done ? (
             <Button

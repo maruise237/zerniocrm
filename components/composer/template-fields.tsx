@@ -30,7 +30,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" />
-        Chargement des modèles...
+        Chargement des modèles…
       </div>
     );
   }
@@ -50,10 +50,9 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
     }
     return (
       <div className="space-y-2 text-sm text-muted-foreground">
-        <p>Aucun modèle approuvé pour ce compte WhatsApp pour l’instant.</p>
         <p>
-          Créez un modèle dans WhatsApp Manager (ou depuis l’onglet Modèles), attendez son
-          approbation par Meta, puis revenez ici : il apparaîtra automatiquement.
+          Aucun modèle approuvé pour l'instant : créez-le dans l'onglet Modèles ou WhatsApp
+          Manager, attendez l'approbation Meta, puis revenez ici.
         </p>
       </div>
     );
@@ -62,7 +61,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <Label className="text-xs">Modèle</Label>
+        <Label className="text-xs">Template</Label>
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Choisir un modèle"
@@ -79,11 +78,14 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
                 )}
               </span>
             ) : (
-              <span className="text-muted-foreground">Choisir un modèle approuvé...</span>
+              <span className="text-muted-foreground">Choisir un modèle approuvé…</span>
             )}
             <ChevronDown className="size-4 shrink-0 opacity-60" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-72 w-72 overflow-y-auto">
+          <DropdownMenuContent
+            align="start"
+            className="max-h-72 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+          >
             {templates.map((t) => (
               <DropdownMenuItem key={t.id || t.name} onSelect={() => setTemplateName(t.name)}>
                 <span className="truncate">{t.name}</span>
@@ -114,7 +116,7 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
           <Input
             value={params[i] ?? ''}
             onChange={(e) => setParam(i, e.target.value)}
-            placeholder={`Value for ${token}`}
+            placeholder={`Valeur pour ${token}`}
             className="bg-[var(--chat-surface)]"
           />
         </div>

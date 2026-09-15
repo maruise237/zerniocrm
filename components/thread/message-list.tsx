@@ -169,7 +169,7 @@ export function MessageList({
           ))
         ) : messages.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No messages in this conversation
+            Aucun message dans cette conversation
           </p>
         ) : (
           <>

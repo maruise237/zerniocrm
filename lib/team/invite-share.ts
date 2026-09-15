@@ -1,12 +1,12 @@
-// Options et libellés d'invitation (client-safe)
+// ── Options et libellés d'invitation (client-safe) ────────────────────────
 // Module pur sans dépendance node : importable depuis les composants client.
 // La partie crypto (génération/hash de jeton) vit dans lib/team/tokens.ts.
 
 export const INVITE_EXPIRY_OPTIONS = [
-  { days: 1, label: '24 heures' },
-  { days: 3, label: '3 jours' },
-  { days: 7, label: '7 jours' },
-  { days: 30, label: '30 jours' },
+  { days: 1, label: '24 h' },
+  { days: 3, label: '3 j' },
+  { days: 7, label: '7 j' },
+  { days: 30, label: '30 j' },
 ] as const;
 
 export const DEFAULT_EXPIRY_DAYS = 7;
@@ -56,8 +56,8 @@ export function buildInviteMailto(inviteUrl: string, inviterLabel: string, roleL
 
 /** Date courte lisible : « 12 sept. 2026 ». */
 export function formatDate(value: string | Date | null): string {
-  if (!value) return '-';
+  if (!value) return '—';
   const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return '-';
+  if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 }

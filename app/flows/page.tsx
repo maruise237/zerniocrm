@@ -72,7 +72,7 @@ function Card({ children, className }: { children: React.ReactNode; className?: 
 const STATUS_META: Record<string, { label: string; badge: string; dot: string }> = {
   active: {
     label: 'Actif',
-    badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     dot: 'bg-emerald-500',
   },
   draft: {
@@ -82,7 +82,7 @@ const STATUS_META: Record<string, { label: string; badge: string; dot: string }>
   },
   paused: {
     label: 'En pause',
-    badge: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
     dot: 'bg-amber-500',
   },
 };
@@ -107,13 +107,14 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 const TEMPLATE_ICONS = {
-  'support-agent': { Icon: Bot, color: 'bg-[var(--wa)] text-[var(--wa-ink)]' },
-  'keyword-reply': { Icon: Zap, color: 'bg-amber-500/15 text-amber-700 dark:text-amber-400' },
-  'welcome-handoff': { Icon: Handshake, color: 'bg-sky-500/15 text-sky-700 dark:text-sky-400' },
+  'support-agent': { Icon: Bot, color: 'bg-[#25D366] text-white' },
+  'keyword-reply': { Icon: Zap, color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  'welcome-handoff': { Icon: Handshake, color: 'bg-sky-500/15 text-sky-600 dark:text-sky-400' },
   'lead-qualifier': { Icon: ClipboardList, color: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
 } as const;
 
-// Assistant de création (2 étapes, aucun code)
+// ── Assistant de création (2 étapes, aucun code) ────────────────────────────
+
 function WorkflowWizard({
   template,
   accounts,
@@ -196,12 +197,12 @@ function WorkflowWizard({
       <DialogContent className="max-h-[88dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            {template && <Sparkles className="h-4 w-4 text-[var(--wa-deep)]" />}
+            {template && <Sparkles className="h-4 w-4 text-[#128C7E]" />}
             {template ? `Configurer : ${template.name}` : ''}
           </DialogTitle>
           <DialogDescription>
             {step === 1
-              ? 'Répondez en quelques phrases : l’agent s’appuiera sur vos réponses.'
+              ? 'Répondez en quelques phrases — l’agent s’appuiera sur vos réponses.'
               : 'Vérifiez, choisissez le compte, et c’est parti.'}
           </DialogDescription>
         </DialogHeader>
@@ -222,7 +223,7 @@ function WorkflowWizard({
                 <div key={field.name}>
                   <Label htmlFor={id} className="text-[13px]">
                     {field.label}
-                    {field.required && <span className="text-red-600 dark:text-red-400"> *</span>}
+                    {field.required && <span className="text-red-500"> *</span>}
                   </Label>
                   {field.type === 'textarea' ? (
                     <Textarea {...common} rows={3} className="mt-1.5 min-h-[72px] text-[15px]" />
@@ -243,7 +244,7 @@ function WorkflowWizard({
               <ul className="mt-2 space-y-1.5">
                 {summary.map((line) => (
                   <li key={line} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
                     {line}
                   </li>
                 ))}
@@ -255,7 +256,7 @@ function WorkflowWizard({
                 Compte WhatsApp concerné
               </Label>
               {whatsappAccounts.length === 0 && accounts.length === 0 ? (
-                <p className="mt-1.5 text-sm text-amber-700 dark:text-amber-400">
+                <p className="mt-1.5 text-sm text-amber-600 dark:text-amber-400">
                   Aucun compte WhatsApp connecté. Connectez-en un dans Paramètres avant de créer une
                   automatisation.
                 </p>
@@ -264,7 +265,7 @@ function WorkflowWizard({
                   id="wf-account"
                   value={effectiveAccountId}
                   onChange={(e) => setAccountId(e.target.value)}
-                  className="mt-1.5 h-11 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-[15px] outline-none focus:border-[var(--wa)]/60"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-[15px] outline-none focus:border-[#25D366]/60"
                 >
                   {(whatsappAccounts.length > 0 ? whatsappAccounts : accounts).map((a) => (
                     <option key={a._id} value={a._id}>
@@ -276,8 +277,7 @@ function WorkflowWizard({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Elle sera activée dès sa création. Vous pourrez la mettre en pause à tout moment, rien
-              n’est envoyé sans que la plateforme ne l’exécute pour vous.
+              Active dès sa création, vous pourrez la mettre en pause à tout moment.
             </p>
 
             {create.isError && (
@@ -298,7 +298,7 @@ function WorkflowWizard({
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={missingRequired.length > 0}
-                className="min-h-[44px] bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
+                className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
               >
                 Continuer
               </Button>
@@ -318,7 +318,7 @@ function WorkflowWizard({
                 type="button"
                 onClick={submit}
                 disabled={create.isPending || (!effectiveAccountId || !profileId)}
-                className="min-h-[44px] bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
+                className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
               >
                 {create.isPending ? (
                   <>
@@ -336,7 +336,8 @@ function WorkflowWizard({
   );
 }
 
-// État réel du canal WhatsApp (y compris déconnecté, jamais filtré)
+// ── État réel du canal WhatsApp (y compris déconnecté — jamais filtré) ──────
+
 function formatFrDate(iso: string, style: 'long' | 'short' = 'short'): string {
   return new Date(iso).toLocaleString('fr-FR', { dateStyle: style, timeStyle: 'short' });
 }
@@ -344,13 +345,7 @@ function formatFrDate(iso: string, style: 'long' | 'short' = 'short'): string {
 function WhatsappStatusBanner() {
   const { status, isLoading, error, refetch } = useWhatsappStatus();
 
-  if (isLoading) {
-    return (
-      <Card className="mt-6">
-        <p className="text-sm text-muted-foreground">Vérification de l’état du canal WhatsApp…</p>
-      </Card>
-    );
-  }
+  if (isLoading) return null;
 
   if (error && !status) {
     return (
@@ -376,13 +371,12 @@ function WhatsappStatusBanner() {
     return (
       <Card className="mt-6 border-amber-500/40 bg-amber-500/5">
         <div className="flex items-start gap-3">
-          <Unplug className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+          <Unplug className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
-            <p className="text-sm font-medium">Aucun numéro WhatsApp n’est connecté</p>
+            <p className="text-sm font-medium">Aucun numéro WhatsApp n’est connecté à Zernio</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Sans numéro connecté, aucun message ne peut arriver et vos automatisations resteront
-              silencieuses, même si elles sont actives. Connectez un numéro dans la page Paramètres,
-              puis revenez ici : l’état se met à jour tout seul.
+              Connectez un numéro dans la page Paramètres : sans lui, vos automatisations restent
+              silencieuses, même actives.
             </p>
           </div>
         </div>
@@ -394,16 +388,15 @@ function WhatsappStatusBanner() {
     return (
       <Card className="mt-6 border-emerald-500/30 bg-emerald-500/5">
         <div className="flex items-start gap-3">
-          <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-400" />
+          <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <div>
             <p className="text-sm font-medium">
               WhatsApp connecté
-              {status.displayName ? ` · ${status.displayName}` : ''}
+              {status.displayName ? ` — ${status.displayName}` : ''}
               {status.phone ? ` (${status.phone})` : ''}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Les messages entrants déclenchent vos automatisations : c’est l’état attendu, rien à
-              faire. En cas de doute, ouvrez les exécutions d’une automatisation ci-dessous.
+              Les messages entrants déclenchent vos automatisations : rien à faire.
             </p>
           </div>
         </div>
@@ -415,17 +408,17 @@ function WhatsappStatusBanner() {
   return (
     <Card className="mt-6 border-red-500/40 bg-red-500/5">
       <div className="flex items-start gap-3">
-        <Unplug className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+        <Unplug className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
         <div>
           <p className="text-sm font-medium">
             WhatsApp est déconnecté
-            {status.displayName ? ` · ${status.displayName}` : ''}
+            {status.displayName ? ` — ${status.displayName}` : ''}
             {status.phone ? ` (${status.phone})` : ''}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {when && <>Déconnecté le {when}. </>}
             {status.humanReason && <>{status.humanReason.charAt(0).toUpperCase() + status.humanReason.slice(1)}. </>}
-            Tant que le numéro n’est pas reconnecté, <span className="font-medium text-foreground">aucun message ne peut arriver : vos automatisations ne se déclencheront pas, même actives</span>. Reconnectez le numéro dans la page Paramètres, puis revenez sur cette page.
+            Tant que le numéro n’est pas reconnecté, <span className="font-medium text-foreground">vos automatisations ne se déclenchent pas</span>.
           </p>
         </div>
       </div>
@@ -433,46 +426,34 @@ function WhatsappStatusBanner() {
   );
 }
 
-// Transparence : quel modèle IA fait tourner l’agent client ?
+// ── Transparence : quel modèle IA fait tourner l’agent client ? ─────────────
+
 function AgentAiInfoCard() {
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-[var(--wa-deep)]" />
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#128C7E]" />
         <div className="min-w-0">
-          <p className="text-sm font-medium">L’IA de l’agent client : ce qu’il faut savoir</p>
+          <p className="text-sm font-medium">L’IA de l’agent client</p>
           <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
               <span>
-                L’agent utilise le <span className="font-medium text-foreground">modèle intégré de la plateforme</span> : aucun
-                modèle à choisir, aucune clé IA à fournir, il tourne pour vous, 24 h/24.
+                Tourne sur le <span className="font-medium text-foreground">modèle intégré de Zernio</span> :
+                aucune clé IA à fournir, 24 h/24.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
               <span>
-                À chaque message reçu, il reçoit l’historique de la conversation et vos informations
-                (offre, horaires, liens, FAQ), puis répond dans la langue du client.
+                Reçoit l’historique et vos infos (offre, FAQ), répond dans la langue du client et
+                transfère à votre équipe si besoin.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
-              <span>Il n’invente rien : s’il ne sait pas, il annonce qu’il va vérifier avec votre équipe.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#25D366]" />
               <span>
-                Si un client demande une vraie personne, ou si l’IA échoue, la conversation est
-                transférée à votre équipe dans la boîte de réception.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--wa)]" />
-              <span>
-                Pour vérifier qu’il fonctionne réellement : ouvrez « Exécutions » sur une
-                automatisation ci-dessous. Chaque passage est tracé (succès, transfert à
-                un humain, erreur avec sa raison exacte).
+                Chaque passage est tracé dans « Exécutions » (succès, transfert, erreur).
               </span>
             </li>
           </ul>
@@ -482,12 +463,13 @@ function AgentAiInfoCard() {
   );
 }
 
-// Exécutions réelles d’une automatisation (chargées à la demande)
+// ── Exécutions réelles d’une automatisation (chargées à la demande) ─────────
+
 const EXEC_STATUS_META: Record<string, { label: string; cls: string }> = {
-  completed: { label: 'Terminée', cls: 'text-emerald-700 dark:text-emerald-400' },
+  completed: { label: 'Terminée', cls: 'text-emerald-600 dark:text-emerald-400' },
   failed: { label: 'Erreur', cls: 'text-red-600 dark:text-red-400' },
-  exited: { label: 'Passée à un humain', cls: 'text-sky-700 dark:text-sky-400' },
-  running: { label: 'En cours', cls: 'text-amber-700 dark:text-amber-400' },
+  exited: { label: 'Passée à un humain', cls: 'text-sky-600 dark:text-sky-400' },
+  running: { label: 'En cours', cls: 'text-amber-600 dark:text-amber-400' },
   waiting: { label: 'Attend une réponse', cls: 'text-slate-500 dark:text-slate-400' },
 };
 
@@ -513,7 +495,7 @@ function WorkflowExecutionsList({ workflowId }: { workflowId: string }) {
     return (
       <p className="text-sm text-muted-foreground">
         Aucune exécution pour l’instant. La première apparaît dès qu’un message déclenche
-        l’automatisation, si WhatsApp est connecté et l’automatisation active.
+        l’automatisation — si WhatsApp est connecté et l’automatisation active.
       </p>
     );
   }
@@ -552,7 +534,8 @@ function ExecutionRow({ exec }: { exec: WorkflowExecution }) {
   );
 }
 
-// Carte d'une automatisation existante
+// ── Carte d'une automatisation existante ────────────────────────────────────
+
 function WorkflowCard({
   workflow,
   onDelete,
@@ -613,7 +596,7 @@ function WorkflowCard({
               size="sm"
               onClick={() => onTransition(isActive ? 'pause' : 'activate')}
               disabled={transitioning}
-              className="min-h-[44px] bg-[var(--wa)] text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
+              className="min-h-[44px] bg-[#25D366] text-white hover:bg-[#1fb857]"
             >
               {transitioning ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -662,7 +645,7 @@ function WorkflowCard({
       {showRuns && (
         <div className="mt-3 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-canvas)] p-3">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Exécutions réelles (traçabilité complète)
+            Exécutions réelles (tracées par Zernio)
           </p>
           <WorkflowExecutionsList workflowId={workflow.id} />
         </div>
@@ -671,7 +654,8 @@ function WorkflowCard({
   );
 }
 
-// Page
+// ── Page ────────────────────────────────────────────────────────────────────
+
 export default function FlowsPage() {
   const { workflows, isLoading, error, refetch } = useWorkflows();
   const { accounts, profiles } = useAccounts();
@@ -716,13 +700,13 @@ export default function FlowsPage() {
           </Link>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--wa)] text-[var(--wa-ink)]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366] text-white">
               <Bot className="h-5 w-5" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Automatisations</h1>
               <p className="text-sm text-muted-foreground">
-                Des agents qui répondent à vos contacts sur WhatsApp, 24 h/24, sans code.
+                Des agents qui répondent à vos contacts sur WhatsApp, 24 h/24 — sans code.
               </p>
             </div>
           </div>
@@ -744,7 +728,7 @@ export default function FlowsPage() {
           {error && !isLoading && (
             <Card className="mt-6">
               <div className="flex items-start gap-3">
-                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                 <div>
                   <p className="text-sm font-medium">Impossible de charger vos automatisations</p>
                   <p className="mt-1 text-sm text-muted-foreground">{error.message}</p>
@@ -759,12 +743,12 @@ export default function FlowsPage() {
             </Card>
           )}
 
-          {/* Modèles : créer en 2 minutes (toujours accessible, même quand la
-               liste ne charge pas : la création est indépendante) */}
+          {/* ── Modèles : créer en 2 minutes (toujours accessible, même
+                 quand la liste ne charge pas : la création est indépendante) ── */}
           <section className="mt-6">
                 <h2 className="text-base font-semibold">Démarrer en 2 minutes</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Choisissez un modèle, répondez à quelques questions, Kamtech s’occupe du reste.
+                  Choisissez un modèle, répondez à quelques questions, Zernio s’occupe du reste.
                 </p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   {WORKFLOW_TEMPLATES.map((template) => {
@@ -774,7 +758,7 @@ export default function FlowsPage() {
                         key={template.id}
                         type="button"
                         onClick={() => openWizard(template)}
-                        className="flex h-full flex-col rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-panel)] p-4 text-left transition-colors hover:border-[var(--wa)]/50"
+                        className="flex h-full flex-col rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-panel)] p-4 text-left transition-colors hover:border-[#25D366]/50"
                       >
                         <span
                           className={cn(
@@ -788,7 +772,7 @@ export default function FlowsPage() {
                         <span className="mt-1 flex-1 text-[13px] leading-snug text-muted-foreground">
                           {template.tagline}
                         </span>
-                        <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--wa-deep)]">
+                        <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#128C7E]">
                           <Sparkles className="h-3.5 w-3.5" /> Configurer
                         </span>
                       </button>
@@ -804,7 +788,7 @@ export default function FlowsPage() {
 
           {!error && (
             <>
-              {/* Liste des automatisations */}
+              {/* ── Liste des automatisations ─────────────────────────── */}
               <section className="mt-8">
                 <h2 className="text-base font-semibold">
                   Vos automatisations
@@ -817,7 +801,7 @@ export default function FlowsPage() {
                 {workflows.length === 0 ? (
                   <Card className="mt-3">
                     <p className="text-sm text-muted-foreground">
-                      Aucune automatisation pour l’instant. Choisissez un modèle ci-dessus : deux
+                      Aucune automatisation pour l’instant. Choisissez un modèle ci-dessus — deux
                       minutes suffisent, et vous pouvez tout mettre en pause à tout moment.
                     </p>
                   </Card>

@@ -103,20 +103,20 @@ export function BlockMenu({ conversation }: { conversation: Conversation }) {
         {blocked === null ? (
           <DropdownMenuItem disabled>
             <Ban className="size-4 opacity-50" />
-            Checking block status
+            Vérification du blocage
           </DropdownMenuItem>
         ) : (
           <>
             {blocked !== true && (
               <DropdownMenuItem variant="destructive" onClick={() => void setBlockState(true)}>
                 <Ban className="size-4" />
-                Block contact
+                Bloquer le contact
               </DropdownMenuItem>
             )}
             {blocked !== false && (
               <DropdownMenuItem onClick={() => void setBlockState(false)}>
                 <Undo2 className="size-4" />
-                Unblock contact
+                Débloquer le contact
               </DropdownMenuItem>
             )}
           </>

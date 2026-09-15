@@ -42,7 +42,7 @@ import {
 } from '@/hooks/useTeam';
 
 const ROLE_BADGE: Record<string, string> = {
-  owner: 'bg-[var(--wa)]/15 text-[var(--wa-deep)]',
+  owner: 'bg-[#25D366]/15 text-[#128C7E]',
   admin: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
   manager: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
   agent: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
@@ -192,7 +192,7 @@ export default function TeamPage() {
           </Link>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--wa)] text-[var(--wa-ink)]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366] text-white">
               <UsersRound className="h-5 w-5" />
             </div>
             <div>
@@ -216,7 +216,7 @@ export default function TeamPage() {
           {error && !isLoading && (
             <Card className="mt-6">
               <div className="flex items-start gap-3">
-                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+                <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                 <div>
                   <p className="text-sm font-medium">Impossible de charger l'équipe</p>
                   <p className="mt-1 text-sm text-muted-foreground">{error.message}</p>
@@ -233,9 +233,8 @@ export default function TeamPage() {
               <div className="flex items-start gap-3">
                 <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
                 <p className="text-sm text-muted-foreground">
-                  La gestion d'équipe nécessite une base de données configurée
-                  (variable <code className="rounded bg-muted px-1 py-0.5 text-xs">DATABASE_URL</code>).
-                  En mode local, chaque compte reste indépendant.
+                  La gestion d'équipe nécessite une base de données configurée. En mode local,
+                  chaque compte reste indépendant.
                 </p>
               </div>
             </Card>
@@ -245,7 +244,7 @@ export default function TeamPage() {
             <>
               <Card className="mt-6">
                 <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[var(--wa-deep)]" />
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#128C7E]" />
                   <div>
                     <p className="text-sm font-semibold">
                       Vous êtes {roleLabel(data.self.role)} de cet espace
@@ -263,10 +262,10 @@ export default function TeamPage() {
 
           {data && !isLocalMode && canManage && (
             <>
-              {/* Formulaire d'invitation */}
+              {/* ── Formulaire d'invitation ─────────────────────────── */}
               <Card className="mt-6">
                 <h2 className="flex items-center gap-2 text-base font-semibold">
-                  <UserPlus className="h-5 w-5 text-[var(--wa-deep)]" />
+                  <UserPlus className="h-5 w-5 text-[#128C7E]" />
                   Inviter un collaborateur
                 </h2>
                 <form onSubmit={submitInvite} className="mt-4 space-y-5">
@@ -282,7 +281,7 @@ export default function TeamPage() {
                       placeholder="prenom@exemple.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3.5 text-base outline-none focus:border-[var(--wa)]/60"
+                      className="h-12 w-full rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3.5 text-base outline-none focus:border-[#25D366]/60"
                     />
                     <p className="mt-2 text-xs text-muted-foreground">
                       Un lien magique personnel sera généré pour cette adresse.
@@ -304,14 +303,14 @@ export default function TeamPage() {
                             className={cn(
                               'flex min-h-[44px] items-start gap-3 rounded-xl border p-3 text-left transition',
                               selected
-                                ? 'border-[var(--wa)] bg-[var(--wa)]/10'
+                                ? 'border-[#25D366] bg-[#25D366]/10'
                                 : 'border-[var(--chat-border)] hover:bg-[var(--chat-hover)]',
                             )}
                           >
                             <span
                               className={cn(
                                 'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2',
-                                selected ? 'border-[var(--wa)] bg-[var(--wa)] text-[var(--wa-ink)]' : 'border-muted-foreground/40',
+                                selected ? 'border-[#25D366] bg-[#25D366] text-white' : 'border-muted-foreground/40',
                               )}
                             >
                               {selected && <Check className="h-3 w-3" />}
@@ -338,7 +337,7 @@ export default function TeamPage() {
                           className={cn(
                             'min-h-[40px] rounded-lg px-1 text-xs font-medium transition sm:text-sm',
                             expiresInDays === opt.days
-                              ? 'bg-[var(--wa)] text-[var(--wa-ink)]'
+                              ? 'bg-[#25D366] text-[#062c16]'
                               : 'text-muted-foreground hover:bg-[var(--chat-hover)]',
                           )}
                         >
@@ -377,7 +376,7 @@ export default function TeamPage() {
                               type="checkbox"
                               checked={permissions.includes(perm)}
                               onChange={() => togglePermission(perm)}
-                              className="h-4 w-4 shrink-0 accent-[var(--wa)]"
+                              className="h-4 w-4 shrink-0 accent-[#25D366]"
                             />
                             {PERMISSION_LABELS[perm]}
                           </label>
@@ -389,7 +388,7 @@ export default function TeamPage() {
                   <button
                     type="submit"
                     disabled={inviteMutation.isPending || !email.trim()}
-                    className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--wa)] font-semibold text-[var(--wa-ink)] hover:bg-[var(--wa-hover)] disabled:opacity-50"
+                    className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] font-semibold text-[#062c16] hover:bg-[#1fba59] disabled:opacity-50"
                   >
                     {inviteMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -401,8 +400,8 @@ export default function TeamPage() {
                 </form>
 
                 {created && (
-                  <div className="mt-4 rounded-xl border border-[var(--wa)]/40 bg-[var(--wa)]/5 p-4">
-                    <p className="text-sm font-semibold text-[var(--wa-deep)]">
+                  <div className="mt-4 rounded-xl border border-[#25D366]/40 bg-[#25D366]/5 p-4">
+                    <p className="text-sm font-semibold text-[#128C7E]">
                       Lien créé pour {created.invitation.email} ({created.invitation.roleLabel})
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -419,7 +418,7 @@ export default function TeamPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => copyLink(created.inviteUrl)}
-                          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--wa)] px-3 text-sm font-medium text-[var(--wa-ink)] hover:bg-[var(--wa-hover)] sm:flex-none"
+                          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 text-sm font-medium text-[#062c16] hover:bg-[#1fba59] sm:flex-none"
                         >
                           <Copy className="h-4 w-4" /> Copier
                         </button>
@@ -435,13 +434,13 @@ export default function TeamPage() {
                       onClick={() => setCreated(null)}
                       className="mt-2 min-h-[44px] text-xs text-muted-foreground underline-offset-2 hover:underline"
                     >
-                      J'ai transmis le lien (masquer)
+                      J'ai transmis le lien — masquer
                     </button>
                   </div>
                 )}
               </Card>
 
-              {/* Invitations en attente */}
+              {/* ── Invitations en attente ──────────────────────────── */}
               {invitations.length > 0 && (
                 <Card className="mt-4">
                   <h2 className="text-base font-semibold">Invitations en attente ({invitations.length})</h2>
@@ -450,7 +449,7 @@ export default function TeamPage() {
                       <li key={inv.id} className="flex flex-wrap items-center gap-2 py-3">
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{inv.email}</p>
-                          <p className={cn('text-xs', inv.expired ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>
+                          <p className={cn('text-xs', inv.expired ? 'text-red-500' : 'text-muted-foreground')}>
                             {roleLabel(inv.role)} · {formatExpiry(inv.expiresAt)}
                           </p>
                         </div>
@@ -475,7 +474,7 @@ export default function TeamPage() {
                 </Card>
               )}
 
-              {/* Collaborateurs */}
+              {/* ── Collaborateurs ──────────────────────────────────── */}
               <Card className="mt-4">
                 <h2 className="text-base font-semibold">Collaborateurs ({members.length})</h2>
                 <ul className="mt-3 divide-y divide-[var(--chat-border)]">
@@ -511,7 +510,7 @@ export default function TeamPage() {
                               value={member.role}
                               onChange={(e) => changeRole(member, e.target.value)}
                               disabled={updateMutation.isPending}
-                              className="h-11 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2.5 text-sm outline-none focus:border-[var(--wa)]/60"
+                              className="h-11 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)] px-2.5 text-sm outline-none focus:border-[#25D366]/60"
                             >
                               {TEAM_ROLES.map((r) => (
                                 <option key={r} value={r}>

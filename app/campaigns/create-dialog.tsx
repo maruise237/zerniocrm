@@ -267,7 +267,7 @@ export function CampaignCreateDialog({
         });
       }
 
-      // Ajout des destinataires choisis (numéros, contacts, tags).
+      // Step 2 : ajout des destinataires choisis (numéros, contacts, tags).
       const problems: string[] = [];
       let totalAdded = 0;
       const addRecipients = async (body: Record<string, unknown>, source: string) => {
@@ -291,13 +291,13 @@ export function CampaignCreateDialog({
 
       if (problems.length > 0) {
         toast.warning(
-          `Campagne créée, mais l’ajout de destinataires a échoué pour : ${problems.join(', ')}. Réessayez depuis la campagne.`,
+          `Campagne créée, mais l’ajout de destinataires a échoué pour : ${problems.join(', ')} — réessayez depuis la campagne.`,
         );
       } else {
         toast.success(
           totalAdded > 0
-            ? `Campagne « ${name.trim()} » créée : ${totalAdded} destinataire(s) ajouté(s).`
-            : `Campagne « ${name.trim()} » créée en brouillon : ajoutez des destinataires depuis la campagne.`,
+            ? `Campagne « ${name.trim()} » créée — ${totalAdded} destinataire(s) ajouté(s).`
+            : `Campagne « ${name.trim()} » créée en brouillon — ajoutez des destinataires depuis la campagne.`,
         );
       }
       onCreated(broadcast);
@@ -325,7 +325,7 @@ export function CampaignCreateDialog({
               id="cmp-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ex. Relance panier abandonné, Septembre"
+              placeholder="ex. Relance panier abandonné — Septembre"
               className="text-sm"
             />
           </div>
@@ -427,7 +427,7 @@ export function CampaignCreateDialog({
                   /^\{\{\d+\}\}$/.test(part) ? (
                     <span
                       key={i}
-                      className="rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-emerald-700 dark:text-emerald-400"
+                      className="rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-emerald-600 dark:text-emerald-400"
                     >
                       {part}
                     </span>
@@ -441,7 +441,7 @@ export function CampaignCreateDialog({
 
           {placeholders.length > 0 && selectedTemplate && (
             <div className="space-y-2.5 rounded-xl border border-sky-500/20 bg-sky-500/5 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-medium text-sky-700 dark:text-sky-400">
+              <p className="flex items-center gap-1.5 text-xs font-medium text-sky-600 dark:text-sky-400">
                 <Megaphone className="size-3.5" /> Personnalisation des variables
               </p>
               {placeholders.map((n) => {
@@ -485,8 +485,7 @@ export function CampaignCreateDialog({
                 );
               })}
               <p className="text-[11px] text-muted-foreground">
-                « Nom du contact » est remplacé individuellement au moment de l’envoi ; la valeur fixe est
-                identique pour tous les destinataires.
+                « Nom du contact » est remplacé pour chaque destinataire ; la valeur fixe est la même pour tous.
               </p>
 
               <div className="rounded-lg border border-[var(--chat-border)] bg-[var(--chat-input)]/50 p-2.5">
@@ -511,7 +510,7 @@ export function CampaignCreateDialog({
                                 ? 'ACME SARL'
                                 : part;
                     return (
-                      <span key={i} className="rounded bg-emerald-500/15 px-1 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">
+                      <span key={i} className="rounded bg-emerald-500/15 px-1 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
                         {sample}
                       </span>
                     );
@@ -520,11 +519,8 @@ export function CampaignCreateDialog({
               </div>
 
               {placeholders.some((n) => (mapping[n]?.field ?? 'custom') !== 'custom') && (
-                <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
-                  Les champs « Nom », « Entreprise », « E-mail »… sont lus sur la fiche contact de
-                  chaque destinataire au moment de l’envoi : ajoutez vos destinataires comme contacts
-                  (page Contacts / import) pour garantir la personnalisation. À défaut, préférez « Valeur
-                  fixe ».
+                <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                  ⚠️ Vérifiez que vos destinataires existent dans Contacts (sinon préférez « Valeur fixe »).
                 </p>
               )}
             </div>
@@ -534,7 +530,7 @@ export function CampaignCreateDialog({
             <div className="flex items-center justify-between gap-2">
               <Label>Destinataires (optionnel)</Label>
               {(phones.length > 0 || selectedContactIds.length > 0 || selectedTags.length > 0) && (
-                <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                   {[phones.length > 0 ? `${phones.length} numéro(s)` : '', selectedContactIds.length > 0 ? `${selectedContactIds.length} contact(s)` : '', selectedTags.length > 0 ? `${selectedTags.length} tag(s)` : '']
                     .filter(Boolean)
                     .join(' · ')}
@@ -557,7 +553,7 @@ export function CampaignCreateDialog({
                   className={cn(
                     'rounded-lg border px-3 py-2 text-xs font-medium transition',
                     recipientTab === value
-                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'border-[var(--chat-border)] text-muted-foreground',
                   )}
                 >
@@ -599,8 +595,7 @@ export function CampaignCreateDialog({
                   </div>
                 ) : contactResults.length === 0 ? (
                   <p className="py-6 text-center text-xs text-muted-foreground">
-                    Aucun contact sur ce compte : importez des contacts (page Contacts) ou saisissez des
-                    numéros.
+                    Aucun contact : importez-en depuis la page Contacts ou saisissez des numéros.
                   </p>
                 ) : (
                   <ul className="max-h-56 space-y-1 overflow-y-auto">
@@ -640,7 +635,7 @@ export function CampaignCreateDialog({
                               </span>
                             </span>
                             {(contact.tags?.length ?? 0) > 0 && (
-                              <span className="shrink-0 text-[10px] text-emerald-700 dark:text-emerald-400">
+                              <span className="shrink-0 text-[10px] text-emerald-600 dark:text-emerald-400">
                                 {(contact.tags ?? []).slice(0, 2).map((t) => `#${t}`).join(' ')}
                               </span>
                             )}
@@ -651,8 +646,7 @@ export function CampaignCreateDialog({
                   </ul>
                 )}
                 <p className="text-[11px] text-muted-foreground">
-                  Cochez les contacts existants à ajouter à la campagne (100 premiers résultats, affinez
-                  avec la recherche).
+                  Cochez les contacts à ajouter (100 premiers ; affinez avec la recherche).
                 </p>
               </div>
             )}
@@ -661,8 +655,7 @@ export function CampaignCreateDialog({
               <div className="space-y-2 rounded-xl border border-[var(--chat-border)] p-3">
                 {knownTags.length === 0 ? (
                   <p className="py-4 text-center text-xs text-muted-foreground">
-                    Aucun tag connu sur ce compte : créez des tags dans la page Contacts (édition d’un
-                    contact ou import).
+                    Aucun tag connu : créez-en dans la page Contacts (édition d’un contact ou import).
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
@@ -676,7 +669,7 @@ export function CampaignCreateDialog({
                           className={cn(
                             'rounded-full border px-3 py-1.5 text-xs font-medium transition',
                             active
-                              ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                              ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                               : 'border-[var(--chat-border)] text-muted-foreground hover:bg-[var(--chat-hover)]',
                           )}
                         >
@@ -704,8 +697,7 @@ export function CampaignCreateDialog({
                   </Button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Tous les contacts portant l’un des tags sélectionnés seront ajoutés comme destinataires
-                  (doublons ignorés). Les tags sont enregistrés comme segment de la campagne.
+                  Tous les contacts portant un tag sélectionné seront ajoutés (doublons ignorés).
                 </p>
               </div>
             )}

@@ -178,7 +178,7 @@ export function LocationContactDrawer({
               </div>
             </div>
             <div className="space-y-1">
-              <Label>Name (optional)</Label>
+              <Label>Nom (optionnel)</Label>
               <Input
                 value={locName}
                 onChange={(e) => setLocName(e.target.value)}
@@ -186,7 +186,7 @@ export function LocationContactDrawer({
               />
             </div>
             <div className="space-y-1">
-              <Label>Address (optional)</Label>
+              <Label>Adresse (optionnel)</Label>
               <Input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}

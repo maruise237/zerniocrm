@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
-import { TEMPLATE_LANGUAGES, extractPlaceholders, variableAtEdge } from '@/lib/whatsapp/template-meta';
+import { TEMPLATE_LANGUAGES, extractPlaceholders } from '@/lib/whatsapp/template-meta';
 import type { ZernioTemplateComponent, ZernioTemplateComponentButton } from '@/lib/types';
 
 const NAME_RE = /^[a-z][a-z0-9_]*$/;
@@ -105,9 +105,6 @@ export function TemplateCreateDialog({
     () => bodyPlaceholders.every((n) => (examples[n] ?? '').trim().length > 0),
     [bodyPlaceholders, examples],
   );
-  // Meta refuse un corps qui commence/termine par une variable (la ponctuation
-  // seule ne compte pas) — interdiction immédiate + message explicite.
-  const bodyEdgeIssue = useMemo(() => variableAtEdge(bodyText), [bodyText]);
 
   const headerMediaKind =
     headerType === 'image' || headerType === 'video' || headerType === 'document' ? headerType : null;
@@ -116,7 +113,6 @@ export function TemplateCreateDialog({
     NAME_RE.test(name.trim()) &&
     category.length > 0 &&
     bodyText.trim().length > 0 &&
-    bodyEdgeIssue === null &&
     (bodyPlaceholders.length === 0 || placeholderOk) &&
     (!headerMediaKind || (headerMediaUrl.trim().length > 0 && !uploadingMedia)) &&
     (category !== 'AUTHENTICATION' || !headerMediaKind) &&
@@ -150,7 +146,7 @@ export function TemplateCreateDialog({
         setHeaderMediaUrl(res.url);
         setHeaderMediaName(file.name);
       } else {
-        setErrors("L’upload du média a échoué, réessayez.");
+        setErrors("L’upload du média a échoué — réessayez.");
       }
     } catch (err) {
       setErrors(err instanceof Error ? err.message : "L’upload du média a échoué.");
@@ -161,34 +157,31 @@ export function TemplateCreateDialog({
 
   function buildComponents(): ZernioTemplateComponent[] {
     const components: ZernioTemplateComponent[] = [];
-    // Types de composants en MINUSCULES : l'API Zernio valide un discriminateur
-    // zod en minuscules (« Invalid discriminator value. Expected 'header' |
-    // 'body' | 'footer' | 'buttons'… » pour 'BODY' — vérifié en prod).
     if (headerType === 'text' && headerText.trim()) {
-      components.push({ type: 'header', format: 'text', text: headerText.trim() });
+      components.push({ type: 'HEADER', format: 'TEXT', text: headerText.trim() });
     }
     if (headerMediaKind && headerMediaUrl.trim()) {
       components.push({
-        type: 'header',
-        format: headerMediaKind,
+        type: 'HEADER',
+        format: headerMediaKind.toUpperCase(),
         example: { header_handle: [headerMediaUrl.trim()] },
       });
     }
-    const bodyComponent: ZernioTemplateComponent = { type: 'body', text: bodyText.trim() };
+    const bodyComponent: ZernioTemplateComponent = { type: 'BODY', text: bodyText.trim() };
     if (bodyPlaceholders.length > 0) {
       bodyComponent.example = {
         body_text: [bodyPlaceholders.map((n) => (examples[n] ?? '').trim())],
       };
     }
     components.push(bodyComponent);
-    if (footerText.trim()) components.push({ type: 'footer', text: footerText.trim() });
+    if (footerText.trim()) components.push({ type: 'FOOTER', text: footerText.trim() });
     if (buttons.length > 0) {
       const clean: ZernioTemplateComponentButton[] = buttons
         .filter((b) => b.text.trim())
         .map((b) => {
           if (b.type === 'URL') {
             return {
-              type: 'url',
+              type: 'URL',
               text: b.text.trim().slice(0, 25),
               url: b.url.trim(),
               ...(b.sample.trim() ? { example: [b.sample.trim()] } : {}),
@@ -196,28 +189,20 @@ export function TemplateCreateDialog({
           }
           if (b.type === 'PHONE_NUMBER') {
             return {
-              type: 'phone_number',
+              type: 'PHONE_NUMBER',
               text: b.text.trim().slice(0, 25),
               phone_number: b.phone.trim(),
             } as ZernioTemplateComponentButton;
           }
-          return { type: 'quick_reply', text: b.text.trim().slice(0, MAX_QUICK_REPLY) };
+          return { type: 'QUICK_REPLY', text: b.text.trim().slice(0, MAX_QUICK_REPLY) };
         });
-      components.push({ type: 'buttons', buttons: clean });
+      components.push({ type: 'BUTTONS', buttons: clean });
     }
     return components;
   }
 
   async function submit() {
     if (!canSubmit || creating) return;
-    if (bodyEdgeIssue) {
-      setErrors(
-        bodyEdgeIssue === 'start'
-          ? 'Meta refuse un modèle qui COMMENCE par une variable : ajoutez du texte avant {{1}} (la ponctuation seule ne compte pas).'
-          : 'Meta refuse un modèle qui TERMINE par une variable : ajoutez du texte après la dernière variable (ex. « …à {{3}} en salle d’attente. », la ponctuation seule ne compte pas).',
-      );
-      return;
-    }
     if (bodyText.trim().length > MAX_BODY) {
       setErrors(`Le corps du message dépasse ${MAX_BODY} caractères.`);
       return;
@@ -310,13 +295,13 @@ export function TemplateCreateDialog({
                     setCategory(c);
                     if (c === 'AUTHENTICATION' && headerMediaKind) {
                       setHeaderType('text');
-                      setErrors('Authentification : Meta n’autorise pas d’en-tête média, passage en en-tête texte.');
+                      setErrors('Authentification : Meta n’autorise pas d’en-tête média — passage en en-tête texte.');
                     }
                   }}
                   className={cn(
-                    'rounded-lg border px-3 py-2 text-xs font-medium transition',
+                    'rounded-lg border px-2 py-2 text-[11px] font-medium transition sm:px-3 sm:text-xs',
                     category === c
-                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                      ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'border-[var(--chat-border)] text-muted-foreground hover:bg-[var(--chat-hover)]',
                   )}
                 >
@@ -335,7 +320,7 @@ export function TemplateCreateDialog({
                 const next = e.target.value as HeaderKind;
                 if (category === 'AUTHENTICATION' && next !== 'none' && next !== 'text') {
                   setHeaderType('text');
-                  setErrors('Authentification : Meta n’autorise pas d’en-tête média, choix remis sur « Texte ».');
+                  setErrors('Authentification : Meta n’autorise pas d’en-tête média — choix remis sur « Texte ».');
                   return;
                 }
                 setHeaderType(next);
@@ -374,7 +359,7 @@ export function TemplateCreateDialog({
                     {uploadingMedia ? 'Upload…' : headerMediaName ? 'Remplacer le fichier' : 'Importer le fichier'}
                   </button>
                   <span className="min-w-0 flex-1 truncate text-right text-[11px] text-muted-foreground">
-                    {headerMediaName || (headerMediaUrl ? 'URL fournie' : 'JPEG/PNG, MP4 ou PDF (max 25 Mo)')}
+                    {headerMediaName || (headerMediaUrl ? 'URL fournie' : 'JPEG/PNG, MP4 ou PDF — max 25 Mo')}
                   </span>
                 </div>
                 <input
@@ -411,9 +396,8 @@ export function TemplateCreateDialog({
                     className="font-mono text-xs"
                   />
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    Le fichier importé est hébergé temporairement (7 jours) et sert d’échantillon à la revue
-                    Meta. Pour un média déjà en ligne, collez son URL publique ou un handle Meta obtenu par
-                    Resumable Upload pour un usage avancé.
+                    Le fichier sert d’échantillon à la revue Meta. Pour un média déjà en ligne,
+                    collez directement son URL publique.
                   </p>
                 </div>
               </div>
@@ -434,18 +418,11 @@ export function TemplateCreateDialog({
               Variables : <span className="font-mono">{"{{1}}"}, {"{{2}}"}</span>… numérotées dans l’ordre.
               {bodyText.length}/{MAX_BODY}
             </p>
-            {bodyEdgeIssue && (
-              <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400">
-                {bodyEdgeIssue === 'start'
-                  ? 'Meta refuse un modèle qui commence par une variable : ajoutez du texte avant {{1}}.'
-                  : 'Meta refuse un modèle qui se termine par une variable : ajoutez du texte après la dernière variable (la ponctuation seule ne compte pas).'}
-              </p>
-            )}
           </div>
 
           {bodyPlaceholders.length > 0 && (
             <div className="space-y-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
-              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
                 Exemples exigés par Meta pour chaque variable
               </p>
               {bodyPlaceholders.map((n) => (
@@ -577,7 +554,7 @@ export function TemplateCreateDialog({
             )}
           </div>
 
-          {errors && <p className="text-xs text-red-600 dark:text-red-400">{errors}</p>}
+          {errors && <p className="text-xs text-red-500">{errors}</p>}
         </div>
 
         <DialogFooter>
