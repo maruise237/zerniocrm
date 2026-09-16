@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import { isWhatsApp, supportsAttachments, supportsReply, supportsTyping } from '@/lib/capabilities';
 import { messagePreviewText } from '@/lib/format';
+import { AttachmentTypeIcon } from '@/components/thread/attachment-type-icon';
 import { isWhatsAppOutside24h, makeOptimisticMessage } from '@/lib/optimistic';
 import { whatsappSendErrorFr } from '@/lib/whatsapp/send-errors';
 import { useTemplateComposer } from '@/hooks/useTemplateComposer';
@@ -506,6 +507,12 @@ export function Composer({
                 : conversation.participantName || replyingTo.senderName || 'ce contact'}
             </div>
             <div className="truncate text-xs text-muted-foreground">
+              {replyingTo.attachments?.[0] && (
+                <AttachmentTypeIcon
+                  type={replyingTo.attachments[0].type}
+                  className="mr-1 inline size-3.5 align-[-2px]"
+                />
+              )}
               {messagePreviewText(replyingTo)}
             </div>
           </div>

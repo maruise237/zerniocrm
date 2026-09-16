@@ -111,7 +111,7 @@ export function LocationContactDrawer({
       };
       onSend({
         body: { location },
-        preview: `📍 ${locName.trim() || 'Location'}`,
+        preview: `Localisation : ${locName.trim() || 'non précisée'}`,
         optimisticMeta: { location },
       });
       return;
@@ -125,7 +125,7 @@ export function LocationContactDrawer({
     ];
     onSend({
       body: { contacts },
-      preview: `👤 ${name}`,
+      preview: `Contact : ${name}`,
       optimisticMeta: { contacts },
     });
   };

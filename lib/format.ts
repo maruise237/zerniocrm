@@ -29,10 +29,10 @@ export function messagePreviewText(m: Pick<Message, 'message' | 'attachments'>):
   if (text) return text;
   const first = m.attachments?.[0];
   if (first) {
-    if (first.type === 'audio') return '🎤 Voice message';
-    if (first.type === 'image') return '📷 Photo';
-    if (first.type === 'video') return '🎥 Video';
-    return '📎 Attachment';
+    if (first.type === 'audio') return 'Voice message';
+    if (first.type === 'image') return 'Photo';
+    if (first.type === 'video') return 'Video';
+    return 'Attachment';
   }
   return 'Message';
 }

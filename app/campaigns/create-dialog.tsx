@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Loader2, Megaphone, Plus, Search } from 'lucide-react';
+import { Check, Loader2, Megaphone, Plus, Search, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -519,8 +519,9 @@ export function CampaignCreateDialog({
               </div>
 
               {placeholders.some((n) => (mapping[n]?.field ?? 'custom') !== 'custom') && (
-                <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
-                  ⚠️ Vérifiez que vos destinataires existent dans Contacts (sinon préférez « Valeur fixe »).
+                <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                  <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                  <span>Vérifiez que vos destinataires existent dans Contacts (sinon préférez « Valeur fixe »).</span>
                 </p>
               )}
             </div>

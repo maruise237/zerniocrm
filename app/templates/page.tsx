@@ -8,6 +8,7 @@ import {
   Clock,
   Eye,
   FileText,
+  ImageIcon,
   LayoutTemplate,
   Loader2,
   Plus,
@@ -82,8 +83,8 @@ function ComponentPreview({ template }: { template: ZernioTemplate }) {
           <p className="mb-1.5 truncate text-[11px] font-medium text-muted-foreground">{header.text}</p>
         )}
         {header?.format && header.format !== 'TEXT' && (
-          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
-            🖼 En-tête {HEADER_FORMAT_LABELS[header.format] ?? header.format.toLowerCase()}
+          <p className="mb-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+            <ImageIcon className="size-3.5 shrink-0" /> En-tête {HEADER_FORMAT_LABELS[header.format] ?? header.format.toLowerCase()}
           </p>
         )}
         {body?.text ? (

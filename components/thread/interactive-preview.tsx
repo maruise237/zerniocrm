@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ExternalLink, LayoutGrid, MousePointerClick, Phone } from 'lucide-react';
+import { ChevronDown, ExternalLink, LayoutGrid, MapPin, MousePointerClick, Phone } from 'lucide-react';
 import type { WaInteractive } from '@/lib/message-metadata';
 
 // Faux-button styling: a bordered pill that reads as a tappable control
@@ -68,7 +68,12 @@ export function InteractivePreview({ meta }: { meta: WaInteractive }) {
   }
 
   if (meta.kind === 'location_request') {
-    return <div className={`${CHIP} mt-2`}>📍 Location requested</div>;
+    return (
+      <div className={`${CHIP} mt-2`}>
+        <MapPin className="size-3.5" />
+        Location requested
+      </div>
+    );
   }
 
   if (meta.kind === 'voice_call') {

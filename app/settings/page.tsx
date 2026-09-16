@@ -145,7 +145,7 @@ export default function SettingsPage() {
                 aria-label="Fuseau horaire"
                 className="h-11 flex-1 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-input)] px-3 text-sm outline-none"
               >
-                <option value="__auto__">🛰 Détection automatique — {detectedTz}</option>
+                <option value="__auto__">Détection automatique — {detectedTz}</option>
                 {!TIMEZONE_OPTIONS.includes(detectedTz) && (
                   <option value={detectedTz}>{detectedTz} (détecté)</option>
                 )}

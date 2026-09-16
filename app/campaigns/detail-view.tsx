@@ -9,6 +9,7 @@ import {
   Code2,
   Copy,
   FileUp,
+  Info,
   Loader2,
   MessageSquareText,
   Pencil,
@@ -1203,12 +1204,15 @@ export function CampaignDetail({
               {broadcast.completedAt && ` · terminée le ${formatDate(broadcast.completedAt)}`}
             </p>
             {isDirectDone && directResult && (
-              <p className="mt-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                ✓ Envoyé en direct le {formatDate(directResult.at)} — {directResult.sent} envoyé(s)
-                {directResult.failed > 0 ? `, ${directResult.failed} échec(s)` : ''}
-                {hasDirectTracking
-                  ? ' · Statuts réels suivis ci-dessous.'
-                  : ' · Statuts détaillés dans quelques instants.'}
+              <p className="mt-2 flex items-start gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                <Check className="mt-0.5 size-3.5 shrink-0" />
+                <span>
+                  Envoyé en direct le {formatDate(directResult.at)} — {directResult.sent} envoyé(s)
+                  {directResult.failed > 0 ? `, ${directResult.failed} échec(s)` : ''}
+                  {hasDirectTracking
+                    ? ' · Statuts réels suivis ci-dessous.'
+                    : ' · Statuts détaillés dans quelques instants.'}
+                </span>
               </p>
             )}
             {broadcast.status === 'failed' && failureReason && (
@@ -1231,8 +1235,12 @@ export function CampaignDetail({
         </div>
 
         {hasVars && isDraft && (
-          <p className="mt-3 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
-            ℹ️ Campagne personnalisée : chaque destinataire reçoit ses propres valeurs, envoyées en direct et suivies individuellement.
+          <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-600 dark:text-sky-400">
+            <Info className="mt-0.5 size-3.5 shrink-0" />
+            <span>
+              Campagne personnalisée : chaque destinataire reçoit ses propres valeurs, envoyées en direct et suivies
+              individuellement.
+            </span>
           </p>
         )}
 

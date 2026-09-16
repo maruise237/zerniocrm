@@ -46,24 +46,24 @@ describe('messagePreviewText', () => {
   });
 
   it('audio attachment -> voice message', () => {
-    expect(messagePreviewText({ message: '', attachments: [{ type: 'audio' }] })).toBe('🎤 Voice message');
+    expect(messagePreviewText({ message: '', attachments: [{ type: 'audio' }] })).toBe('Voice message');
   });
 
   it('image attachment -> photo', () => {
-    expect(messagePreviewText({ message: '   ', attachments: [{ type: 'image' }] })).toBe('📷 Photo');
+    expect(messagePreviewText({ message: '   ', attachments: [{ type: 'image' }] })).toBe('Photo');
   });
 
   it('video attachment -> video', () => {
-    expect(messagePreviewText({ message: '', attachments: [{ type: 'video' }] })).toBe('🎥 Video');
+    expect(messagePreviewText({ message: '', attachments: [{ type: 'video' }] })).toBe('Video');
   });
 
   it('other attachment -> generic attachment', () => {
-    expect(messagePreviewText({ message: '', attachments: [{ type: 'document' }] })).toBe('📎 Attachment');
+    expect(messagePreviewText({ message: '', attachments: [{ type: 'document' }] })).toBe('Attachment');
   });
 
   it('only first attachment matters', () => {
     expect(messagePreviewText({ message: '', attachments: [{ type: 'audio' }, { type: 'image' }] })).toBe(
-      '🎤 Voice message'
+      'Voice message'
     );
   });
 

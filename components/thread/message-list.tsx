@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -204,7 +204,10 @@ export function MessageList({
                   ) : isCallEvent(msg.metadata) ? (
                     // Call-event row (WhatsApp call.received / call.ended):
                     // a centered system pill, not a chat bubble.
-                    <SystemPill className="my-2">{msg.message || '📞 Appel'}</SystemPill>
+                    <SystemPill className="my-2">
+                      <Phone className="mr-1 size-3" aria-hidden="true" />
+                      {msg.message || 'Appel'}
+                    </SystemPill>
                   ) : (
                     <MessageBubble
                       msg={msg}

@@ -18,6 +18,7 @@ import { isOptimisticId } from '@/lib/optimistic';
 import { cn } from '@/lib/utils';
 import type { Conversation, Message } from '@/lib/types';
 import { AttachmentView } from './attachment';
+import { AttachmentTypeIcon } from './attachment-type-icon';
 import { DeliveryStatusIcon } from './delivery-status-icon';
 import { EditedLabel } from './edited-label';
 import { InteractivePreview } from './interactive-preview';
@@ -234,8 +235,13 @@ export const MessageBubble = memo(function MessageBubble({
                     : conversation.participantName || quoted.senderName || 'Message'
                   : 'Message'}
               </span>
-              <span className="block truncate opacity-70">
-                {quoted ? messagePreviewText(quoted) : "Message d'origine"}
+              <span className="flex min-w-0 items-center gap-1 opacity-70">
+                {quoted?.attachments?.[0] && (
+                  <AttachmentTypeIcon type={quoted.attachments[0].type} className="size-3 shrink-0" />
+                )}
+                <span className="min-w-0 flex-1 truncate">
+                  {quoted ? messagePreviewText(quoted) : "Message d'origine"}
+                </span>
               </span>
             </span>
           </button>
