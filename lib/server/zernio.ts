@@ -198,22 +198,28 @@ export async function proxy(opts: {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   query?: string[];
   jsonBody?: boolean;
+  /** Corps JSON déjà lu (et éventuellement transformé) côté route — prioritaire sur req. */
+  body?: unknown;
 }): Promise<Response> {
-  const { req, path, method = 'GET', query = [], jsonBody = false } = opts;
+  const { req, path, method = 'GET', query = [], jsonBody = false, body: providedBody } = opts;
   const resolved = await resolveUserKey();
   if (!resolved.ok) return resolved.response;
   const init: RequestInit = { method };
-  if (jsonBody) {
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return Response.json(
-        { error: 'Invalid JSON body', code: 'invalid_field_value' },
-        { status: 400 },
-      );
+  if (jsonBody || providedBody !== undefined) {
+    let payload: unknown;
+    if (providedBody !== undefined) {
+      payload = providedBody;
+    } else {
+      try {
+        payload = await req.json();
+      } catch {
+        return Response.json(
+          { error: 'Invalid JSON body', code: 'invalid_field_value' },
+          { status: 400 },
+        );
+      }
     }
-    init.body = JSON.stringify(body);
+    init.body = JSON.stringify(payload);
     init.headers = { 'content-type': 'application/json' };
   }
   const upstream = await zernioFetch(`${path}${forwardQuery(req, query)}`, init, resolved.apiKey);
