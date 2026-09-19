@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Check,
@@ -12,6 +13,8 @@ import {
   EyeOff,
   Globe,
   KeyRound,
+  Loader2,
+  LogOut,
   MessageCircle,
   Moon,
   Save,
@@ -20,6 +23,8 @@ import {
   Webhook,
 } from 'lucide-react';
 import { BottomNav, DesktopNav } from '@/components/app-navigation';
+import { authClient } from '@/lib/auth/client';
+import { toast } from 'sonner';
 import {
   TIMEZONE_OPTIONS,
   detectTimezone,
@@ -30,6 +35,8 @@ import {
 } from '@/lib/timezone';
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookReady, setWebhookReady] = useState(false);
@@ -108,6 +115,25 @@ export default function SettingsPage() {
     window.setTimeout(() => setSaved(false), 2200);
   }
 
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      const { error } = await authClient.signOut();
+      if (error) {
+        toast.error('Impossible de vous déconnecter. Réessayez.');
+        setSigningOut(false);
+        return;
+      }
+      toast.success('Vous êtes déconnecté');
+      router.replace('/auth/sign-in');
+      router.refresh();
+    } catch {
+      toast.error('Impossible de vous déconnecter. Vérifiez votre connexion.');
+      setSigningOut(false);
+    }
+  }
+
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-[var(--chat-canvas)]">
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -173,6 +199,31 @@ export default function SettingsPage() {
         </section>
 
         <section className="mt-6 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-5"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500"><ShieldCheck className="h-5 w-5" /></div><h3 className="mt-4 text-sm font-semibold">Données isolées</h3><p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Chaque compte a son propre webhook et ses propres messages.</p></div><div className="rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-5"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500"><MessageCircle className="h-5 w-5" /></div><h3 className="mt-4 text-sm font-semibold">WhatsApp uniquement</h3><p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Une inbox directe, rapide et lisible.</p></div></section>
+
+        <section className="mt-6 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                <LogOut className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold">Déconnexion</h2>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  Fermer votre session ZernioCRM sur cet appareil. Vous pourrez vous reconnecter à tout moment.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={signOut}
+              disabled={signingOut}
+              aria-busy={signingOut}
+              className="touch-target flex shrink-0 items-center justify-center gap-2 rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-44"
+            >
+              {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+              {signingOut ? 'Déconnexion…' : 'Se déconnecter'}
+            </button>
+          </div>
+        </section>
 
         <footer className="mt-8 flex flex-col items-center justify-center gap-1 pb-5 text-xs text-muted-foreground"><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> <span className="font-medium text-foreground">ZernioCRM</span> · propulsé par l’API Zernio</span><span>Connexion sécurisée par Neon Auth</span></footer>
       </div>

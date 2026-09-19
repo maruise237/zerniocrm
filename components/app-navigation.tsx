@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutTemplate,
-  Loader2,
-  LogOut,
   Megaphone,
   MessageCircle,
   MoreHorizontal,
@@ -16,8 +14,6 @@ import {
   Workflow,
   X,
 } from 'lucide-react';
-import { toast } from 'sonner';
-import { authClient } from '@/lib/auth/client';
 import { cn } from '@/lib/utils';
 
 interface NavLink {
@@ -43,75 +39,6 @@ const SECONDARY_LINKS = [
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
   if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-/** Déconnexion : vide la session Neon Auth puis retour à l'écran de connexion. */
-function SignOutButton({ className, mobile = false }: { className?: string; mobile?: boolean }) {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-
-  async function handleSignOut() {
-    if (pending) return;
-    setPending(true);
-    try {
-      const { error } = await authClient.signOut();
-      if (error) {
-        toast.error('Impossible de vous déconnecter. Réessayez.');
-        setPending(false);
-        return;
-      }
-      toast.success('Vous êtes déconnecté');
-      router.replace('/auth/sign-in');
-      router.refresh();
-    } catch {
-      toast.error('Impossible de vous déconnecter. Vérifiez votre connexion.');
-      setPending(false);
-    }
-  }
-
-  if (!mobile) {
-    return (
-      <button
-        type="button"
-        onClick={handleSignOut}
-        disabled={pending}
-        aria-busy={pending}
-        className={cn(
-          'flex min-h-[44px] items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-[var(--chat-hover)] hover:text-destructive disabled:opacity-60',
-          className,
-        )}
-      >
-        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-        Déconnexion
-      </button>
-    );
-  }
-
-  return (
-    <>
-      <div className="my-1 border-t border-[var(--chat-border)]" aria-hidden="true" />
-      <button
-        type="button"
-        onClick={handleSignOut}
-        disabled={pending}
-        aria-busy={pending}
-        className={cn(
-          'flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-[var(--chat-hover)] disabled:opacity-60',
-          className,
-        )}
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
-          {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
-        </span>
-        <span className="min-w-0 text-left">
-          <span className="block text-sm font-medium text-destructive">Déconnexion</span>
-          <span className="block truncate text-xs text-muted-foreground">
-            Fermer votre session sur cet appareil
-          </span>
-        </span>
-      </button>
-    </>
-  );
 }
 
 /** Desktop row: icon + visible text label for every section. */
@@ -151,7 +78,6 @@ export function DesktopNav({ className }: { className?: string }) {
           {short}
         </Link>
       ))}
-      <SignOutButton />
     </nav>
   );
 }
@@ -233,7 +159,6 @@ export function BottomNav({ hidden = false }: { hidden?: boolean }) {
             </span>
           </Link>
         ))}
-        <SignOutButton mobile />
       </div>
 
       <nav
