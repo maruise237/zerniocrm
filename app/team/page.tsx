@@ -198,7 +198,7 @@ export default function TeamPage() {
             <div>
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Équipe</h1>
               <p className="text-sm text-muted-foreground">
-                Invitez des collaborateurs et choisissez ce qu'ils peuvent faire.
+                Invitez des collaborateurs et choisissez ce qu’ils peuvent faire.
               </p>
             </div>
           </div>
@@ -218,7 +218,7 @@ export default function TeamPage() {
               <div className="flex items-start gap-3">
                 <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                 <div>
-                  <p className="text-sm font-medium">Impossible de charger l'équipe</p>
+                  <p className="text-sm font-medium">Impossible de charger l’équipe</p>
                   <p className="mt-1 text-sm text-muted-foreground">{error.message}</p>
                   <button onClick={refetch} className="mt-3 min-h-[44px] rounded-lg border border-[var(--chat-border)] px-3 text-sm hover:bg-[var(--chat-hover)]">
                     Réessayer
@@ -233,7 +233,7 @@ export default function TeamPage() {
               <div className="flex items-start gap-3">
                 <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
                 <p className="text-sm text-muted-foreground">
-                  La gestion d'équipe nécessite une base de données configurée. En mode local,
+                  La gestion d’équipe nécessite une base de données configurée. En mode local,
                   chaque compte reste indépendant.
                 </p>
               </div>
@@ -326,7 +326,7 @@ export default function TeamPage() {
                   </fieldset>
 
                   <fieldset>
-                    <legend className="mb-2 text-sm font-medium">Le lien d'invitation expire dans…</legend>
+                    <legend className="mb-2 text-sm font-medium">Le lien d’invitation expire dans…</legend>
                     <div className="grid grid-cols-4 gap-1 rounded-xl border border-[var(--chat-border)] p-1">
                       {INVITE_EXPIRY_OPTIONS.map((opt) => (
                         <button
@@ -365,7 +365,7 @@ export default function TeamPage() {
                     {showPermissions && (
                       <div className="mt-2 space-y-1 rounded-xl border border-[var(--chat-border)] p-3">
                         <p className="mb-2 text-xs text-muted-foreground">
-                          Pré-remplies selon le rôle. Décochez pour restreindre l'accès de cette personne.
+                          Pré-remplies selon le rôle. Décochez pour restreindre l’accès de cette personne.
                         </p>
                         {ALL_PERMISSIONS.map((perm) => (
                           <label
@@ -395,7 +395,7 @@ export default function TeamPage() {
                     ) : (
                       <UserPlus className="h-4 w-4" />
                     )}
-                    Créer le lien d'invitation
+                    Créer le lien d’invitation
                   </button>
                 </form>
 
@@ -405,7 +405,7 @@ export default function TeamPage() {
                       Lien créé pour {created.invitation.email} ({created.invitation.roleLabel})
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {formatExpiry(created.invitation.expiresAt)} · Ce lien ne s'affiche qu'une seule fois :
+                      {formatExpiry(created.invitation.expiresAt)} · Ce lien ne s’affiche qu’une seule fois :
                       copiez-le maintenant.
                     </p>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -434,7 +434,7 @@ export default function TeamPage() {
                       onClick={() => setCreated(null)}
                       className="mt-2 min-h-[44px] text-xs text-muted-foreground underline-offset-2 hover:underline"
                     >
-                      J'ai transmis le lien — masquer
+                      J’ai transmis le lien — masquer
                     </button>
                   </div>
                 )}
@@ -557,7 +557,7 @@ export default function TeamPage() {
                   })}
                 </ul>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Un collaborateur retiré perd immédiatement l'accès à cet espace.
+                  Un collaborateur retiré perd immédiatement l’accès à cet espace.
                 </p>
               </Card>
             </>

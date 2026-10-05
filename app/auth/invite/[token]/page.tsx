@@ -130,7 +130,7 @@ export default function InviteAcceptPage() {
         {!preview && (
           <div className="mt-10 flex flex-col items-center gap-3" role="status">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Vérification de l'invitation…</p>
+            <p className="text-sm text-muted-foreground">Vérification de l’invitation…</p>
           </div>
         )}
 
@@ -149,7 +149,7 @@ export default function InviteAcceptPage() {
               href="/"
               className="mt-6 flex min-h-[48px] items-center justify-center rounded-xl bg-[var(--wa)] font-semibold text-[var(--wa-ink)] hover:bg-[var(--wa-hover)]"
             >
-              Aller à l'application
+              Aller à l’application
             </Link>
           </div>
         )}
@@ -157,7 +157,7 @@ export default function InviteAcceptPage() {
         {preview && preview.status === 'pending' && (
           <div className="mt-8">
             <h1 className="text-2xl font-bold tracking-tight">
-              Rejoignez l'espace de {preview.invitedByEmail ?? 'votre collaborateur'}
+              Rejoignez l’espace de {preview.invitedByEmail ?? 'votre collaborateur'}
             </h1>
             <div className="mt-4 space-y-2 rounded-xl border border-[var(--chat-border)] p-4 text-sm">
               <p className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export default function InviteAcceptPage() {
               <div className="mt-6 flex items-start gap-3 rounded-xl bg-[var(--wa)]/10 p-4" role="status">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--wa-deep)]" />
                 <p className="text-sm font-medium text-[var(--wa-deep)]">
-                  Invitation acceptée ! Vous arrivez dans l'application…
+                  Invitation acceptée ! Vous arrivez dans l’application…
                 </p>
               </div>
             ) : (
@@ -194,7 +194,7 @@ export default function InviteAcceptPage() {
                     <div className="mt-6 rounded-xl bg-amber-500/10 p-4 text-sm">
                       <p className="font-medium">Mauvais compte connecté</p>
                       <p className="mt-1 text-muted-foreground">
-                        Vous êtes connecté avec <strong>{sessionEmail}</strong>, mais l'invitation est
+                        Vous êtes connecté avec <strong>{sessionEmail}</strong>, mais l’invitation est
                         destinée à <strong>{preview.email}</strong>. Déconnectez-vous puis connectez-vous
                         avec la bonne adresse.
                       </p>
@@ -212,14 +212,14 @@ export default function InviteAcceptPage() {
                       className="mt-6 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--wa)] font-semibold text-[var(--wa-ink)] hover:bg-[var(--wa-hover)] disabled:opacity-50"
                     >
                       {accepting && <Loader2 className="h-4 w-4 animate-spin" />}
-                      Accepter l'invitation
+                      Accepter l’invitation
                     </button>
                   )
                 ) : (
                   <div className="mt-6 space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      Créez votre compte (ou connectez-vous) avec l'adresse{' '}
-                      <strong>{preview.email}</strong> pour rejoindre l'espace.
+                      Créez votre compte (ou connectez-vous) avec l’adresse{' '}
+                      <strong>{preview.email}</strong> pour rejoindre l’espace.
                     </p>
                     <Link
                       href={`/auth/sign-up?next=${encodeURIComponent(safeNext)}`}
@@ -231,7 +231,7 @@ export default function InviteAcceptPage() {
                       href={`/auth/sign-in?next=${encodeURIComponent(safeNext)}`}
                       className="flex min-h-[48px] items-center justify-center rounded-xl border border-[var(--chat-border)] font-medium hover:bg-[var(--chat-hover)]"
                     >
-                      J'ai déjà un compte : Se connecter
+                      J’ai déjà un compte : Se connecter
                     </Link>
                   </div>
                 )}

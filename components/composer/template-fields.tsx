@@ -51,8 +51,8 @@ export function TemplateFields({ composer }: { composer: TemplateComposer }) {
     return (
       <div className="space-y-2 text-sm text-muted-foreground">
         <p>
-          Aucun modèle approuvé pour l'instant : créez-le dans l'onglet Modèles ou WhatsApp
-          Manager, attendez l'approbation Meta, puis revenez ici.
+          Aucun modèle approuvé pour l’instant : créez-le dans l’onglet Modèles ou WhatsApp
+          Manager, attendez l’approbation Meta, puis revenez ici.
         </p>
       </div>
     );

@@ -287,7 +287,7 @@ export function InteractiveDrawer({
         <DialogHeader>
           <DialogTitle>Message interactif</DialogTitle>
           <DialogDescription>
-            Boutons, liste, bouton-lien, flow, demande de localisation ou bouton d'appel
+            Boutons, liste, bouton-lien, flow, demande de localisation ou bouton d’appel
           </DialogDescription>
         </DialogHeader>
 
@@ -516,7 +516,7 @@ export function InteractiveDrawer({
               </DropdownMenu>
               {!flowsQuery.isLoading && flows.length === 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Seuls les flows publiés peuvent être envoyés. Publiez d'abord un flow.
+                  Seuls les flows publiés peuvent être envoyés. Publiez d’abord un flow.
                 </p>
               )}
             </div>
@@ -561,7 +561,7 @@ export function InteractiveDrawer({
                   placeholder="ex. ACCUEIL"
                 />
                 <p className="text-xs text-muted-foreground">
-                  L'écran sur lequel le flow s'ouvre (doit correspondre à un identifiant du JSON du flow).
+                  L’écran sur lequel le flow s’ouvre (doit correspondre à un identifiant du JSON du flow).
                 </p>
               </div>
             )}
@@ -608,7 +608,7 @@ export function InteractiveDrawer({
                 placeholder="Appeler"
               />
               <p className="text-xs text-muted-foreground">
-                L'appel doit être activé sur votre numéro, sinon Meta refuse l'envoi.
+                L’appel doit être activé sur votre numéro, sinon Meta refuse l’envoi.
               </p>
             </div>
           </TabsContent>
