@@ -18,6 +18,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
 import { saveCampaignVars, type CampaignVars } from '@/lib/campaigns/personalization';
 import { extractPlaceholders } from '@/lib/whatsapp/template-meta';
+import { optOutNote } from '@/lib/whatsapp/opt-out';
+import { formatCost } from '@/lib/whatsapp/usage';
+import { useWhatsappUsage } from '@/hooks/useWhatsappUsage';
 import { cn } from '@/lib/utils';
 import type {
   Account,
@@ -116,6 +119,7 @@ export function CampaignCreateDialog({
       : selectedVariants[0]?.language ?? '';
 
   const selectedTemplate = selectedVariants.find((v) => v.language === effectiveLanguage) ?? null;
+  const { usage } = useWhatsappUsage(open ? effectiveAccountId : null);
   const bodyComponent = selectedTemplate?.components?.find((c) => c.type === 'BODY');
   const placeholders = useMemo(
     () => extractPlaceholders(bodyComponent?.text ?? ''),
@@ -191,6 +195,20 @@ export function CampaignCreateDialog({
     effectiveAccountId.length > 0 &&
     !!selectedTemplate &&
     placeholders.every((n) => mapping[n] && (mapping[n].field !== 'custom' || mapping[n].custom.trim().length > 0));
+
+  // Estimation : coût moyen d'un message marketing constaté sur 30 jours
+  // (données Meta). Uniquement pour un modèle marketing et un nombre de
+  // destinataires connu ; les segments par tags sont comptés à l'ajout.
+  const knownRecipients = phones.length + selectedContactIds.length;
+  const isMarketing = (selectedTemplate?.category ?? '').toUpperCase() === 'MARKETING';
+  const costEstimate =
+    isMarketing && usage?.avgMarketingCost && knownRecipients > 0
+      ? `Coût estimé : ${knownRecipients} message(s) × ${formatCost(usage.avgMarketingCost)} ≈ ${formatCost(
+          knownRecipients * usage.avgMarketingCost,
+        )} (devise de votre compte Meta, d’après vos envois des 30 derniers jours${
+          selectedTags.length > 0 ? ', hors contacts ajoutés par tags' : ''
+        }).`
+      : null;
 
   async function submit() {
     if (!canSubmit || creating || !selectedTemplate) return;
@@ -270,9 +288,10 @@ export function CampaignCreateDialog({
       // Step 2 : ajout des destinataires choisis (numéros, contacts, tags).
       const problems: string[] = [];
       let totalAdded = 0;
+      let totalExcluded = 0;
       const addRecipients = async (body: Record<string, unknown>, source: string) => {
         try {
-          const res = await apiFetch<{ added?: number; skipped?: number }>(
+          const res = await apiFetch<{ added?: number; skipped?: number; excludedOptOut?: number }>(
             `/api/broadcasts/${encodeURIComponent(broadcast.id)}/recipients`,
             {
               method: 'POST',
@@ -281,6 +300,7 @@ export function CampaignCreateDialog({
             },
           );
           totalAdded += res.added ?? 0;
+          totalExcluded += res.excludedOptOut ?? 0;
         } catch {
           problems.push(source);
         }
@@ -296,7 +316,7 @@ export function CampaignCreateDialog({
       } else {
         toast.success(
           totalAdded > 0
-            ? `Campagne « ${name.trim()} » créée — ${totalAdded} destinataire(s) ajouté(s).`
+            ? `Campagne « ${name.trim()} » créée — ${totalAdded} destinataire(s) ajouté(s)${optOutNote(totalExcluded)}.`
             : `Campagne « ${name.trim()} » créée en brouillon — ajoutez des destinataires depuis la campagne.`,
         );
       }
@@ -703,6 +723,12 @@ export function CampaignCreateDialog({
               </div>
             )}
           </div>
+
+          {costEstimate && (
+            <p className="rounded-xl border border-[var(--chat-border)] bg-[var(--chat-surface)] px-3 py-2 text-xs">
+              {costEstimate}
+            </p>
+          )}
         </div>
 
         <DialogFooter>

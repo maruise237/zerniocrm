@@ -145,7 +145,7 @@ export function useAddRecipients(broadcastId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: { phones?: string[]; contactIds?: string[]; useSegment?: boolean }) =>
-      apiFetch<{ added?: number; skipped?: number }>(
+      apiFetch<{ added?: number; skipped?: number; excludedOptOut?: number }>(
         `/api/broadcasts/${encodeURIComponent(broadcastId ?? '')}/recipients`,
         {
           method: 'POST',

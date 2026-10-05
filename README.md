@@ -31,6 +31,12 @@ Le CRM supporte les **collaborateurs** (`/team`) : le propriétaire d'un espace 
 - **Résolution workspace** (`lib/server/workspace.ts`) : `resolveWorkspace()` rattache chaque utilisateur à son espace (config propre → propriétaire, sinon membership active), avec cache 60 s. Les collaborateurs agissent avec la **clé du propriétaire** et le journal des messages est rattaché au workspace (`resolveUserKey().workspaceOwnerId`). Les routes d'écriture (conversations, broadcasts, contacts, templates, flows, appels, blocages, médias, settings) sont gardées par `requirePermission()` — **fail-closed** : base injoignable → 503, jamais de permissions ouvertes.
 - **Gestion courante** : renvoyer une invitation remplace l'ancien lien (révocation automatique), changement de rôle/statut (suspendre/réactiver), retrait immédiat (caches invalidés), lecture de l'équipe accessible à tous les membres (transparence du rôle).
 
+## Désabonnement (STOP) et consommation Meta
+
+- **Désabonnement marketing** (`lib/whatsapp/opt-out.ts`, `lib/server/opt-out.ts`) : un message entrant égal à `STOP`, `ARRÊT`, `DÉSABONNER`, `Stop promotions`… (message entier, sans tenir compte de la casse ni des accents) passe le contact Zernio en `isSubscribed: false` et envoie une confirmation ; `START` / `RÉABONNER` le réabonne. Nécessite le webhook `message.received` configuré dans Zernio (URL des Paramètres).
+- **Exclusion automatique** : l'ajout de destinataires (`POST /api/broadcasts/[id]/recipients`) retire les désabonnés pour tous les chemins (numéros, fichier, contacts, segment par tags) ; l'envoi direct personnalisé les ignore ; l'envoi immédiat d'une campagne est refusé (409) si un destinataire s'est désabonné depuis son ajout. Fail-closed : liste des désabonnés illisible → 503, rien ne part.
+- **Consommation du mois** (`GET /api/whatsapp/usage`, carte en tête de `/campaigns`) : depuis le 1er octobre 2026 Meta facture les réponses de service au-delà de 1 000 par mois et par numéro. La carte affiche le quota gratuit restant et le coût approximatif (`/v1/whatsapp/pricing-analytics`) ; la création de campagne marketing affiche un coût estimé d'après le coût moyen constaté sur 30 jours.
+
 ## Automatisations (Workflows Zernio)
 
 La page `/flows` (« Automatisations ») repose intégralement sur l'**API Workflows de Zernio** (`/v1/workflows`) : le CRM n'exécute rien lui-même, il assemble un graphe de nœuds standard et le confie à Zernio, qui le fait tourner 24 h/24 sur WhatsApp.

@@ -17,6 +17,7 @@ import {
   type CampaignVars,
 } from '@/lib/campaigns/personalization';
 import type { ZernioBroadcastRecipient } from '@/lib/types';
+import { buildOptOutIndex, phoneDigits, type OptedOutContact, type OptOutIndex } from '@/lib/whatsapp/opt-out';
 
 export interface DirectSendResult {
   sent: number;
@@ -24,6 +25,8 @@ export interface DirectSendResult {
   total: number;
   /** Nombre d'envois enregistrés pour le suivi (campaign_sends). */
   tracked: number;
+  /** Destinataires retirés car désabonnés (STOP). */
+  excludedOptOut: number;
 }
 
 /** Identifiants éventuellement renvoyés par Zernio à la création de conversation. */
@@ -119,6 +122,34 @@ async function resolveParams(
   return values;
 }
 
+/** Désabonnés (STOP) relus juste avant l'envoi : un contact a pu se désabonner depuis son ajout. */
+async function loadOptOutIndex(): Promise<OptOutIndex> {
+  const contacts: OptedOutContact[] = [];
+  for (let page = 0; page < 50; page += 1) {
+    const res = await apiFetch<{ contacts?: OptedOutContact[]; pagination?: { hasMore?: boolean } }>(
+      `/api/contacts?isSubscribed=false&platform=whatsapp&limit=100&skip=${page * 100}`,
+    );
+    contacts.push(...(res.contacts ?? []));
+    if (!res.pagination?.hasMore) break;
+  }
+  return buildOptOutIndex(contacts);
+}
+
+/**
+ * Destinataires joignables (avec numéro) et encore abonnés.
+ * Lecture des désabonnés impossible → exception : rien ne part.
+ */
+export async function withoutOptedOut(
+  all: ZernioBroadcastRecipient[],
+): Promise<{ recipients: ZernioBroadcastRecipient[]; excludedOptOut: number }> {
+  const optOut = await loadOptOutIndex();
+  const reachable = all.filter((r) => r.platformIdentifier);
+  const recipients = reachable.filter(
+    (r) => !(r.contactId && optOut.ids.has(r.contactId)) && !optOut.phones.has(phoneDigits(r.platformIdentifier)),
+  );
+  return { recipients, excludedOptOut: reachable.length - recipients.length };
+}
+
 export async function sendPersonalizedCampaign(opts: {
   broadcastId: string;
   accountId: string;
@@ -126,7 +157,7 @@ export async function sendPersonalizedCampaign(opts: {
 }): Promise<DirectSendResult> {
   const { broadcastId, accountId, cfg } = opts;
   const allRecipients = await fetchBroadcastRecipients(broadcastId);
-  const recipients = allRecipients.filter((r) => r.platformIdentifier);
+  const { recipients, excludedOptOut } = await withoutOptedOut(allRecipients);
   const total = recipients.length;
 
   const contactCache = new Map<string, { email?: string; company?: string }>();
@@ -180,5 +211,5 @@ export async function sendPersonalizedCampaign(opts: {
 
   const trackedCount = await trackSends(broadcastId, accountId, tracked);
   markDirectSent(broadcastId);
-  return { sent, failures, total, tracked: trackedCount };
+  return { sent, failures, total, tracked: trackedCount, excludedOptOut };
 }

@@ -22,6 +22,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { BottomNav, DesktopNav } from '@/components/app-navigation';
+import { UsageCard } from '@/components/usage-card';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -436,6 +437,7 @@ export default function CampaignsPage() {
           </div>
         ) : (
           <section className="mt-5 space-y-2.5">
+            <UsageCard accountId={whatsappAccounts[0]?._id} />
             {(isLoading || accountsLoading) && (
               <div className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--chat-border)] bg-[var(--chat-surface)] p-10 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" /> Chargement des campagnes…

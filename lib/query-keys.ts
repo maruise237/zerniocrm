@@ -7,6 +7,7 @@ export const queryKeys = {
   templates: (accountId: string) => ['whatsapp-templates', accountId] as const,
   templateEvents: (accountId: string) => ['whatsapp-template-events', accountId] as const,
   flows: (accountId: string) => ['whatsapp-flows', accountId] as const,
+  usage: (accountId: string) => ['whatsapp-usage', accountId] as const,
   broadcasts: ['broadcasts'] as const,
   broadcast: (id: string) => ['broadcast', id] as const,
   broadcastRecipients: (id: string) => ['broadcast-recipients', id] as const,

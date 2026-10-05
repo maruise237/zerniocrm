@@ -45,6 +45,8 @@ import { parseContactFile } from '@/lib/contacts/import-parser';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import { templateVariableCount } from '@/lib/campaigns/template-check';
 import { cumulativeStats, directSendStats, dominantFailure } from '@/lib/campaigns/stats';
+import { optOutNote } from '@/lib/whatsapp/opt-out';
+import { withoutOptedOut } from '@/lib/campaigns/direct-send';
 import {
   campaignVarsToList,
   duplicateBroadcast,
@@ -178,7 +180,8 @@ function AddRecipientsDialog({
         const res = await add.mutateAsync({ phones });
         toast.success(
           `${res.added ?? 0} destinataire(s) ajouté(s)` +
-            (res.skipped ? `, ${res.skipped} ignoré(s)` : ''),
+            (res.skipped ? `, ${res.skipped} ignoré(s)` : '') +
+            optOutNote(res.excludedOptOut),
         );
         onClose();
       } catch {
@@ -192,7 +195,8 @@ function AddRecipientsDialog({
         const res = await add.mutateAsync({ phones: filePhones });
         toast.success(
           `${res.added ?? 0} destinataire(s) ajouté(s) depuis le fichier` +
-            (res.skipped ? `, ${res.skipped} ignoré(s)` : ''),
+            (res.skipped ? `, ${res.skipped} ignoré(s)` : '') +
+            optOutNote(res.excludedOptOut),
         );
         onClose();
       } catch {
@@ -206,7 +210,8 @@ function AddRecipientsDialog({
         const res = await add.mutateAsync({ contactIds: selectedContactIds });
         toast.success(
           `${res.added ?? 0} contact(s) ajouté(s)` +
-            (res.skipped ? `, ${res.skipped} ignoré(s)` : ''),
+            (res.skipped ? `, ${res.skipped} ignoré(s)` : '') +
+            optOutNote(res.excludedOptOut),
         );
         onClose();
       } catch {
@@ -221,7 +226,7 @@ function AddRecipientsDialog({
     }
     try {
       const res = await add.mutateAsync({ useSegment: true });
-      toast.success(`${res.added ?? 0} contact(s) du segment ajouté(s)`);
+      toast.success(`${res.added ?? 0} contact(s) du segment ajouté(s)${optOutNote(res.excludedOptOut)}`);
       onClose();
     } catch {
       toast.error('La synchronisation du segment a échoué.');
@@ -953,11 +958,16 @@ export function CampaignDetail({
     setDirectErrors([]);
     try {
       const allRecipients = await fetchBroadcastRecipients(t.id);
-      const recipients = allRecipients.filter((r) => r.platformIdentifier);
+      const { recipients, excludedOptOut } = await withoutOptedOut(allRecipients);
       if (recipients.length === 0) {
-        toast.error('Aucun destinataire avec numéro — ajoutez-en d’abord.');
+        toast.error(
+          excludedOptOut > 0
+            ? 'Tous les destinataires de cette campagne se sont désabonnés (STOP).'
+            : 'Aucun destinataire avec numéro — ajoutez-en d’abord.',
+        );
         return;
       }
+      if (excludedOptOut > 0) toast.info(`Envoi en cours${optOutNote(excludedOptOut).replace(',', ' :')}.`);
 
       const contactCache = new Map<string, { email?: string; company?: string }>();
       let sent = 0;
